@@ -1,7 +1,7 @@
-import { Game } from './Game.js?v=1.1.4';
+import { Game } from './Game.js?v=1.2.1';
 
 window.onload = function () {
-    console.log('Game Version: 1.2.0 (Final Release)');
+    console.log('Game Version: 1.2.1 (Clean Release)');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements
