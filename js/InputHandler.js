@@ -1,7 +1,7 @@
 export class InputHandler {
     constructor(jumpCallback) {
         this.keys = {};
-        this.mouseX = 0;
+        this.mouseX = null;
         this.jumpCallback = jumpCallback;
         this.canvasWidth = 800;
 
@@ -27,8 +27,8 @@ export class InputHandler {
     attachCanvas(canvas) {
         this.canvasWidth = canvas.width;
 
-        // Mouse move for position tracking
-        canvas.addEventListener('mousemove', e => {
+        // Mouse move for position tracking - use window to track even outside canvas/over UI
+        window.addEventListener('mousemove', e => {
             const rect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / rect.width;
             this.mouseX = (e.clientX - rect.left) * scaleX;

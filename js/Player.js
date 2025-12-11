@@ -82,7 +82,7 @@ export class Player {
         // Desktop mouse follow: mouse position controls player movement
         // Note: mouseX is in screen coordinates, player.x is in world coordinates
         // We need to convert player position to screen position using camera offset
-        else if (input.mouseX > 0 && this.camera) {
+        else if (input.mouseX !== null && this.camera) {
             // Convert player's world position to screen position
             const playerScreenX = this.x - this.camera.x + this.width / 2;
             const mouseDiff = input.mouseX - playerScreenX;
