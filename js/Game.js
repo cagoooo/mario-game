@@ -261,15 +261,15 @@ export class Game {
     update() {
         if (!this.gameRunning || !this.player) return;
 
-        // Pass camera reference to player for mouse position calculation
-        this.player.camera = this.camera;
-        this.player.update(this.input, this.platforms, this.levelWidth);
-
-        // Camera logic
+        // Camera logic - update BEFORE player so mouse position calculation is accurate
         let targetCamX = this.player.x - this.width / 2 + this.player.width / 2;
         if (targetCamX < 0) targetCamX = 0;
         if (targetCamX > this.levelWidth - this.width) targetCamX = this.levelWidth - this.width;
         this.camera.x = targetCamX;
+
+        // Pass camera to player for mouse position calculation
+        this.player.camera = this.camera;
+        this.player.update(this.input, this.platforms, this.levelWidth);
 
         // Update enemies
         for (let i = this.enemies.length - 1; i >= 0; i--) {
