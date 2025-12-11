@@ -64,6 +64,8 @@ export class Game {
 
         this.images = {};
         this.loadImages();
+
+        this.handleAnyKeyRestart = this.handleAnyKeyRestart.bind(this);
     }
 
     loadHighScore() {
@@ -223,6 +225,12 @@ export class Game {
 
     restart() {
         this.ui.gameOverOverlay.style.display = 'none';
+
+        // Remove any key restart listeners
+        window.removeEventListener('keydown', this.handleAnyKeyRestart);
+        window.removeEventListener('click', this.handleAnyKeyRestart);
+        window.removeEventListener('touchstart', this.handleAnyKeyRestart);
+
         this.initGame();
         this.startBGM();
         this.gameLoop();
@@ -577,6 +585,20 @@ export class Game {
         }
 
         this.playSound('gameOver');
+
+        // Add any key restart listener
+        setTimeout(() => {
+            window.addEventListener('keydown', this.handleAnyKeyRestart);
+            window.addEventListener('click', this.handleAnyKeyRestart);
+            window.addEventListener('touchstart', this.handleAnyKeyRestart);
+        }, 500); // Small delay to prevent accidental restarts
+    }
+
+    handleAnyKeyRestart(e) {
+        if (!this.gameRunning) {
+            // Prevent default behavior for some keys if needed, but generally let it pass
+            this.restart();
+        }
     }
 
     updateScore() {
