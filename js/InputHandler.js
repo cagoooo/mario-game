@@ -30,14 +30,16 @@ export class InputHandler {
         // Mouse move for position tracking
         canvas.addEventListener('mousemove', e => {
             const rect = canvas.getBoundingClientRect();
-            this.mouseX = e.clientX - rect.left;
+            const scaleX = canvas.width / rect.width;
+            this.mouseX = (e.clientX - rect.left) * scaleX;
         });
 
         // Click handler - jump and set direction
         canvas.addEventListener('click', (e) => {
             const rect = canvas.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
-            const centerX = rect.width / 2;
+            const scaleX = canvas.width / rect.width;
+            const clickX = (e.clientX - rect.left) * scaleX;
+            const centerX = canvas.width / 2;
 
             // Set direction based on click position
             if (clickX < centerX - 50) {
@@ -58,9 +60,10 @@ export class InputHandler {
         canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
             const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
             const touch = e.touches[0];
-            const touchX = touch.clientX - rect.left;
-            const centerX = rect.width / 2;
+            const touchX = (touch.clientX - rect.left) * scaleX;
+            const centerX = canvas.width / 2;
 
             this.isTouching = true;
 
@@ -83,9 +86,10 @@ export class InputHandler {
         canvas.addEventListener('touchmove', (e) => {
             e.preventDefault();
             const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
             const touch = e.touches[0];
-            const touchX = touch.clientX - rect.left;
-            const centerX = rect.width / 2;
+            const touchX = (touch.clientX - rect.left) * scaleX;
+            const centerX = canvas.width / 2;
 
             // Update direction based on touch position
             if (touchX < centerX - 50) {
