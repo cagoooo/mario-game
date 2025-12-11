@@ -66,12 +66,13 @@ export class Player {
         let moveInput = 0;
 
         // Touch direction (from clicking/touching left or right side of screen)
+        // This is for mobile: tap left side = move left + jump
         if (input.touchDirection !== 0) {
             moveInput = input.touchDirection;
             this.direction = moveInput;
         }
-        // Mouse/touch follow control (backup)
-        else if (input.mouseX > 0 && input.isTouching) {
+        // Desktop mouse follow: mouse position controls player movement
+        else if (input.mouseX > 0) {
             const playerCenterX = this.x + this.width / 2;
             const mouseDiff = input.mouseX - playerCenterX;
 
