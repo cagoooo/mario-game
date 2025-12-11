@@ -65,8 +65,13 @@ export class Player {
         // === HORIZONTAL MOVEMENT ===
         let moveInput = 0;
 
-        // Touch/Mouse follow control (for touchscreens)
-        if (input.mouseX > 0) {
+        // Touch direction (from clicking/touching left or right side of screen)
+        if (input.touchDirection !== 0) {
+            moveInput = input.touchDirection;
+            this.direction = moveInput;
+        }
+        // Mouse/touch follow control (backup)
+        else if (input.mouseX > 0 && input.isTouching) {
             const playerCenterX = this.x + this.width / 2;
             const mouseDiff = input.mouseX - playerCenterX;
 
@@ -76,7 +81,7 @@ export class Player {
             }
         }
 
-        // Keyboard control overrides touch
+        // Keyboard control overrides all
         if (input.keys['ArrowLeft']) {
             moveInput = -1;
             this.direction = -1;
