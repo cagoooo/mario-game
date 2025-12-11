@@ -17,8 +17,12 @@ export class Game {
 
         this.width = canvas.width;
         this.height = canvas.height;
-        this.levelWidth = 4000;
+        this.levelWidth = 4000; // Initial buffer, but effectively infinite
         this.GROUND_Y = this.height - 50;
+
+        this.lastGeneratedX = 0;
+        this.CHUNK_SIZE = 2000;
+        this.renderDistance = 3000;
 
         this.camera = { x: 0, y: 0 };
 
@@ -236,12 +240,15 @@ export class Game {
         this.player = new Player(50, this.GROUND_Y, this.images.player);
         this.player.setGroundY(this.GROUND_Y);
 
-        this.platforms = generatePlatforms(this.levelWidth, this.height, this.images.tiles);
-        this.enemies = createEnemies(Math.floor(this.levelWidth / 300), this.levelWidth, this.height, this.images.enemy);
-        this.coins = generateCoins(this.levelWidth, this.platforms);
-        this.questionBlocks = generateQuestionBlocks(this.levelWidth, this.GROUND_Y);
+        this.platforms = [];
+        this.enemies = [];
+        this.coins = [];
+        this.questionBlocks = [];
         this.mushrooms = [];
-        this.pipes = generatePipes(this.levelWidth, this.GROUND_Y);
+        this.pipes = [];
+
+        this.lastGeneratedX = 0;
+        this.generateChunk(0, this.levelWidth);
 
         this.gameRunning = true;
         this.isPaused = false;
@@ -271,8 +278,18 @@ export class Game {
         // Camera logic - update BEFORE player so mouse position calculation is accurate
         let targetCamX = this.player.x - this.width / 2 + this.player.width / 2;
         if (targetCamX < 0) targetCamX = 0;
-        if (targetCamX > this.levelWidth - this.width) targetCamX = this.levelWidth - this.width;
+        // Removed max level width constraint for infinite scrolling
+        // if (targetCamX > this.levelWidth - this.width) targetCamX = this.levelWidth - this.width;
         this.camera.x = targetCamX;
+
+        // Infinite generation logic
+        if (this.player.x + this.renderDistance > this.lastGeneratedX) {
+            this.generateChunk(this.lastGeneratedX, this.lastGeneratedX + this.CHUNK_SIZE);
+        }
+
+        // Cleanup logic (remove objects far behind camera)
+        const cleanupX = this.camera.x - 1000;
+        this.cleanupObjects(cleanupX);
 
         // Pass camera to player for mouse position calculation
         this.player.camera = this.camera;
@@ -623,5 +640,37 @@ export class Game {
         setTimeout(() => {
             this.ui.score.style.transform = 'scale(1)';
         }, 100);
+    }
+    generateChunk(startX, endX) {
+        const newPlatforms = generatePlatforms(startX, endX, this.height, this.images.tiles);
+        this.platforms.push(...newPlatforms);
+
+        const newEnemies = createEnemies(startX, endX, this.height, this.images.enemy);
+        this.enemies.push(...newEnemies);
+
+        const newCoins = generateCoins(startX, endX, newPlatforms); // Pass only new platforms for optimization? Or all? 
+        // generateCoins currently iterates all platforms passed. Passing only new ones is safer for performance 
+        // but might miss coins bridging chunks. For now, passing newPlatforms is good.
+        this.coins.push(...newCoins);
+
+        const newBlocks = generateQuestionBlocks(startX, endX, this.GROUND_Y);
+        this.questionBlocks.push(...newBlocks);
+
+        const newPipes = generatePipes(startX, endX, this.GROUND_Y);
+        this.pipes.push(...newPipes);
+
+        this.lastGeneratedX = endX;
+        this.levelWidth = endX; // Keep levelWidth updated for boundary checks if any remain
+    }
+
+    cleanupObjects(minX) {
+        this.platforms = this.platforms.filter(p => p.x + p.width > minX);
+        this.enemies = this.enemies.filter(e => e.x + e.width > minX);
+        this.coins = this.coins.filter(c => c.x + c.width > minX);
+        this.questionBlocks = this.questionBlocks.filter(b => b.x + b.width > minX);
+        this.pipes = this.pipes.filter(p => p.x + p.width > minX);
+        this.mushrooms = this.mushrooms.filter(m => m.x + m.width > minX);
+        this.particles = this.particles.filter(p => p.x > minX);
+        this.scorePopups = this.scorePopups.filter(p => p.x > minX);
     }
 }

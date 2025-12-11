@@ -141,11 +141,14 @@ export class QuestionBlock {
     }
 }
 
-export function generateQuestionBlocks(levelWidth, groundY) {
+export function generateQuestionBlocks(startX, endX, groundY) {
     const blocks = [];
 
     // Spread question blocks across the level
-    for (let x = 300; x < levelWidth - 300; x += 400) {
+    let firstBlockX = Math.ceil(startX / 400) * 400;
+    if (firstBlockX < startX) firstBlockX += 400;
+
+    for (let x = firstBlockX; x < endX; x += 400) {
         if (Math.random() > 0.3) {
             const blockY = groundY - 120 - Math.random() * 80;
             const content = Math.random() < 0.2 ? 'mushroom' : 'coin';

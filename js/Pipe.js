@@ -125,10 +125,15 @@ export class Pipe {
     }
 }
 
-export function generatePipes(levelWidth, groundY) {
+export function generatePipes(startX, endX, groundY) {
     const pipes = [];
 
-    for (let x = 400; x < levelWidth - 200; x += 500) {
+    // Ensure we align pipes to a grid or just random within chunk
+    // Let's start from the first multiple of 500 after startX
+    let firstPipeX = Math.ceil(startX / 500) * 500;
+    if (firstPipeX < startX) firstPipeX += 500;
+
+    for (let x = firstPipeX; x < endX; x += 500) {
         if (Math.random() > 0.4) {
             const height = 60 + Math.random() * 40;
             const hasPiranha = Math.random() > 0.5;

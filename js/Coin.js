@@ -105,11 +105,14 @@ export class Coin {
     }
 }
 
-export function generateCoins(levelWidth, platforms) {
+export function generateCoins(startX, endX, platforms) {
     const coins = [];
 
     // Coins along the ground
-    for (let x = 200; x < levelWidth - 200; x += 150) {
+    let firstCoinX = Math.ceil(startX / 150) * 150;
+    if (firstCoinX < startX) firstCoinX += 150;
+
+    for (let x = firstCoinX; x < endX; x += 150) {
         if (Math.random() > 0.3) {
             coins.push(new Coin(x, 300)); // Adjust Y based on ground
         }
@@ -117,10 +120,12 @@ export function generateCoins(levelWidth, platforms) {
 
     // Coins above platforms
     platforms.forEach(platform => {
-        if (Math.random() > 0.4) {
-            const coinX = platform.x + platform.width / 2 - 10;
-            const coinY = platform.y - 50;
-            coins.push(new Coin(coinX, coinY));
+        if (platform.x >= startX && platform.x < endX) {
+            if (Math.random() > 0.4) {
+                const coinX = platform.x + platform.width / 2 - 10;
+                const coinY = platform.y - 50;
+                coins.push(new Coin(coinX, coinY));
+            }
         }
     });
 

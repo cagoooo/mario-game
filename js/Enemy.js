@@ -235,12 +235,15 @@ export class FlyingEnemy extends Enemy {
     }
 }
 
-export function createEnemies(count, canvasWidth, canvasHeight, spriteSheet) {
+export function createEnemies(startX, endX, canvasHeight, spriteSheet) {
     const enemies = [];
     const groundY = canvasHeight - 50;
+    const width = endX - startX;
+    // Density: roughly 1 enemy per 400px
+    const count = Math.floor(width / 400);
 
     for (let i = 0; i < count; i++) {
-        const x = 600 + Math.random() * (canvasWidth - 800);
+        const x = startX + Math.random() * width;
         const speed = 1 + Math.random() * 1.5;
         const direction = Math.random() < 0.5 ? -1 : 1;
         const type = Math.random();

@@ -149,41 +149,49 @@ export class Background {
 
     drawGround(ctx, canvasHeight, camera) {
         const groundHeight = canvasHeight - this.groundY;
+        const scrollX = -camera.x % 800; // Scroll offset
 
-        // Grass layer on top
-        ctx.fillStyle = '#228B22';
-        ctx.fillRect(0, this.groundY, 800, 10);
+        // Draw ground twice to cover the screen seamlessly
+        for (let offset of [scrollX, scrollX + 800]) {
+            if (offset > 800 || offset + 800 < 0) continue; // Optimization
 
-        // Grass texture (triangles)
-        ctx.fillStyle = '#32CD32';
-        for (let i = 0; i < 800; i += 12) {
-            ctx.beginPath();
-            ctx.moveTo(i, this.groundY);
-            ctx.lineTo(i + 6, this.groundY - 8);
-            ctx.lineTo(i + 12, this.groundY);
-            ctx.fill();
-        }
+            const drawX = offset;
 
-        // Brown soil layer
-        ctx.fillStyle = '#8B4513';
-        ctx.fillRect(0, this.groundY + 10, 800, 25);
+            // Grass layer on top
+            ctx.fillStyle = '#228B22';
+            ctx.fillRect(drawX, this.groundY, 800, 10);
 
-        // Soil texture (darker lines)
-        ctx.fillStyle = '#654321';
-        for (let i = 0; i < 800; i += 30) {
-            ctx.fillRect(i, this.groundY + 15, 20, 3);
-        }
+            // Grass texture (triangles)
+            ctx.fillStyle = '#32CD32';
+            for (let i = 0; i < 800; i += 12) {
+                ctx.beginPath();
+                ctx.moveTo(drawX + i, this.groundY);
+                ctx.lineTo(drawX + i + 6, this.groundY - 8);
+                ctx.lineTo(drawX + i + 12, this.groundY);
+                ctx.fill();
+            }
 
-        // Stone/bedrock layer
-        ctx.fillStyle = '#696969';
-        ctx.fillRect(0, this.groundY + 35, 800, groundHeight - 35);
+            // Brown soil layer
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(drawX, this.groundY + 10, 800, 25);
 
-        // Stone texture
-        ctx.fillStyle = '#808080';
-        for (let i = 0; i < 800; i += 40) {
-            ctx.beginPath();
-            ctx.arc(i + 20, this.groundY + 50, 8, 0, Math.PI * 2);
-            ctx.fill();
+            // Soil texture (darker lines)
+            ctx.fillStyle = '#654321';
+            for (let i = 0; i < 800; i += 30) {
+                ctx.fillRect(drawX + i, this.groundY + 15, 20, 3);
+            }
+
+            // Stone/bedrock layer
+            ctx.fillStyle = '#696969';
+            ctx.fillRect(drawX, this.groundY + 35, 800, groundHeight - 35);
+
+            // Stone texture
+            ctx.fillStyle = '#808080';
+            for (let i = 0; i < 800; i += 40) {
+                ctx.beginPath();
+                ctx.arc(drawX + i + 20, this.groundY + 50, 8, 0, Math.PI * 2);
+                ctx.fill();
+            }
         }
     }
 }

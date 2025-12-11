@@ -49,12 +49,14 @@ export class Platform {
     }
 }
 
-export function generatePlatforms(canvasWidth, canvasHeight, spriteSheet) {
-    const platformCount = Math.floor(Math.random() * 5) + 8; // 8 to 12 platforms
+export function generatePlatforms(startX, endX, canvasHeight, spriteSheet) {
+    const width = endX - startX;
+    const platformCount = Math.floor(width / 200) + Math.floor(Math.random() * 2);
     const platforms = [];
+
     for (let i = 0; i < platformCount; i++) {
         platforms.push(new Platform(
-            Math.random() * (canvasWidth - 100),
+            startX + Math.random() * (width - 100),
             Math.random() * (canvasHeight - 150) + 100,
             Math.random() * 50 + 50,
             20,
