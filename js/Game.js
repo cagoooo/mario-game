@@ -117,7 +117,7 @@ export class Game {
         };
 
         const promises = Object.entries(imagePaths).map(([key, src]) => {
-            return new Promise((resolve, reject) => {
+            return new Promise((resolve) => {
                 const img = new Image();
                 img.src = src;
                 img.onload = () => {
@@ -126,7 +126,8 @@ export class Game {
                 };
                 img.onerror = (e) => {
                     console.error(`Failed to load image: ${key}`, e);
-                    reject(e);
+                    // Resolve with null or a placeholder to prevent Promise.all failure
+                    resolve([key, null]);
                 };
             });
         });
@@ -134,12 +135,20 @@ export class Game {
         try {
             const results = await Promise.all(promises);
             results.forEach(([key, img]) => {
-                this.images[key] = img;
+                if (img) {
+                    this.images[key] = img;
+                } else {
+                    console.warn(`Using fallback for ${key}`);
+                    // Create a 1x1 transparent placeholder if needed, or just leave undefined
+                    // Most components seem to handle missing images or use primitives
+                }
             });
-            console.log('All images loaded. Starting game...');
+            console.log('Image loading complete. Starting game...');
             this.start();
         } catch (error) {
-            console.error('Error loading images:', error);
+            console.error('Critical error during loading:', error);
+            // Attempt to start anyway
+            this.start();
         }
     }
 
