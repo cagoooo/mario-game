@@ -628,6 +628,18 @@ export class Game {
         setTimeout(addRestartListeners, 500);
     }
 
+    restart() {
+        // Remove restart listeners
+        document.removeEventListener('keydown', this.handleAnyKeyRestart);
+        document.removeEventListener('click', this.handleAnyKeyRestart);
+        document.removeEventListener('touchstart', this.handleAnyKeyRestart);
+
+        this.ui.gameOverOverlay.style.display = 'none';
+        this.initGame();
+        this.startBGM();
+        this.gameLoop();
+    }
+
     handleAnyKeyRestart(e) {
         if (!this.gameRunning) {
             // Prevent default behavior for some keys if needed, but generally let it pass
