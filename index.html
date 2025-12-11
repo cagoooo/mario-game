@@ -28,6 +28,23 @@
     <button id="startButton">開始遊戲</button>
   </div>
 
+  <!-- Game UI -->
+  <div id="gameUI">
+    <div id="topBar">
+      <div id="score">⭐ 0</div>
+      <div id="highScore">🏆 0</div>
+      <div id="topButtons">
+        <button id="pauseButton" class="iconButton">⏸️</button>
+        <button id="muteButton" class="iconButton">🔊</button>
+        <button id="fullscreenButton" class="iconButton">⛶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Canvas -->
+  <canvas id="gameArea" width="800" height="400"></canvas>
+
+  <!-- Pause Overlay -->
   <div id="pauseOverlay">
     <div id="pauseText">⏸️ 暫停</div>
     <button id="resumeButton">繼續遊戲</button>
@@ -38,12 +55,27 @@
     <div id="gameOver">遊戲結束！</div>
     <div id="finalScore"></div>
     <button id="restartButton">重新開始</button>
-    navigator.serviceWorker.register('./sw.js')
-    .then(reg => console.log('Service Worker registered'))
-    .catch(err => console.log('Service Worker registration failed:', err));
-    });
+  </div>
+
+  <!-- Touch Controls -->
+  <div id="controlButtons">
+    <div id="leftButton" class="controlButton">◀</div>
+    <div id="jumpButton" class="controlButton">↑</div>
+    <div id="rightButton" class="controlButton">▶</div>
+  </div>
+
+  <script type="module" src="js/main.js?v=1.1.1"></script>
+  <script>
+    // Unregister Service Worker to prevent caching issues during development/debugging
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function (registrations) {
+        for (let registration of registrations) {
+          registration.unregister();
+          console.log('Service Worker unregistered');
+        }
+      });
     }
-    </script>
+  </script>
 </body>
 
 </html>
