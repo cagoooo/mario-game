@@ -1,6 +1,7 @@
 import { Game } from './Game.js';
 
 window.onload = function () {
+    console.log('Game Version: 1.1.0 (Debug Mode)');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements
