@@ -1,7 +1,7 @@
 import { Game } from './Game.js?v=1.2.1';
 
 window.onload = function () {
-    console.log('Game Version: 1.2.1 (Clean Release)');
+    console.log('%c Game Version: 1.3.0 (Infinite Runner Mode) ', 'background: #222; color: #bada55; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements
