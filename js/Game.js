@@ -53,6 +53,7 @@ export class Game {
         this.enemies = [];
         this.coins = [];
         this.questionBlocks = [];
+        this.mushrooms = [];
         this.pipes = [];
 
         this.ui.restartBtn.addEventListener('click', () => this.restart());
@@ -235,6 +236,8 @@ export class Game {
         this.enemies = createEnemies(Math.floor(this.levelWidth / 300), this.levelWidth, this.height, this.images.enemy);
         this.coins = generateCoins(this.levelWidth, this.platforms);
         this.questionBlocks = generateQuestionBlocks(this.levelWidth, this.GROUND_Y);
+        this.mushrooms = [];
+        this.pipes = generatePipes(this.levelWidth, this.GROUND_Y);
 
         this.gameRunning = true;
         this.isPaused = false;
@@ -356,16 +359,43 @@ export class Game {
                 this.player.y < block.y + block.height &&
                 this.player.y + this.player.height > block.y + block.height - 10) {
 
-                const scoreValue = block.hit();
-                if (scoreValue) {
-                    this.score += scoreValue;
-                    this.addScorePopup(block.x + 16, block.y - 20, scoreValue);
-                    this.updateScore();
-                    this.playSound('coin');
+                const result = block.hit();
+                if (result) {
+                    if (result.type === 'coin') {
+                        this.score += result.value;
+                        this.addScorePopup(block.x + 16, block.y - 20, result.value);
+                        this.updateScore();
+                        this.playSound('coin');
+                    } else if (result.type === 'mushroom') {
+                        this.mushrooms.push(new Mushroom(block.x, block.y));
+                        this.playSound('block'); // Different sound for item spawn?
+                    }
                     this.triggerScreenShake(3);
                 }
             }
         });
+
+        // Update mushrooms
+        for (let i = this.mushrooms.length - 1; i >= 0; i--) {
+            const mushroom = this.mushrooms[i];
+            mushroom.update(this.platforms, this.GROUND_Y, this.levelWidth);
+
+            if (mushroom.collected) {
+                this.mushrooms.splice(i, 1);
+                continue;
+            }
+
+            // Check collision with player
+            if (checkCollision(this.player, mushroom) && mushroom.active && !mushroom.spawning) {
+                if (this.player.powerUp()) {
+                    mushroom.collected = true;
+                    this.score += 1000;
+                    this.addScorePopup(mushroom.x, mushroom.y, 1000);
+                    this.updateScore();
+                    this.playSound('powerup'); // Need to add this sound
+                }
+            }
+        }
 
         // Update screen shake
         if (this.screenShake.intensity > 0) {
@@ -417,6 +447,11 @@ export class Game {
             this.ctx.strokeText(`+${popup.value}`, screenX, popup.y);
             this.ctx.fillText(`+${popup.value}`, screenX, popup.y);
             this.ctx.restore();
+        });
+
+        // Draw mushrooms
+        this.mushrooms.forEach(mushroom => {
+            mushroom.draw(this.ctx, this.camera);
         });
 
         // Draw particles

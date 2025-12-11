@@ -1,10 +1,11 @@
 export class QuestionBlock {
-    constructor(x, y) {
+    constructor(x, y, content = 'coin') {
         this.x = x;
         this.y = y;
         this.width = 32;
         this.height = 32;
         this.used = false;
+        this.content = content; // 'coin' or 'mushroom'
 
         // Animation
         this.animationFrame = 0;
@@ -25,16 +26,21 @@ export class QuestionBlock {
         this.isBumping = true;
         this.bumpOffset = -8;
 
-        // Create spawned coin animation
-        this.spawnedCoin = {
-            x: this.x + this.width / 2,
-            y: this.y - 10,
-            targetY: this.y - 50,
-            velocity: -8,
-            life: 40
-        };
+        if (this.content === 'coin') {
+            // Create spawned coin animation
+            this.spawnedCoin = {
+                x: this.x + this.width / 2,
+                y: this.y - 10,
+                targetY: this.y - 50,
+                velocity: -8,
+                life: 40
+            };
+            return { type: 'coin', value: 10 };
+        } else if (this.content === 'mushroom') {
+            return { type: 'mushroom' };
+        }
 
-        return 10; // Score value
+        return null;
     }
 
     update() {
@@ -142,7 +148,8 @@ export function generateQuestionBlocks(levelWidth, groundY) {
     for (let x = 300; x < levelWidth - 300; x += 400) {
         if (Math.random() > 0.3) {
             const blockY = groundY - 120 - Math.random() * 80;
-            blocks.push(new QuestionBlock(x + Math.random() * 100, blockY));
+            const content = Math.random() < 0.2 ? 'mushroom' : 'coin';
+            blocks.push(new QuestionBlock(x + Math.random() * 100, blockY, content));
         }
     }
 
