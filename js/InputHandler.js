@@ -116,27 +116,29 @@ export class InputHandler {
 
     attachControls(leftBtn, rightBtn, jumpBtn) {
         const addInput = (elem, code) => {
-            // Touch events
-            elem.addEventListener('touchstart', (e) => {
-                e.preventDefault();
+            // Use Pointer Events for unified handling of mouse and touch
+            elem.addEventListener('pointerdown', (e) => {
+                e.preventDefault(); // Prevent default touch actions/selection
+                elem.setPointerCapture(e.pointerId); // Capture pointer to handle drag/slide off
                 this.keys[code] = true;
             });
-            elem.addEventListener('touchend', (e) => {
+
+            elem.addEventListener('pointerup', (e) => {
                 e.preventDefault();
+                elem.releasePointerCapture(e.pointerId);
                 this.keys[code] = false;
             });
 
-            // Mouse events
-            elem.addEventListener('mousedown', (e) => {
+            elem.addEventListener('pointercancel', (e) => {
                 e.preventDefault();
-                this.keys[code] = true;
-            });
-            elem.addEventListener('mouseup', (e) => {
-                e.preventDefault();
+                elem.releasePointerCapture(e.pointerId);
                 this.keys[code] = false;
             });
-            elem.addEventListener('mouseleave', (e) => {
-                e.preventDefault();
+
+            // Handle sliding off the button
+            elem.addEventListener('pointerleave', (e) => {
+                // Only reset if we're not capturing (though setPointerCapture usually handles this)
+                // But for safety:
                 if (this.keys[code]) {
                     this.keys[code] = false;
                 }
@@ -148,16 +150,15 @@ export class InputHandler {
 
         // Jump button
         if (jumpBtn) {
-            // Touch
-            jumpBtn.addEventListener('touchstart', (e) => {
+            jumpBtn.addEventListener('pointerdown', (e) => {
                 e.preventDefault();
+                jumpBtn.setPointerCapture(e.pointerId);
                 this.jumpCallback();
             });
 
-            // Mouse
-            jumpBtn.addEventListener('mousedown', (e) => {
+            jumpBtn.addEventListener('pointerup', (e) => {
                 e.preventDefault();
-                this.jumpCallback();
+                jumpBtn.releasePointerCapture(e.pointerId);
             });
         }
 

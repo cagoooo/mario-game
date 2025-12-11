@@ -78,9 +78,23 @@ window.onload = function () {
         }
     });
 
-    // Touch device detection
+    // Touch device detection or small screen
     const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-    if (isTouchDevice) {
+    const isSmallScreen = window.innerWidth <= 850;
+
+    // Always show controls if touch device, small screen, or for testing
+    if (isTouchDevice || isSmallScreen) {
         document.getElementById('controlButtons').style.display = 'flex';
     }
+
+    // Handle window resize to show/hide buttons
+    window.addEventListener('resize', () => {
+        if (window.innerWidth <= 850 || ('ontouchstart' in window) || (navigator.maxTouchPoints > 0)) {
+            document.getElementById('controlButtons').style.display = 'flex';
+        } else {
+            // Optional: hide if you want, but for now let's keep them if they were shown
+            // or strictly follow the rule:
+            // document.getElementById('controlButtons').style.display = 'none';
+        }
+    });
 };
