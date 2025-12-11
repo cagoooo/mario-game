@@ -1,7 +1,7 @@
 import { Game } from './Game.js?v=1.1.4';
 
 window.onload = function () {
-    console.log('Game Version: 1.1.5 (Restart Cache Fix)');
+    console.log('Game Version: 1.2.0 (Final Release)');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements

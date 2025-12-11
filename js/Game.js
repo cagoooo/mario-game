@@ -488,39 +488,7 @@ export class Game {
 
         this.ctx.restore(); // Restore from screen shake
 
-        // DEBUG: Draw mouse position and player screen position
-        if (this.gameRunning) {
-            this.ctx.save();
-            this.ctx.font = '16px monospace';
-            this.ctx.fillStyle = 'white';
-            this.ctx.strokeStyle = 'black';
-            this.ctx.lineWidth = 3;
 
-            const playerScreenX = this.player.x - this.camera.x + this.player.width / 2;
-            const mouseX = this.input.mouseX;
-
-            // Draw text
-            const text = `MouseX: ${mouseX ? mouseX.toFixed(0) : 'null'} | PlayerScreenX: ${playerScreenX.toFixed(0)}`;
-            this.ctx.strokeText(text, 10, 30);
-            this.ctx.fillText(text, 10, 30);
-
-            // Draw line at player center
-            this.ctx.strokeStyle = 'lime';
-            this.ctx.beginPath();
-            this.ctx.moveTo(playerScreenX, 0);
-            this.ctx.lineTo(playerScreenX, this.height);
-            this.ctx.stroke();
-
-            // Draw line at mouse position
-            if (mouseX !== null) {
-                this.ctx.strokeStyle = 'red';
-                this.ctx.beginPath();
-                this.ctx.moveTo(mouseX, 0);
-                this.ctx.lineTo(mouseX, this.height);
-                this.ctx.stroke();
-            }
-            this.ctx.restore();
-        }
     }
 
     triggerScreenShake(intensity) {

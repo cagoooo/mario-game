@@ -29,3 +29,5 @@
 - [x] Hybrid Input Support (Pointer Events for robust mouse/touch)
 - [x] Mouse Edge Movement Fix (Global mouse tracking)
 - [x] Button Input Compatibility Fix (Touchstart/Mousedown fallback)
+- [x] Restart Crash Fix (Missing method implementation)
+- [x] Deployment Caching Fix (Version tagging)
