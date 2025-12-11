@@ -4,8 +4,10 @@ export class Player {
     constructor(x, y, spriteSheet) {
         this.x = x;
         this.y = y;
-        this.width = 30;
-        this.height = 50;
+        this.baseWidth = 30;
+        this.baseHeight = 50;
+        this.width = this.baseWidth;
+        this.height = this.baseHeight;
         this.spriteSheet = spriteSheet;
 
         // Movement physics
@@ -41,7 +43,13 @@ export class Player {
 
         // Power-up state
         this.isPowered = false;
-        this.powerUpTime = 0;
+        this.powerScale = 1.0;
+
+        // Invincibility frames (when hit)
+        this.invincible = false;
+        this.invincibleTime = 0;
+        this.invincibleDuration = 90; // frames
+        this.flashTimer = 0;
 
         // Dust particles for landing
         this.dustParticles = [];
@@ -210,6 +218,62 @@ export class Player {
                 life: 20 + Math.random() * 10,
                 size: 3 + Math.random() * 4
             });
+        }
+    }
+
+    powerUp() {
+        if (this.isPowered) return false; // Already powered
+
+        this.isPowered = true;
+        this.powerScale = 1.4;
+
+        // Grow Mario
+        const oldHeight = this.height;
+        this.width = this.baseWidth * this.powerScale;
+        this.height = this.baseHeight * this.powerScale;
+
+        // Adjust Y so Mario grows upward
+        this.y -= (this.height - oldHeight);
+
+        return true;
+    }
+
+    shrink() {
+        if (!this.isPowered) return false; // Already small
+
+        this.isPowered = false;
+        this.powerScale = 1.0;
+        this.width = this.baseWidth;
+        this.height = this.baseHeight;
+
+        // Start invincibility
+        this.invincible = true;
+        this.invincibleTime = this.invincibleDuration;
+
+        return true;
+    }
+
+    hit() {
+        // Called when hit by enemy
+        if (this.invincible) return 'invincible';
+
+        if (this.isPowered) {
+            this.shrink();
+            return 'shrink';
+        }
+
+        return 'dead';
+    }
+
+    updateInvincibility() {
+        if (this.invincible) {
+            this.invincibleTime--;
+            this.flashTimer++;
+
+            if (this.invincibleTime <= 0) {
+                this.invincible = false;
+                this.flashTimer = 0;
+            }
         }
     }
 

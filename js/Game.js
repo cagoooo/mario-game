@@ -6,6 +6,7 @@ import { createEnemies } from './Enemy.js';
 import { checkCollision } from './utils.js';
 import { Coin, generateCoins } from './Coin.js';
 import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js';
+import { Mushroom } from './Mushroom.js';
 
 export class Game {
     constructor(canvas, uiElements) {
