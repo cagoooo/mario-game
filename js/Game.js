@@ -261,6 +261,8 @@ export class Game {
     update() {
         if (!this.gameRunning || !this.player) return;
 
+        // Pass camera reference to player for mouse position calculation
+        this.player.camera = this.camera;
         this.player.update(this.input, this.platforms, this.levelWidth);
 
         // Camera logic
