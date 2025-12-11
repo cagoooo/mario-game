@@ -29,6 +29,7 @@ window.onload = function () {
     uiElements.startBtn.addEventListener('click', () => {
         uiElements.startScreen.style.display = 'none';
         game = new Game(canvas, uiElements);
+        window.game = game; // Expose for testing
     });
 
     // Pause button

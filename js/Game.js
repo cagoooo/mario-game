@@ -215,22 +215,8 @@ export class Game {
         oscillator.start(this.audioCtx.currentTime);
         oscillator.stop(this.audioCtx.currentTime + 0.5);
     }
-
     start() {
         this.initAudio();
-        this.initGame();
-        this.startBGM();
-        this.gameLoop();
-    }
-
-    restart() {
-        this.ui.gameOverOverlay.style.display = 'none';
-
-        // Remove any key restart listeners
-        window.removeEventListener('keydown', this.handleAnyKeyRestart);
-        window.removeEventListener('click', this.handleAnyKeyRestart);
-        window.removeEventListener('touchstart', this.handleAnyKeyRestart);
-
         this.initGame();
         this.startBGM();
         this.gameLoop();
@@ -587,11 +573,15 @@ export class Game {
         this.playSound('gameOver');
 
         // Add any key restart listener
-        setTimeout(() => {
-            window.addEventListener('keydown', this.handleAnyKeyRestart);
-            window.addEventListener('click', this.handleAnyKeyRestart);
-            window.addEventListener('touchstart', this.handleAnyKeyRestart);
-        }, 500); // Small delay to prevent accidental restarts
+        // Use document to ensure we catch events bubbling up
+        const addRestartListeners = () => {
+            document.addEventListener('keydown', this.handleAnyKeyRestart);
+            document.addEventListener('click', this.handleAnyKeyRestart);
+            document.addEventListener('touchstart', this.handleAnyKeyRestart);
+        };
+
+        // Small delay to prevent accidental restarts, but ensure it runs
+        setTimeout(addRestartListeners, 500);
     }
 
     handleAnyKeyRestart(e) {

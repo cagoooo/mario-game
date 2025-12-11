@@ -240,7 +240,7 @@ export function createEnemies(count, canvasWidth, canvasHeight, spriteSheet) {
     const groundY = canvasHeight - 50;
 
     for (let i = 0; i < count; i++) {
-        const x = 200 + Math.random() * (canvasWidth - 400);
+        const x = 600 + Math.random() * (canvasWidth - 800);
         const speed = 1 + Math.random() * 1.5;
         const direction = Math.random() < 0.5 ? -1 : 1;
         const type = Math.random();
