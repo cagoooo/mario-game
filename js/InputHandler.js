@@ -115,7 +115,8 @@ export class InputHandler {
     }
 
     attachControls(leftBtn, rightBtn, jumpBtn) {
-        const addTouch = (elem, code) => {
+        const addInput = (elem, code) => {
+            // Touch events
             elem.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 this.keys[code] = true;
@@ -124,14 +125,37 @@ export class InputHandler {
                 e.preventDefault();
                 this.keys[code] = false;
             });
+
+            // Mouse events
+            elem.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                this.keys[code] = true;
+            });
+            elem.addEventListener('mouseup', (e) => {
+                e.preventDefault();
+                this.keys[code] = false;
+            });
+            elem.addEventListener('mouseleave', (e) => {
+                e.preventDefault();
+                if (this.keys[code]) {
+                    this.keys[code] = false;
+                }
+            });
         };
 
-        addTouch(leftBtn, 'ArrowLeft');
-        addTouch(rightBtn, 'ArrowRight');
+        addInput(leftBtn, 'ArrowLeft');
+        addInput(rightBtn, 'ArrowRight');
 
         // Jump button
         if (jumpBtn) {
+            // Touch
             jumpBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.jumpCallback();
+            });
+
+            // Mouse
+            jumpBtn.addEventListener('mousedown', (e) => {
                 e.preventDefault();
                 this.jumpCallback();
             });
@@ -140,6 +164,7 @@ export class InputHandler {
         // Prevent default on all control buttons
         [leftBtn, rightBtn, jumpBtn].filter(Boolean).forEach(btn => {
             btn.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+            btn.addEventListener('contextmenu', (e) => e.preventDefault()); // Prevent right-click menu
         });
     }
 }
