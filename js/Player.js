@@ -68,7 +68,13 @@ export class Player {
         // Sprite configuration
         this.frameWidth = 32;
         this.frameHeight = 32;
+        this.frameWidth = 32;
+        this.frameHeight = 32;
         this.scale = 1.5;
+
+        // Squash and stretch
+        this.scaleX = 1.0;
+        this.scaleY = 1.0;
     }
 
     setGroundY(y) {
@@ -102,6 +108,10 @@ export class Player {
         // Store previous grounded state
         this.wasGrounded = this.grounded;
         this.justLanded = false;
+
+        // Restore scale
+        this.scaleX += (1.0 - this.scaleX) * 0.2;
+        this.scaleY += (1.0 - this.scaleY) * 0.2;
 
         // === HORIZONTAL MOVEMENT ===
         let moveInput = 0;
@@ -210,6 +220,9 @@ export class Player {
             if (!this.wasGrounded && this.velY > 2) {
                 this.justLanded = true;
                 this.spawnDust('land');
+                // Squash effect on landing
+                this.scaleY = 0.8;
+                this.scaleX = 1.2;
             }
             this.y = this.GROUND_Y - this.height;
             this.velY = 0;
@@ -366,6 +379,11 @@ export class Player {
             this.jumpHoldTime = 0;
             this.grounded = false;
             this.coyoteTime = 0; // Consume coyote time
+
+            // Stretch on jump
+            this.scaleX = 0.8;
+            this.scaleY = 1.2;
+
             return true;
         }
         return false;
@@ -374,10 +392,11 @@ export class Player {
     draw(ctx, camera) {
         ctx.save();
         const drawX = this.x - camera.x + this.width / 2;
-        const drawY = this.y + this.height / 2;
+        const drawY = this.y + this.height; // Pivot at bottom
 
         ctx.translate(drawX, drawY);
-        ctx.scale(this.direction, 1);
+        ctx.scale(this.direction * this.scaleX, this.scaleY);
+        ctx.translate(0, -this.height / 2); // Move back to center for drawing
 
         // Define colors based on state
         let pantsColor = '#1E90FF'; // Blue

@@ -1,7 +1,7 @@
 import { Game, preloadImages } from './Game.js?v=1.4.2';
 
 window.onload = async function () {
-    console.log('%c Game Version: 1.4.1 (Physics & Fixes) ', 'background: #222; color: #bada55; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 1.5.0 (Mobile Release) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements
@@ -96,6 +96,13 @@ window.onload = async function () {
         }
     });
 
+    // Initialize mute button state
+    if (localStorage.getItem('marioMuted') === 'true') {
+        uiElements.muteBtn.textContent = '🔇';
+    } else {
+        uiElements.muteBtn.textContent = '🔊';
+    }
+
     // Fullscreen button
     uiElements.fullscreenBtn.addEventListener('click', () => {
         if (!document.fullscreenElement) {
@@ -127,5 +134,32 @@ window.onload = async function () {
             // or strictly follow the rule:
             // document.getElementById('controlButtons').style.display = 'none';
         }
+        checkOrientation();
     });
+
+    // Orientation Warning
+    const checkOrientation = () => {
+        const warningId = 'orientationWarning';
+        let warning = document.getElementById(warningId);
+
+        if (window.innerHeight > window.innerWidth && (isTouchDevice || isSmallScreen)) {
+            if (!warning) {
+                warning = document.createElement('div');
+                warning.id = warningId;
+                warning.innerHTML = '<div class="rotate-icon">📱</div><p>請將裝置轉為橫向<br>以獲得最佳體驗</p>';
+                document.body.appendChild(warning);
+            }
+            warning.style.display = 'flex';
+            if (game && game.gameRunning && !game.isPaused) {
+                game.pause();
+            }
+        } else {
+            if (warning) {
+                warning.style.display = 'none';
+            }
+        }
+    };
+
+    // Initial check
+    checkOrientation();
 };

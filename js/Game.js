@@ -19,8 +19,15 @@ export class Game {
         this.ui = uiElements;
         this.images = images;
 
-        this.width = canvas.width;
-        this.height = canvas.height;
+        this.width = 800; // Logical width
+        this.height = 400; // Logical height
+
+        // High DPI Support
+        this.dpr = window.devicePixelRatio || 1;
+        canvas.width = this.width * this.dpr;
+        canvas.height = this.height * this.dpr;
+        // Removed inline styles to allow CSS aspect-ratio to work
+        this.ctx.scale(this.dpr, this.dpr);
         this.levelWidth = 4000; // Initial buffer, but effectively infinite
         this.GROUND_Y = this.height - 50;
 
@@ -38,13 +45,16 @@ export class Game {
         this.isGameOverSequence = false;
         this.isNewHighScore = false;
         this.isPaused = false;
-        this.isMuted = false;
+        this.isPaused = false;
+        this.isMuted = localStorage.getItem('marioMuted') === 'true';
 
         // Score popup system
         this.scorePopups = [];
+        this.scorePopupPool = []; // Object pool
 
         // Celebration particles
         this.particles = [];
+        this.particlePool = []; // Object pool
 
         // Screen shake
         this.screenShake = { x: 0, y: 0, intensity: 0 };
@@ -100,26 +110,50 @@ export class Game {
     }
 
     addScorePopup(x, y, value) {
-        this.scorePopups.push({
-            x: x,
-            y: y,
-            value: value,
-            life: 60, // frames
-            velocity: -2
-        });
+        let popup;
+        if (this.scorePopupPool.length > 0) {
+            popup = this.scorePopupPool.pop();
+            popup.x = x;
+            popup.y = y;
+            popup.value = value;
+            popup.life = 60;
+            popup.velocity = -2;
+        } else {
+            popup = {
+                x: x,
+                y: y,
+                value: value,
+                life: 60, // frames
+                velocity: -2
+            };
+        }
+        this.scorePopups.push(popup);
     }
 
     addParticles(x, y, count, color) {
         for (let i = 0; i < count; i++) {
-            this.particles.push({
-                x: x,
-                y: y,
-                vx: (Math.random() - 0.5) * 8,
-                vy: (Math.random() - 0.5) * 8 - 3,
-                life: 60 + Math.random() * 30,
-                color: color,
-                size: 3 + Math.random() * 4
-            });
+            let p;
+            if (this.particlePool.length > 0) {
+                p = this.particlePool.pop();
+                p.x = x;
+                p.y = y;
+                p.vx = (Math.random() - 0.5) * 8;
+                p.vy = (Math.random() - 0.5) * 8 - 3;
+                p.life = 60 + Math.random() * 30;
+                p.color = color;
+                p.size = 3 + Math.random() * 4;
+            } else {
+                p = {
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.5) * 8 - 3,
+                    life: 60 + Math.random() * 30,
+                    color: color,
+                    size: 3 + Math.random() * 4
+                };
+            }
+            this.particles.push(p);
         }
     }
 
@@ -256,6 +290,11 @@ export class Game {
         this.lastGeneratedX = 0;
         this.generateChunk(0, this.levelWidth);
 
+        // FPS Control
+        this.fps = 60;
+        this.fpsInterval = 1000 / this.fps;
+        this.lastTime = 0;
+
         this.gameRunning = true;
         this.isPaused = false;
         this.score = 0;
@@ -270,23 +309,52 @@ export class Game {
         this.background.setTiles(this.images.tiles);
     }
 
+    generateChunk(startX, endX) {
+        // Generate platforms
+        const newPlatforms = generatePlatforms(startX, endX, this.GROUND_Y);
+        this.platforms.push(...newPlatforms);
+
+        // Generate enemies
+        const newEnemies = createEnemies(startX, endX, this.platforms, this.GROUND_Y);
+        this.enemies.push(...newEnemies);
+
+        // Generate coins
+        const newCoins = generateCoins(startX, endX, this.platforms);
+        this.coins.push(...newCoins);
+
+        // Generate question blocks
+        const newBlocks = generateQuestionBlocks(startX, endX, this.platforms, this.GROUND_Y);
+        this.questionBlocks.push(...newBlocks);
+
+        // Generate pipes
+        const newPipes = generatePipes(startX, endX, this.platforms, this.GROUND_Y);
+        this.pipes.push(...newPipes);
+
+        this.lastGeneratedX = endX;
+    }
+
     // ...
 
-    gameLoop() {
+    gameLoop(timestamp = 0) {
         if (!this.gameRunning || this.isPaused) return;
 
-        // console.log('Loop start'); // Too spammy, maybe just once
-        if (Math.random() < 0.01) console.log('Game loop running...');
+        // Calculate elapsed time
+        const deltaTime = timestamp - this.lastTime;
 
-        try {
-            this.update();
-            this.draw();
-        } catch (e) {
-            console.error('Error in game loop:', e);
-            this.gameRunning = false; // Stop loop on error
+        if (deltaTime >= this.fpsInterval) {
+            // Adjust for refresh rates that aren't multiples of 60
+            this.lastTime = timestamp - (deltaTime % this.fpsInterval);
+
+            try {
+                this.update();
+                this.draw();
+            } catch (e) {
+                console.error('Error in game loop:', e);
+                this.gameRunning = false;
+            }
         }
 
-        requestAnimationFrame(() => this.gameLoop());
+        requestAnimationFrame((ts) => this.gameLoop(ts));
     }
 
     onJump() {
@@ -367,6 +435,7 @@ export class Game {
             popup.y += popup.velocity;
             popup.life--;
             if (popup.life <= 0) {
+                this.scorePopupPool.push(popup); // Return to pool
                 this.scorePopups.splice(i, 1);
             }
         }
@@ -379,6 +448,7 @@ export class Game {
             p.vy += 0.15;
             p.life--;
             if (p.life <= 0) {
+                this.particlePool.push(p); // Return to pool
                 this.particles.splice(i, 1);
             }
         }
@@ -692,8 +762,14 @@ export class Game {
 
     toggleMute() {
         this.isMuted = !this.isMuted;
+        localStorage.setItem('marioMuted', this.isMuted);
         if (this.bgmGain) {
             this.bgmGain.gain.value = this.isMuted ? 0 : 0.05;
+        }
+        if (this.isMuted) {
+            this.stopBGM();
+        } else {
+            this.startBGM();
         }
     }
 
