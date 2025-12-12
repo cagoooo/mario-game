@@ -38,6 +38,7 @@ export class Player {
         this.animationFrame = 0;
         this.animationTick = 0;
         this.isJumping = false;
+        this.isDead = false; // New death state
 
         this.GROUND_Y = 0;
 
@@ -74,7 +75,22 @@ export class Player {
         this.GROUND_Y = y;
     }
 
-    update(input, platforms, canvasWidth) {
+    die() {
+        if (this.isDead) return;
+        this.isDead = true;
+        this.velY = -12; // Small hop
+        this.velX = 0;
+        // Optional: Change sprite to dead sprite if available
+    }
+
+    update(input, platforms, canvasWidth, camera) {
+        // Death Animation Logic
+        if (this.isDead) {
+            this.velY += this.GRAVITY;
+            this.y += this.velY;
+            return; // Skip all other updates (collision, input, etc.)
+        }
+
         // Update Star Power
         if (this.starPower) {
             this.starTimer--;
@@ -99,9 +115,9 @@ export class Player {
         // Desktop mouse follow: mouse position controls player movement
         // Note: mouseX is in screen coordinates, player.x is in world coordinates
         // We need to convert player position to screen position using camera offset
-        else if (input.mouseX !== null && this.camera) {
+        else if (input.mouseX !== null && camera) {
             // Convert player's world position to screen position
-            const playerScreenX = this.x - this.camera.x + this.width / 2;
+            const playerScreenX = this.x - camera.x + this.width / 2;
             const mouseDiff = input.mouseX - playerScreenX;
 
             if (Math.abs(mouseDiff) > 30) {

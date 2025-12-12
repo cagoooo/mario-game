@@ -34,6 +34,9 @@ export class Game {
         this.highScore = this.loadHighScore();
         this.gameRunning = false;
         this.isNewHighScore = false;
+        this.gameRunning = false;
+        this.isGameOverSequence = false;
+        this.isNewHighScore = false;
         this.isPaused = false;
         this.isMuted = false;
 
@@ -207,6 +210,15 @@ export class Game {
                 oscillator.frequency.linearRampToValueAtTime(1200, this.audioCtx.currentTime + 0.2);
                 gainNode.gain.exponentialRampToValueAtTime(0.00001, this.audioCtx.currentTime + 0.3);
                 break;
+            case 'death':
+                // Classic death sound (approximate)
+                oscillator.type = 'square';
+                gainNode.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
+                oscillator.frequency.setValueAtTime(400, this.audioCtx.currentTime);
+                oscillator.frequency.linearRampToValueAtTime(300, this.audioCtx.currentTime + 0.1);
+                oscillator.frequency.linearRampToValueAtTime(200, this.audioCtx.currentTime + 0.2);
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, this.audioCtx.currentTime + 0.4);
+                break;
         }
 
         oscillator.start(this.audioCtx.currentTime);
@@ -258,6 +270,25 @@ export class Game {
         this.background.setTiles(this.images.tiles);
     }
 
+    // ...
+
+    gameLoop() {
+        if (!this.gameRunning || this.isPaused) return;
+
+        // console.log('Loop start'); // Too spammy, maybe just once
+        if (Math.random() < 0.01) console.log('Game loop running...');
+
+        try {
+            this.update();
+            this.draw();
+        } catch (e) {
+            console.error('Error in game loop:', e);
+            this.gameRunning = false; // Stop loop on error
+        }
+
+        requestAnimationFrame(() => this.gameLoop());
+    }
+
     onJump() {
         this.initAudio();
         if (!this.gameRunning) return;
@@ -281,25 +312,23 @@ export class Game {
     update() {
         if (!this.gameRunning || !this.player) return;
 
+        // Check for death animation completion
+        if (this.player.isDead) {
+            this.player.update(this.input, this.platforms, this.width, this.camera);
+            if (this.player.y > this.height + 100) {
+                this.showGameOverScreen();
+            }
+            return; // Stop other game updates
+        }
+
+        this.player.update(this.input, this.platforms, this.levelWidth, this.camera);
+
         // Camera logic - update BEFORE player so mouse position calculation is accurate
         let targetCamX = this.player.x - this.width / 2 + this.player.width / 2;
         if (targetCamX < 0) targetCamX = 0;
         // Removed max level width constraint for infinite scrolling
         // if (targetCamX > this.levelWidth - this.width) targetCamX = this.levelWidth - this.width;
         this.camera.x = targetCamX;
-
-        // Infinite generation logic
-        if (this.player.x + this.renderDistance > this.lastGeneratedX) {
-            this.generateChunk(this.lastGeneratedX, this.lastGeneratedX + this.CHUNK_SIZE);
-        }
-
-        // Cleanup logic (remove objects far behind camera)
-        const cleanupX = this.camera.x - 1000;
-        this.cleanupObjects(cleanupX);
-
-        // Pass camera to player for mouse position calculation
-        this.player.camera = this.camera;
-        this.player.update(this.input, this.platforms, this.levelWidth);
 
         // Update enemies
         for (let i = this.enemies.length - 1; i >= 0; i--) {
@@ -504,7 +533,11 @@ export class Game {
 
         // Update Pipes (Piranha Plants)
         this.pipes.forEach(pipe => {
-            pipe.update();
+            try {
+                pipe.update();
+            } catch (e) {
+                console.error('Error updating pipe:', e);
+            }
 
             // Check collision with Piranha Plant
             const hitbox = pipe.getPiranhaHitbox();
@@ -549,6 +582,15 @@ export class Game {
 
         // Draw question blocks
         this.questionBlocks.forEach(block => block.draw(this.ctx, this.camera));
+
+        // Draw pipes
+        this.pipes.forEach(pipe => {
+            try {
+                pipe.draw(this.ctx, this.camera);
+            } catch (e) {
+                console.error('Error drawing pipe:', e);
+            }
+        });
 
         // Draw coins
         this.coins.forEach(coin => coin.draw(this.ctx, this.camera));
@@ -622,8 +664,13 @@ export class Game {
     gameLoop() {
         if (!this.gameRunning || this.isPaused) return;
 
-        this.update();
-        this.draw();
+        try {
+            this.update();
+            this.draw();
+        } catch (e) {
+            console.error('Error in game loop:', e);
+            this.gameRunning = false;
+        }
 
         requestAnimationFrame(() => this.gameLoop());
     }
@@ -700,8 +747,30 @@ export class Game {
         }
     }
 
+
+
+    // ... (skipping to gameOver method)
+
     gameOver() {
+        if (!this.gameRunning) return;
+
+        // Trigger death animation
+        this.player.die();
+        this.stopBGM();
+        this.playSound('death');
+
+        // We don't set gameRunning = false yet, we wait for the animation
+        // But we want to stop scrolling and enemy updates.
+        // Actually, setting gameRunning = false stops the loop in gameLoop().
+        // So we need to keep gameRunning = true but have a special state or check in update().
+
+        // Let's use a flag isGameOverSequence
+        this.isGameOverSequence = true;
+    }
+
+    showGameOverScreen() {
         this.gameRunning = false;
+        this.isGameOverSequence = false;
         this.stopBGM();
 
         // Show game over overlay

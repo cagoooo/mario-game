@@ -1,4 +1,4 @@
-import { Game, preloadImages } from './Game.js?v=1.4.1';
+import { Game, preloadImages } from './Game.js?v=1.4.2';
 
 window.onload = async function () {
     console.log('%c Game Version: 1.4.1 (Physics & Fixes) ', 'background: #222; color: #bada55; font-size: 20px; padding: 10px;');
@@ -32,14 +32,25 @@ window.onload = async function () {
 
     let loadedImages = null;
     try {
-        loadedImages = await preloadImages();
+        const preloadPromise = preloadImages();
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Loading timed out')), 5000)
+        );
+
+        loadedImages = await Promise.race([preloadPromise, timeoutPromise]);
+
         uiElements.startBtn.disabled = false;
         uiElements.startBtn.textContent = '開始遊戲';
         uiElements.startBtn.style.opacity = '1';
         uiElements.startBtn.style.cursor = 'pointer';
     } catch (e) {
-        console.error('Failed to preload images', e);
-        uiElements.startBtn.textContent = '載入失敗';
+        console.error('Failed to preload images or timed out', e);
+        uiElements.startBtn.textContent = '載入逾時 - 點擊重新整理';
+        uiElements.startBtn.disabled = false;
+        uiElements.startBtn.style.opacity = '1';
+        uiElements.startBtn.style.cursor = 'pointer';
+        uiElements.startBtn.onclick = () => window.location.reload();
+        return; // Stop execution so we don't attach the game start listener
     }
 
     let game = null;

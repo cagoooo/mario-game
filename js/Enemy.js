@@ -254,14 +254,14 @@ export function createEnemies(startX, endX, canvasHeight, spriteSheet, difficult
         const direction = Math.random() < 0.5 ? -1 : 1;
         const type = Math.random();
 
-        if (type < 0.5) {
-            // Regular Goomba
+        if (type < 0.4) {
+            // Regular Goomba (40%)
             enemies.push(new Enemy(x, groundY - 30, speed, direction, spriteSheet));
-        } else if (type < 0.75) {
-            // Koopa
+        } else if (type < 0.6) {
+            // Koopa (20%)
             enemies.push(new Koopa(x, groundY - 40, speed, direction));
         } else {
-            // Flying enemy
+            // Flying enemy (40%)
             enemies.push(new FlyingEnemy(x, groundY - 100 - Math.random() * 80, speed, direction));
         }
     }

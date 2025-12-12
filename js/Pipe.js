@@ -63,26 +63,8 @@ export class Pipe {
     draw(ctx, camera) {
         const screenX = this.x - camera.x;
 
-        // === PIPE BODY ===
-        // Main pipe body (dark green)
-        ctx.fillStyle = '#228B22';
-        ctx.fillRect(screenX + 4, this.y + 20, 40, this.height - 20);
-
-        // Pipe rim (lighter green)
-        ctx.fillStyle = '#32CD32';
-        ctx.fillRect(screenX, this.y, this.width, 24);
-
-        // Pipe highlight
-        ctx.fillStyle = '#90EE90';
-        ctx.fillRect(screenX + 4, this.y + 4, 8, 16);
-        ctx.fillRect(screenX + 8, this.y + 24, 6, this.height - 30);
-
-        // Pipe shadow
-        ctx.fillStyle = '#006400';
-        ctx.fillRect(screenX + 36, this.y + 4, 8, 16);
-        ctx.fillRect(screenX + 38, this.y + 24, 6, this.height - 30);
-
         // === PIRANHA PLANT ===
+        // Draw plant BEFORE pipe so it looks like it's coming out from inside
         if (this.hasPiranha && this.piranhaOffset > 0) {
             const plantY = this.y - this.piranhaOffset;
 
@@ -134,6 +116,25 @@ export class Pipe {
             ctx.arc(screenX + 31, plantY + 8, 2, 0, Math.PI * 2);
             ctx.fill();
         }
+
+        // === PIPE BODY ===
+        // Main pipe body (dark green)
+        ctx.fillStyle = '#228B22';
+        ctx.fillRect(screenX + 4, this.y + 20, 40, this.height - 20);
+
+        // Pipe rim (lighter green)
+        ctx.fillStyle = '#32CD32';
+        ctx.fillRect(screenX, this.y, this.width, 24);
+
+        // Pipe highlight
+        ctx.fillStyle = '#90EE90';
+        ctx.fillRect(screenX + 4, this.y + 4, 8, 16);
+        ctx.fillRect(screenX + 8, this.y + 24, 6, this.height - 30);
+
+        // Pipe shadow
+        ctx.fillStyle = '#006400';
+        ctx.fillRect(screenX + 36, this.y + 4, 8, 16);
+        ctx.fillRect(screenX + 38, this.y + 24, 6, this.height - 30);
     }
 }
 
