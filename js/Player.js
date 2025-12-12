@@ -51,9 +51,10 @@ export class Player {
         this.invincibleDuration = 90; // frames
         this.flashTimer = 0;
 
-        // Dust particles for landing
+        // Dust particles for landing and running
         this.dustParticles = [];
         this.justLanded = false;
+        this.runDustTimer = 0;
 
         // Sprite configuration
         this.frameWidth = 32;
@@ -128,6 +129,15 @@ export class Player {
                 this.animationFrame = (this.animationFrame + 1) % 3;
                 this.animationTick = 0;
             }
+
+            // Spawn running dust
+            if (this.grounded) {
+                this.runDustTimer++;
+                if (this.runDustTimer > 10) {
+                    this.spawnDust('run');
+                    this.runDustTimer = 0;
+                }
+            }
         } else {
             this.animationFrame = 0;
             this.animationTick = 0;
@@ -167,7 +177,7 @@ export class Player {
         if (this.y + this.height > this.GROUND_Y) {
             if (!this.wasGrounded && this.velY > 2) {
                 this.justLanded = true;
-                this.spawnDust();
+                this.spawnDust('land');
             }
             this.y = this.GROUND_Y - this.height;
             this.velY = 0;
@@ -181,7 +191,7 @@ export class Player {
                 if (this.y + this.height - this.velY <= platform.y) {
                     if (!this.wasGrounded && this.velY > 2) {
                         this.justLanded = true;
-                        this.spawnDust();
+                        this.spawnDust('land');
                     }
                     this.y = platform.y - this.height;
                     this.velY = 0;
@@ -203,23 +213,28 @@ export class Player {
             const p = this.dustParticles[i];
             p.x += p.vx;
             p.y += p.vy;
-            p.vy += 0.1;
+            p.vy += 0.1; // Gravity
             p.life--;
+            p.size *= 0.9; // Shrink
             if (p.life <= 0) {
                 this.dustParticles.splice(i, 1);
             }
         }
     }
 
-    spawnDust() {
-        for (let i = 0; i < 6; i++) {
+    spawnDust(type) {
+        const count = type === 'land' ? 8 : 2;
+        const speed = type === 'land' ? 3 : 1;
+
+        for (let i = 0; i < count; i++) {
             this.dustParticles.push({
                 x: this.x + this.width / 2 + (Math.random() - 0.5) * 20,
                 y: this.y + this.height,
-                vx: (Math.random() - 0.5) * 3,
-                vy: -Math.random() * 2,
+                vx: (Math.random() - 0.5) * speed + (type === 'run' ? -this.direction * 2 : 0),
+                vy: -Math.random() * speed,
                 life: 20 + Math.random() * 10,
-                size: 3 + Math.random() * 4
+                size: 4 + Math.random() * 4,
+                color: type === 'land' ? '#C4A484' : '#E0E0E0' // Brown for land, whitish for run
             });
         }
     }

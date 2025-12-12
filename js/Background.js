@@ -78,19 +78,24 @@ export class Background {
         gradient.addColorStop(1, '#E0F7FA');    // Very light cyan near horizon
 
         ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, 800, this.groundY);
+        ctx.fillRect(0, 0, this.canvasWidth, this.groundY);
     }
 
     drawFarMountains(ctx, camera) {
         ctx.fillStyle = '#B8C5D6'; // Distant blue-gray
+        const parallaxFactor = 0.1;
+        const width = this.canvasWidth * 2; // Repeat width
+
         this.farMountains.forEach(m => {
-            const parallaxX = m.x - camera.x * 0.1;
-            const screenX = ((parallaxX % (this.canvasWidth * 2)) + this.canvasWidth * 2) % (this.canvasWidth * 2) - 200;
+            // Calculate relative position with wrapping
+            let relX = (m.x - camera.x * parallaxFactor) % width;
+            if (relX < -200) relX += width;
+            if (relX > this.canvasWidth) relX -= width;
 
             ctx.beginPath();
-            ctx.moveTo(screenX, this.groundY);
-            ctx.lineTo(screenX + m.width / 2, this.groundY - m.height);
-            ctx.lineTo(screenX + m.width, this.groundY);
+            ctx.moveTo(relX, this.groundY);
+            ctx.lineTo(relX + m.width / 2, this.groundY - m.height);
+            ctx.lineTo(relX + m.width, this.groundY);
             ctx.closePath();
             ctx.fill();
         });
@@ -98,13 +103,17 @@ export class Background {
 
     drawNearMountains(ctx, camera) {
         ctx.fillStyle = '#6B8E6B'; // Green hills
+        const parallaxFactor = 0.25;
+        const width = this.canvasWidth * 2;
+
         this.nearMountains.forEach(m => {
-            const parallaxX = m.x - camera.x * 0.25;
-            const screenX = ((parallaxX % (this.canvasWidth * 2)) + this.canvasWidth * 2) % (this.canvasWidth * 2) - 200;
+            let relX = (m.x - camera.x * parallaxFactor) % width;
+            if (relX < -200) relX += width;
+            if (relX > this.canvasWidth) relX -= width;
 
             ctx.beginPath();
-            ctx.moveTo(screenX, this.groundY);
-            ctx.quadraticCurveTo(screenX + m.width / 2, this.groundY - m.height, screenX + m.width, this.groundY);
+            ctx.moveTo(relX, this.groundY);
+            ctx.quadraticCurveTo(relX + m.width / 2, this.groundY - m.height, relX + m.width, this.groundY);
             ctx.closePath();
             ctx.fill();
         });
@@ -112,84 +121,94 @@ export class Background {
 
     drawClouds(ctx, camera) {
         ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        const parallaxFactor = 0.15;
+        const width = this.canvasWidth * 2;
+
         this.clouds.forEach(cloud => {
-            const parallaxX = cloud.x - camera.x * 0.15;
-            const screenX = ((parallaxX % (this.canvasWidth * 2)) + this.canvasWidth * 2) % (this.canvasWidth * 2) - 100;
+            let relX = (cloud.x - camera.x * parallaxFactor) % width;
+            if (relX < -100) relX += width;
+            if (relX > this.canvasWidth) relX -= width;
 
             ctx.beginPath();
-            ctx.arc(screenX, cloud.y, cloud.radius, 0, Math.PI * 2);
-            ctx.arc(screenX + cloud.radius * 0.8, cloud.y, cloud.radius * 1.2, 0, Math.PI * 2);
-            ctx.arc(screenX - cloud.radius * 0.8, cloud.y, cloud.radius * 1.1, 0, Math.PI * 2);
-            ctx.arc(screenX + cloud.radius * 0.3, cloud.y - cloud.radius * 0.5, cloud.radius * 0.8, 0, Math.PI * 2);
+            ctx.arc(relX, cloud.y, cloud.radius, 0, Math.PI * 2);
+            ctx.arc(relX + cloud.radius * 0.8, cloud.y, cloud.radius * 1.2, 0, Math.PI * 2);
+            ctx.arc(relX - cloud.radius * 0.8, cloud.y, cloud.radius * 1.1, 0, Math.PI * 2);
+            ctx.arc(relX + cloud.radius * 0.3, cloud.y - cloud.radius * 0.5, cloud.radius * 0.8, 0, Math.PI * 2);
             ctx.closePath();
             ctx.fill();
         });
     }
 
     drawBushes(ctx, camera) {
+        const parallaxFactor = 0.7;
+        const width = this.canvasWidth * 1.5;
+
         this.bushes.forEach(bush => {
-            const parallaxX = bush.x - camera.x * 0.7;
-            const screenX = ((parallaxX % (this.canvasWidth * 1.5)) + this.canvasWidth * 1.5) % (this.canvasWidth * 1.5) - 50;
+            let relX = (bush.x - camera.x * parallaxFactor) % width;
+            if (relX < -50) relX += width;
+            if (relX > this.canvasWidth) relX -= width;
 
             // Dark green bush
             ctx.fillStyle = '#2E7D32';
             ctx.beginPath();
-            ctx.arc(screenX, this.groundY - bush.size / 2, bush.size, 0, Math.PI * 2);
-            ctx.arc(screenX + bush.size * 0.8, this.groundY - bush.size / 2, bush.size * 0.8, 0, Math.PI * 2);
-            ctx.arc(screenX - bush.size * 0.6, this.groundY - bush.size / 2, bush.size * 0.7, 0, Math.PI * 2);
+            ctx.arc(relX, this.groundY - bush.size / 2, bush.size, 0, Math.PI * 2);
+            ctx.arc(relX + bush.size * 0.8, this.groundY - bush.size / 2, bush.size * 0.8, 0, Math.PI * 2);
+            ctx.arc(relX - bush.size * 0.6, this.groundY - bush.size / 2, bush.size * 0.7, 0, Math.PI * 2);
             ctx.fill();
 
             // Lighter highlights
             ctx.fillStyle = '#4CAF50';
             ctx.beginPath();
-            ctx.arc(screenX, this.groundY - bush.size, bush.size * 0.5, 0, Math.PI * 2);
+            ctx.arc(relX, this.groundY - bush.size, bush.size * 0.5, 0, Math.PI * 2);
             ctx.fill();
         });
     }
 
     drawGround(ctx, canvasHeight, camera) {
         const groundHeight = canvasHeight - this.groundY;
-        const scrollX = -camera.x % 800; // Scroll offset
+        const tileSize = 800; // Keep texture tile size fixed
+        const scrollX = -camera.x % tileSize;
 
-        // Draw ground twice to cover the screen seamlessly
-        for (let offset of [scrollX, scrollX + 800]) {
-            if (offset > 800 || offset + 800 < 0) continue; // Optimization
+        // Draw enough tiles to cover the screen width + buffer
+        const tilesNeeded = Math.ceil(this.canvasWidth / tileSize) + 1;
 
-            const drawX = offset;
+        for (let i = 0; i < tilesNeeded; i++) {
+            const drawX = scrollX + (i * tileSize);
+            if (drawX + tileSize < 0) continue; // Skip if off-screen left
 
             // Grass layer on top
             ctx.fillStyle = '#228B22';
-            ctx.fillRect(drawX, this.groundY, 800, 10);
+            ctx.fillRect(drawX, this.groundY, tileSize, 10);
 
             // Grass texture (triangles)
             ctx.fillStyle = '#32CD32';
-            for (let i = 0; i < 800; i += 12) {
+            for (let j = 0; j < tileSize; j += 12) {
                 ctx.beginPath();
-                ctx.moveTo(drawX + i, this.groundY);
-                ctx.lineTo(drawX + i + 6, this.groundY - 8);
-                ctx.lineTo(drawX + i + 12, this.groundY);
+                ctx.moveTo(drawX + j, this.groundY);
+                ctx.lineTo(drawX + j + 6, this.groundY - 8);
+                ctx.lineTo(drawX + j + 12, this.groundY);
                 ctx.fill();
             }
 
             // Brown soil layer
             ctx.fillStyle = '#8B4513';
-            ctx.fillRect(drawX, this.groundY + 10, 800, 25);
+            ctx.fillRect(drawX, this.groundY + 10, tileSize, 25);
 
             // Soil texture (darker lines)
             ctx.fillStyle = '#654321';
-            for (let i = 0; i < 800; i += 30) {
-                ctx.fillRect(drawX + i, this.groundY + 15, 20, 3);
+            for (let j = 0; j < tileSize; j += 30) {
+                ctx.fillRect(drawX + j, this.groundY + 15, 20, 3);
             }
 
             // Stone/bedrock layer
             ctx.fillStyle = '#696969';
-            ctx.fillRect(drawX, this.groundY + 35, 800, groundHeight - 35);
+            ctx.fillRect(drawX, this.groundY + 35, tileSize, groundHeight - 35);
 
             // Stone texture
             ctx.fillStyle = '#808080';
-            for (let i = 0; i < 800; i += 40) {
+            for (let j = 0; j < tileSize; j += 40) {
                 ctx.beginPath();
-                ctx.arc(drawX + i + 20, this.groundY + 50, 8, 0, Math.PI * 2);
+                ctx.arc(drawX + j + 20, this.groundY + 50, 8, 0, Math.PI * 2);
                 ctx.fill();
             }
         }
