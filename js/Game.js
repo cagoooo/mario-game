@@ -63,6 +63,9 @@ export class Game {
         this.coins = [];
         this.questionBlocks = [];
         this.mushrooms = [];
+        this.stars = [];
+        this.fireflowers = [];
+        this.fireballs = [];
         this.pipes = [];
 
         this.ui.restartBtn.addEventListener('click', () => this.restart());
@@ -233,6 +236,9 @@ export class Game {
         this.coins = [];
         this.questionBlocks = [];
         this.mushrooms = [];
+        this.stars = [];
+        this.fireflowers = [];
+        this.fireballs = [];
         this.pipes = [];
 
         this.lastGeneratedX = 0;
@@ -665,9 +671,20 @@ export class Game {
 
         const playNote = () => {
             if (!this.bgmOscillator || this.isPaused || !this.gameRunning) return;
+
+            // Calculate tempo based on difficulty and star power
+            let tempoMultiplier = this.getDifficultyMultiplier();
+            if (this.player && this.player.starPower) {
+                tempoMultiplier *= 1.5; // 50% faster for Star Power
+            }
+
+            // Base note duration is 300ms
+            const noteDuration = 300 / tempoMultiplier;
+
             this.bgmOscillator.frequency.setValueAtTime(notes[noteIndex], this.audioCtx.currentTime);
             noteIndex = (noteIndex + 1) % notes.length;
-            setTimeout(playNote, 300);
+
+            setTimeout(playNote, noteDuration);
         };
 
         this.bgmOscillator.start();
