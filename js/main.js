@@ -1,6 +1,6 @@
-import { Game } from './Game.js?v=1.2.1';
+import { Game, preloadImages } from './Game.js?v=1.3.0';
 
-window.onload = function () {
+window.onload = async function () {
     console.log('%c Game Version: 1.3.0 (Infinite Runner Mode) ', 'background: #222; color: #bada55; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
@@ -24,12 +24,31 @@ window.onload = function () {
         fullscreenBtn: document.getElementById('fullscreenButton')
     };
 
+    // Preload images
+    uiElements.startBtn.disabled = true;
+    uiElements.startBtn.textContent = '載入中...';
+    uiElements.startBtn.style.opacity = '0.5';
+    uiElements.startBtn.style.cursor = 'not-allowed';
+
+    let loadedImages = null;
+    try {
+        loadedImages = await preloadImages();
+        uiElements.startBtn.disabled = false;
+        uiElements.startBtn.textContent = '開始遊戲';
+        uiElements.startBtn.style.opacity = '1';
+        uiElements.startBtn.style.cursor = 'pointer';
+    } catch (e) {
+        console.error('Failed to preload images', e);
+        uiElements.startBtn.textContent = '載入失敗';
+    }
+
     let game = null;
 
     // Start button
     uiElements.startBtn.addEventListener('click', () => {
+        if (!loadedImages) return;
         uiElements.startScreen.style.display = 'none';
-        game = new Game(canvas, uiElements);
+        game = new Game(canvas, uiElements, loadedImages);
         window.game = game; // Expose for testing
     });
 

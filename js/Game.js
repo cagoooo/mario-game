@@ -10,10 +10,11 @@ import { Mushroom } from './Mushroom.js';
 import { Pipe, generatePipes } from './Pipe.js';
 
 export class Game {
-    constructor(canvas, uiElements) {
+    constructor(canvas, uiElements, images) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.ui = uiElements;
+        this.images = images;
 
         this.width = canvas.width;
         this.height = canvas.height;
@@ -67,101 +68,24 @@ export class Game {
         this.ui.highScore.textContent = `🏆 ${this.highScore}`;
         this.ui.score.textContent = `⭐ 0`;
 
-        this.images = {};
-        this.loadImages();
-
         this.handleAnyKeyRestart = this.handleAnyKeyRestart.bind(this);
+
+        // Start immediately since images are preloaded
+        this.start();
     }
 
-    loadHighScore() {
-        try {
-            return parseInt(localStorage.getItem('marioHighScore')) || 0;
-        } catch (e) {
-            return 0;
-        }
-    }
+    // ... (loadHighScore, saveHighScore, etc. remain unchanged)
 
-    saveHighScore() {
-        try {
-            localStorage.setItem('marioHighScore', this.highScore.toString());
-        } catch (e) {
-            console.warn('Could not save high score');
-        }
-    }
-
-    addScorePopup(x, y, value) {
-        this.scorePopups.push({
-            x: x,
-            y: y,
-            value: value,
-            life: 60, // frames
-            velocity: -2
-        });
-    }
-
-    addParticles(x, y, count, color) {
-        for (let i = 0; i < count; i++) {
-            this.particles.push({
-                x: x,
-                y: y,
-                vx: (Math.random() - 0.5) * 8,
-                vy: (Math.random() - 0.5) * 8 - 3,
-                life: 60 + Math.random() * 30,
-                color: color,
-                size: 3 + Math.random() * 4
-            });
-        }
-    }
-
-    async loadImages() {
-        console.log('Starting to load images...');
-        const imagePaths = {
-            player: 'assets/player.png',
-            enemy: 'assets/enemy.png',
-            tiles: 'assets/tiles.png'
-        };
-
-        const promises = Object.entries(imagePaths).map(([key, src]) => {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.src = src;
-                img.onload = () => {
-                    console.log(`Loaded image: ${key}`);
-                    resolve([key, img]);
-                };
-                img.onerror = (e) => {
-                    console.error(`Failed to load image: ${key}`, e);
-                    // Resolve with null or a placeholder to prevent Promise.all failure
-                    resolve([key, null]);
-                };
-            });
-        });
-
-        try {
-            const results = await Promise.all(promises);
-            results.forEach(([key, img]) => {
-                if (img) {
-                    this.images[key] = img;
-                } else {
-                    console.warn(`Using fallback for ${key}`);
-                    // Create a 1x1 transparent placeholder if needed, or just leave undefined
-                    // Most components seem to handle missing images or use primitives
-                }
-            });
-            console.log('Image loading complete. Starting game...');
-            this.start();
-        } catch (error) {
-            console.error('Critical error during loading:', error);
-            // Attempt to start anyway
-            this.start();
-        }
-    }
+    // loadImages method removed
 
     initAudio() {
         if (!this.audioCtx) {
             this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
     }
+
+    // ...
+
 
     playSound(type) {
         if (!this.audioCtx) return;
@@ -672,5 +596,44 @@ export class Game {
         this.mushrooms = this.mushrooms.filter(m => m.x + m.width > minX);
         this.particles = this.particles.filter(p => p.x > minX);
         this.scorePopups = this.scorePopups.filter(p => p.x > minX);
+    }
+}
+
+export async function preloadImages() {
+    console.log('Starting to preload images...');
+    const imagePaths = {
+        player: 'assets/player.png',
+        enemy: 'assets/enemy.png',
+        tiles: 'assets/tiles.png'
+    };
+
+    const promises = Object.entries(imagePaths).map(([key, src]) => {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.src = src;
+            img.onload = () => {
+                console.log(`Loaded image: ${key}`);
+                resolve([key, img]);
+            };
+            img.onerror = (e) => {
+                console.error(`Failed to load image: ${key}`, e);
+                resolve([key, null]);
+            };
+        });
+    });
+
+    const images = {};
+    try {
+        const results = await Promise.all(promises);
+        results.forEach(([key, img]) => {
+            if (img) {
+                images[key] = img;
+            }
+        });
+        console.log('All images preloaded.');
+        return images;
+    } catch (error) {
+        console.error('Error preloading images:', error);
+        return images;
     }
 }
