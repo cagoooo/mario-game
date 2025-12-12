@@ -74,9 +74,45 @@ export class Game {
         this.start();
     }
 
-    // ... (loadHighScore, saveHighScore, etc. remain unchanged)
+    loadHighScore() {
+        try {
+            return parseInt(localStorage.getItem('marioHighScore')) || 0;
+        } catch (e) {
+            return 0;
+        }
+    }
 
-    // loadImages method removed
+    saveHighScore() {
+        try {
+            localStorage.setItem('marioHighScore', this.highScore.toString());
+        } catch (e) {
+            console.warn('Could not save high score');
+        }
+    }
+
+    addScorePopup(x, y, value) {
+        this.scorePopups.push({
+            x: x,
+            y: y,
+            value: value,
+            life: 60, // frames
+            velocity: -2
+        });
+    }
+
+    addParticles(x, y, count, color) {
+        for (let i = 0; i < count; i++) {
+            this.particles.push({
+                x: x,
+                y: y,
+                vx: (Math.random() - 0.5) * 8,
+                vy: (Math.random() - 0.5) * 8 - 3,
+                life: 60 + Math.random() * 30,
+                color: color,
+                size: 3 + Math.random() * 4
+            });
+        }
+    }
 
     initAudio() {
         if (!this.audioCtx) {
