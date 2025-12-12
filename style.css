@@ -136,24 +136,12 @@ body {
     transition: all 0.1s;
 }
 
-.iconButton:hover {
-    transform: scale(1.1);
-    background: white;
-}
-
-margin-bottom: 30px;
-text-shadow: 3px 3px 6px #000;
-}
-
-#resumeButton {
-    padding: 15px 40px;
-    font-size: 20px;
-    background: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: transform 0.1s;
+background: #4CAF50;
+color: white;
+border: none;
+border-radius: 10px;
+cursor: pointer;
+transition: transform 0.1s;
 }
 
 #resumeButton:hover {
@@ -446,62 +434,175 @@ text-shadow: 3px 3px 6px #000;
             font-size: 22px;
         }
 
-        #jumpButton {
-            width: 60px;
-            height: 60px;
-        }
-    }
-
-    /* Fullscreen styles */
-    :fullscreen #gameArea,
-    :-webkit-full-screen #gameArea {
-        max-width: 100vw;
-        max-height: 100vh;
-        width: 100vw;
-        height: 100vh;
-    }
-
-    /* Desktop Optimization */
-    @media (min-width: 1024px) {
         #gameArea {
-            left: 0;
             width: 100%;
             height: 100%;
-            background: #1a1a2e;
-            color: white;
-            display: none;
+            background: rgba(0, 0, 0, 0.7);
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 9999;
-            text-align: center;
+            z-index: 200;
         }
 
-        .rotate-icon {
-            font-size: 64px;
-            margin-bottom: 20px;
-            animation: rotate 2s infinite;
+        #pauseText {
+            font-size: 48px;
+            color: white;
+            margin-bottom: 30px;
+            text-shadow: 3px 3px 6px #000;
         }
 
-        @keyframes rotate {
-            0% {
-                transform: rotate(0deg);
+        #resumeButton {
+            padding: 15px 40px;
+            font-size: 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        #resumeButton:hover {
+            transform: scale(1.05);
+            background: #45a049;
+        }
+
+        /* ========== GAME OVER OVERLAY ========== */
+        #gameOverOverlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+
+        #gameOver {
+            font-size: 42px;
+            color: #FF6B6B;
+            text-shadow: 3px 3px 6px #000;
+            margin-bottom: 15px;
+        }
+
+        #finalScore {
+            font-size: 28px;
+            color: #FFD700;
+            margin-bottom: 30px;
+        }
+
+        #restartButton {
+            padding: 15px 40px;
+            font-size: 20px;
+            background: linear-gradient(180deg, #FF6B6B 0%, #FF0000 100%);
+            color: white;
+            border: 3px solid #8B0000;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        #restartButton:hover {
+            transform: scale(1.05);
+        }
+
+        /* ========== TOUCH CONTROLS ========== */
+        #controlButtons {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: none;
+            justify-content: center;
+            gap: 30px;
+            z-index: 100;
+            padding: 0 20px;
+        }
+
+        .controlButton {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(200, 200, 200, 0.8) 100%);
+            border: 3px solid #333;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: none;
+            /* Critical for Pointer Events */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .controlButton:active {
+            transform: scale(0.9);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        #jumpButton {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(180deg, rgba(255, 100, 100, 0.9) 0%, rgba(200, 50, 50, 0.8) 100%);
+            color: white;
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 850px) {
+            #gameArea {
+                width: 100vw !important;
+                max-height: 50vh;
+                border: none;
+                border-radius: 0;
             }
 
-            25% {
-                transform: rotate(-90deg);
+            #gameTitle {
+                font-size: 36px;
             }
 
-            50% {
-                transform: rotate(-90deg);
-            }
-
-            75% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(0deg);
+            #score,
+            #highScore {
+                font-size: 14px;
+                padding: 5px 10px;
             }
         }
-    }
+
+        @media (pointer: coarse) {
+            #controlButtons {
+                display: flex !important;
+            }
+        }
+
+        @media (max-height: 600px) and (orientation: landscape) {
+            #controlButtons {
+                bottom: 10px;
+            }
+
+            .controlButton {
+                width: 50px;
+                height: 50px;
+                font-size: 22px;
+            }
+
+            #jumpButton {
+                width: 60px;
+                height: 60px;
+            }
+        }
+
+        /* Fullscreen styles */
+        :fullscreen #gameArea,
+        :-webkit-full-screen #gameArea {
+            max-width: 100vw;
+            max-height: 100vh;
+            width: 100vw;
+            height: 100vh;
+        }
