@@ -45,6 +45,14 @@ export class Player {
         this.isPowered = false;
         this.powerScale = 1.0;
 
+        // Star Power
+        this.starPower = false;
+        this.starTimer = 0;
+        this.starDuration = 600; // 10 seconds
+
+        // Fire Power
+        this.firePower = false;
+
         // Invincibility frames (when hit)
         this.invincible = false;
         this.invincibleTime = 0;
@@ -67,6 +75,14 @@ export class Player {
     }
 
     update(input, platforms, canvasWidth) {
+        // Update Star Power
+        if (this.starPower) {
+            this.starTimer--;
+            if (this.starTimer <= 0) {
+                this.starPower = false;
+            }
+        }
+
         // Store previous grounded state
         this.wasGrounded = this.grounded;
         this.justLanded = false;
@@ -239,6 +255,18 @@ export class Player {
         }
     }
 
+    getStarPower() {
+        this.starPower = true;
+        this.starTimer = this.starDuration;
+        this.invincible = true; // Also invincible to damage
+        this.invincibleTime = this.starDuration;
+    }
+
+    getFirePower() {
+        this.firePower = true;
+        this.powerUp(); // Also grow if not already
+    }
+
     powerUp() {
         if (this.isPowered) return false; // Already powered
 
@@ -257,6 +285,14 @@ export class Player {
     }
 
     shrink() {
+        if (this.firePower) {
+            this.firePower = false;
+            // Stay big (powered) but lose fire? Or shrink completely?
+            // Classic Mario: Fire -> Big. But here let's simplify: Fire -> Small.
+            // Actually, let's do Fire -> Big (Powered).
+            return true;
+        }
+
         if (!this.isPowered) return false; // Already small
 
         this.isPowered = false;
@@ -273,7 +309,17 @@ export class Player {
 
     hit() {
         // Called when hit by enemy
+        if (this.starPower) return 'kill'; // Kill enemy if star power
         if (this.invincible) return 'invincible';
+
+        if (this.firePower) {
+            this.firePower = false;
+            this.invincible = true;
+            this.invincibleTime = this.invincibleDuration;
+            return 'shrink'; // Lose fire power but stay big? Or shrink? 
+            // Let's make it: Fire -> Small for simplicity and higher stakes, or Fire -> Big.
+            // Let's stick to: Fire -> Small (shrink) to match current shrink logic which resets everything.
+        }
 
         if (this.isPowered) {
             this.shrink();
@@ -317,6 +363,29 @@ export class Player {
         ctx.translate(drawX, drawY);
         ctx.scale(this.direction, 1);
 
+        // Define colors based on state
+        let pantsColor = '#1E90FF'; // Blue
+        let shirtColor = '#FF2020'; // Red
+        let hatColor = '#FF0000';   // Red
+        let overallColor = '#1E90FF'; // Blue
+
+        if (this.firePower) {
+            pantsColor = '#FFFFFF'; // White
+            shirtColor = '#FFFFFF'; // White
+            hatColor = '#FFFFFF';   // White
+            overallColor = '#FF2020'; // Red overalls
+        }
+
+        if (this.starPower) {
+            // Rainbow effect
+            const hue = (Date.now() / 2) % 360;
+            const color = `hsl(${hue}, 100%, 50%)`;
+            pantsColor = color;
+            shirtColor = color;
+            hatColor = color;
+            overallColor = color;
+        }
+
         // ========== IMPROVED MARIO CHARACTER ==========
 
         // Animation offsets
@@ -324,7 +393,7 @@ export class Player {
         const jumpArmOffset = this.isJumping ? -8 : 0;
 
         // === LEGS ===
-        ctx.fillStyle = '#1E90FF'; // Bright blue pants
+        ctx.fillStyle = pantsColor;
         if (this.isJumping) {
             // Jump pose - legs spread
             ctx.fillRect(-12, 8, 8, 14);
@@ -361,13 +430,13 @@ export class Player {
         }
 
         // === BODY (OVERALLS) ===
-        ctx.fillStyle = '#1E90FF'; // Bright blue overalls
+        ctx.fillStyle = overallColor;
         ctx.beginPath();
         ctx.roundRect(-11, -2, 22, 12, 3);
         ctx.fill();
 
         // Overall straps
-        ctx.fillStyle = '#1E90FF';
+        ctx.fillStyle = overallColor;
         ctx.fillRect(-9, -8, 4, 8);
         ctx.fillRect(5, -8, 4, 8);
 
@@ -378,14 +447,14 @@ export class Player {
         ctx.arc(7, -2, 2, 0, Math.PI * 2);
         ctx.fill();
 
-        // === RED SHIRT ===
-        ctx.fillStyle = '#FF2020'; // Bright red
+        // === SHIRT ===
+        ctx.fillStyle = shirtColor;
         ctx.beginPath();
         ctx.roundRect(-10, -12, 20, 10, 2);
         ctx.fill();
 
         // === ARMS ===
-        ctx.fillStyle = '#FF2020'; // Red sleeves
+        ctx.fillStyle = shirtColor;
         if (this.isJumping) {
             // Arms up when jumping
             ctx.save();
@@ -426,24 +495,24 @@ export class Player {
 
         // === HAT ===
         // Hat brim
-        ctx.fillStyle = '#FF0000'; // Bright red
+        ctx.fillStyle = hatColor;
         ctx.beginPath();
         ctx.ellipse(4, -28, 16, 5, 0, 0, Math.PI * 2);
         ctx.fill();
 
         // Hat dome
-        ctx.fillStyle = '#FF0000';
+        ctx.fillStyle = hatColor;
         ctx.beginPath();
         ctx.ellipse(0, -34, 12, 8, 0, Math.PI, 0);
         ctx.fill();
         ctx.fillRect(-12, -34, 24, 6);
 
         // Hat "M" logo
-        ctx.fillStyle = '#FFFFFF';
+        ctx.fillStyle = this.firePower ? '#FF0000' : '#FFFFFF'; // Red M for fire, White otherwise
         ctx.beginPath();
         ctx.arc(0, -32, 5, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = '#FF0000';
+        ctx.fillStyle = this.firePower ? '#FFFFFF' : '#FF0000'; // White text for fire, Red otherwise
         ctx.font = 'bold 8px Arial';
         ctx.textAlign = 'center';
         ctx.fillText('M', 0, -29);
@@ -505,7 +574,7 @@ export class Player {
             const alpha = p.life / 30;
             ctx.save();
             ctx.globalAlpha = alpha;
-            ctx.fillStyle = '#C4A484'; // Tan/brown dust color
+            ctx.fillStyle = p.color || '#C4A484';
             ctx.beginPath();
             ctx.arc(screenX, p.y, p.size, 0, Math.PI * 2);
             ctx.fill();

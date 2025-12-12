@@ -235,16 +235,22 @@ export class FlyingEnemy extends Enemy {
     }
 }
 
-export function createEnemies(startX, endX, canvasHeight, spriteSheet) {
+export function createEnemies(startX, endX, canvasHeight, spriteSheet, difficultyMultiplier = 1) {
     const enemies = [];
     const groundY = canvasHeight - 50;
     const width = endX - startX;
-    // Density: roughly 1 enemy per 400px
-    const count = Math.floor(width / 400);
+
+    // Density increases with difficulty (lower divisor = more enemies)
+    // Base: 400px per enemy. Cap density at 200px per enemy.
+    const densityDivisor = Math.max(200, 400 / difficultyMultiplier);
+    const count = Math.floor(width / densityDivisor);
 
     for (let i = 0; i < count; i++) {
         const x = startX + Math.random() * width;
-        const speed = 1 + Math.random() * 1.5;
+        // Speed increases with difficulty
+        const baseSpeed = 1 + Math.random() * 1.5;
+        const speed = baseSpeed * difficultyMultiplier;
+
         const direction = Math.random() < 0.5 ? -1 : 1;
         const type = Math.random();
 

@@ -7,6 +7,9 @@ import { checkCollision } from './utils.js';
 import { Coin, generateCoins } from './Coin.js';
 import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js';
 import { Mushroom } from './Mushroom.js';
+import { Star } from './Star.js';
+import { FireFlower } from './FireFlower.js';
+import { Fireball } from './Fireball.js';
 import { Pipe, generatePipes } from './Pipe.js';
 
 export class Game {
@@ -184,6 +187,23 @@ export class Game {
                 oscillator.frequency.setValueAtTime(400, this.audioCtx.currentTime + 0.05);
                 gainNode.gain.exponentialRampToValueAtTime(0.00001, this.audioCtx.currentTime + 0.1);
                 break;
+            case 'fireball':
+                // Fireball shoot sound
+                oscillator.type = 'square';
+                gainNode.gain.setValueAtTime(0.05, this.audioCtx.currentTime);
+                oscillator.frequency.setValueAtTime(800, this.audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(400, this.audioCtx.currentTime + 0.1);
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, this.audioCtx.currentTime + 0.1);
+                break;
+            case 'powerup':
+                // Powerup collect sound
+                oscillator.type = 'sine';
+                gainNode.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
+                oscillator.frequency.setValueAtTime(400, this.audioCtx.currentTime);
+                oscillator.frequency.linearRampToValueAtTime(800, this.audioCtx.currentTime + 0.1);
+                oscillator.frequency.linearRampToValueAtTime(1200, this.audioCtx.currentTime + 0.2);
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, this.audioCtx.currentTime + 0.3);
+                break;
         }
 
         oscillator.start(this.audioCtx.currentTime);
@@ -193,6 +213,14 @@ export class Game {
         this.initAudio();
         this.initGame();
         this.startBGM();
+
+        // Bind F key for shooting
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'KeyF') {
+                this.shootFireball();
+            }
+        });
+
         this.gameLoop();
     }
 
@@ -230,6 +258,18 @@ export class Game {
         if (this.player && this.player.jump()) {
             this.playSound('jump');
         }
+    }
+
+    shootFireball() {
+        if (!this.gameRunning || !this.player || !this.player.firePower) return;
+
+        // Limit fireballs on screen
+        if (this.fireballs.length >= 2) return;
+
+        const x = this.player.direction === 1 ? this.player.x + this.player.width : this.player.x - 16;
+        const y = this.player.y + 20;
+        this.fireballs.push(new Fireball(x, y, this.player.direction));
+        this.playSound('fireball'); // Need to add sound
     }
 
     update() {
@@ -349,12 +389,48 @@ export class Game {
                         this.playSound('coin');
                     } else if (result.type === 'mushroom') {
                         this.mushrooms.push(new Mushroom(block.x, block.y));
-                        this.playSound('block'); // Different sound for item spawn?
+                        this.playSound('block');
+                    } else if (result.type === 'star') {
+                        this.stars.push(new Star(block.x, block.y));
+                        this.playSound('block');
+                    } else if (result.type === 'fireflower') {
+                        this.fireflowers.push(new FireFlower(block.x, block.y));
+                        this.playSound('block');
                     }
                     this.triggerScreenShake(3);
                 }
             }
         });
+
+        // Update Fireballs
+        for (let i = this.fireballs.length - 1; i >= 0; i--) {
+            const fireball = this.fireballs[i];
+            fireball.update(this.platforms, this.GROUND_Y);
+
+            if (!fireball.active) {
+                this.fireballs.splice(i, 1);
+                continue;
+            }
+
+            // Check collision with enemies
+            for (let j = this.enemies.length - 1; j >= 0; j--) {
+                const enemy = this.enemies[j];
+                if (checkCollision(fireball, enemy)) {
+                    // Kill enemy
+                    this.addScorePopup(enemy.x, enemy.y, 100);
+                    this.addParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 8, '#FFD700');
+                    this.enemies.splice(j, 1);
+                    this.score += 100;
+                    this.updateScore();
+                    this.playSound('stomp'); // Or kick sound
+
+                    // Destroy fireball
+                    fireball.active = false;
+                    this.addParticles(fireball.x, fireball.y, 4, '#FF4500');
+                    break; // One fireball kills one enemy
+                }
+            }
+        }
 
         // Update mushrooms
         for (let i = this.mushrooms.length - 1; i >= 0; i--) {
@@ -377,6 +453,68 @@ export class Game {
                 }
             }
         }
+
+        // Update Stars
+        for (let i = this.stars.length - 1; i >= 0; i--) {
+            const star = this.stars[i];
+            star.update(this.platforms, this.GROUND_Y, this.levelWidth);
+
+            if (star.collected) {
+                this.stars.splice(i, 1);
+                continue;
+            }
+
+            if (checkCollision(this.player, star) && star.active && !star.spawning) {
+                star.collected = true;
+                this.score += 1000;
+                this.addScorePopup(star.x, star.y, 1000);
+                this.updateScore();
+                this.playSound('powerup');
+                // TODO: Implement Star Power logic in Player
+                if (this.player.getStarPower) this.player.getStarPower();
+            }
+        }
+
+        // Update FireFlowers
+        for (let i = this.fireflowers.length - 1; i >= 0; i--) {
+            const flower = this.fireflowers[i];
+            flower.update(this.platforms, this.GROUND_Y, this.levelWidth);
+
+            if (flower.collected) {
+                this.fireflowers.splice(i, 1);
+                continue;
+            }
+
+            if (checkCollision(this.player, flower) && flower.active && !flower.spawning) {
+                flower.collected = true;
+                this.score += 1000;
+                this.addScorePopup(flower.x, flower.y, 1000);
+                this.updateScore();
+                this.playSound('powerup');
+                // TODO: Implement Fire Power logic in Player
+                if (this.player.getFirePower) this.player.getFirePower();
+            }
+        }
+
+        // Update Pipes (Piranha Plants)
+        this.pipes.forEach(pipe => {
+            pipe.update();
+
+            // Check collision with Piranha Plant
+            const hitbox = pipe.getPiranhaHitbox();
+            if (hitbox && checkCollision(this.player, hitbox)) {
+                const result = this.player.hit();
+                if (result === 'dead') {
+                    this.gameOver();
+                } else if (result === 'shrink') {
+                    this.triggerScreenShake(5);
+                    this.playSound('block'); // Damage sound
+                } else if (result === 'kill') {
+                    // Star power kills piranha plant? Maybe just ignore it or disable it temporarily
+                    // For now, let's say star power makes you immune but doesn't kill the plant (it's in a pipe)
+                }
+            }
+        });
 
         // Update screen shake
         if (this.screenShake.intensity > 0) {
@@ -434,6 +572,9 @@ export class Game {
         this.mushrooms.forEach(mushroom => {
             mushroom.draw(this.ctx, this.camera);
         });
+        this.stars.forEach(star => star.draw(this.ctx, this.camera));
+        this.fireflowers.forEach(flower => flower.draw(this.ctx, this.camera));
+        this.fireballs.forEach(fb => fb.draw(this.ctx, this.camera));
 
         // Draw particles
         this.particles.forEach(p => {
@@ -605,7 +746,8 @@ export class Game {
         const newPlatforms = generatePlatforms(startX, endX, this.height, this.images.tiles);
         this.platforms.push(...newPlatforms);
 
-        const newEnemies = createEnemies(startX, endX, this.height, this.images.enemy);
+        const difficulty = this.getDifficultyMultiplier();
+        const newEnemies = createEnemies(startX, endX, this.height, this.images.enemy, difficulty);
         this.enemies.push(...newEnemies);
 
         const newCoins = generateCoins(startX, endX, newPlatforms); // Pass only new platforms for optimization? Or all? 
@@ -630,8 +772,18 @@ export class Game {
         this.questionBlocks = this.questionBlocks.filter(b => b.x + b.width > minX);
         this.pipes = this.pipes.filter(p => p.x + p.width > minX);
         this.mushrooms = this.mushrooms.filter(m => m.x + m.width > minX);
+        this.stars = this.stars.filter(s => s.x + s.width > minX);
+        this.fireflowers = this.fireflowers.filter(f => f.x + f.width > minX);
+        this.fireballs = this.fireballs.filter(f => f.x + f.width > minX);
         this.particles = this.particles.filter(p => p.x > minX);
         this.scorePopups = this.scorePopups.filter(p => p.x > minX);
+    }
+    getDifficultyMultiplier() {
+        // Base difficulty is 1.0
+        // Increases by 0.1 every 500 points
+        // Cap at 2.5x speed/density
+        const multiplier = 1 + (this.score / 500) * 0.1;
+        return Math.min(2.5, multiplier);
     }
 }
 

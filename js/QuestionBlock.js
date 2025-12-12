@@ -38,6 +38,10 @@ export class QuestionBlock {
             return { type: 'coin', value: 10 };
         } else if (this.content === 'mushroom') {
             return { type: 'mushroom' };
+        } else if (this.content === 'star') {
+            return { type: 'star' };
+        } else if (this.content === 'fireflower') {
+            return { type: 'fireflower' };
         }
 
         return null;
@@ -151,7 +155,16 @@ export function generateQuestionBlocks(startX, endX, groundY) {
     for (let x = firstBlockX; x < endX; x += 400) {
         if (Math.random() > 0.3) {
             const blockY = groundY - 120 - Math.random() * 80;
-            const content = Math.random() < 0.2 ? 'mushroom' : 'coin';
+
+            // Loot table
+            const rand = Math.random();
+            let content = 'coin';
+
+            if (rand < 0.05) content = 'star';        // 5%
+            else if (rand < 0.15) content = 'fireflower'; // 10%
+            else if (rand < 0.35) content = 'mushroom';   // 20%
+            // else coin (65%)
+
             blocks.push(new QuestionBlock(x + Math.random() * 100, blockY, content));
         }
     }
