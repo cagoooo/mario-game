@@ -8,33 +8,45 @@ export class Pipe {
         // Piranha plant
         this.hasPiranha = hasPiranha;
         this.piranhaOffset = 0;
-        this.piranhaDirection = 1;
+        this.piranhaState = 'WAITING'; // WAITING, EMERGING, ATTACKING, RETREATING
         this.piranhaTimer = 0;
-        this.piranhaVisible = false;
-        this.piranhaWaitTime = 120;
+        this.piranhaWaitTime = 60 + Math.random() * 60;
     }
 
     update() {
         if (!this.hasPiranha) return;
 
-        this.piranhaTimer++;
-
-        if (this.piranhaTimer > this.piranhaWaitTime) {
-            // Piranha is emerging or hiding
-            this.piranhaOffset += 0.8 * this.piranhaDirection;
-
-            if (this.piranhaOffset > 30) {
-                this.piranhaDirection = -1;
-                this.piranhaVisible = true;
-            }
-
-            if (this.piranhaOffset < 0) {
-                this.piranhaOffset = 0;
-                this.piranhaDirection = 1;
-                this.piranhaTimer = 0;
-                this.piranhaVisible = false;
-                this.piranhaWaitTime = 80 + Math.random() * 80;
-            }
+        switch (this.piranhaState) {
+            case 'WAITING':
+                this.piranhaTimer++;
+                if (this.piranhaTimer > this.piranhaWaitTime) {
+                    this.piranhaState = 'EMERGING';
+                    this.piranhaTimer = 0;
+                }
+                break;
+            case 'EMERGING':
+                this.piranhaOffset += 1.0;
+                if (this.piranhaOffset >= 30) {
+                    this.piranhaOffset = 30;
+                    this.piranhaState = 'ATTACKING';
+                    this.piranhaTimer = 0;
+                }
+                break;
+            case 'ATTACKING':
+                this.piranhaTimer++;
+                if (this.piranhaTimer > 90) { // Stay up for 1.5 seconds
+                    this.piranhaState = 'RETREATING';
+                }
+                break;
+            case 'RETREATING':
+                this.piranhaOffset -= 1.0;
+                if (this.piranhaOffset <= 0) {
+                    this.piranhaOffset = 0;
+                    this.piranhaState = 'WAITING';
+                    this.piranhaTimer = 0;
+                    this.piranhaWaitTime = 60 + Math.random() * 60;
+                }
+                break;
         }
     }
 
@@ -134,9 +146,9 @@ export function generatePipes(startX, endX, groundY) {
     if (firstPipeX < startX) firstPipeX += 500;
 
     for (let x = firstPipeX; x < endX; x += 500) {
-        if (Math.random() > 0.4) {
+        if (Math.random() > 0.3) { // 70% chance for a pipe
             const height = 60 + Math.random() * 40;
-            const hasPiranha = Math.random() > 0.5;
+            const hasPiranha = Math.random() > 0.3; // 70% chance for a piranha plant
             pipes.push(new Pipe(x + Math.random() * 100, groundY - height, height, hasPiranha));
         }
     }

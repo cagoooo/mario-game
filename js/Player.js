@@ -19,10 +19,10 @@ export class Player {
 
         // Jump physics
         this.GRAVITY = 0.6;
-        this.JUMP_FORCE = -14;
+        this.JUMP_FORCE = -16; // Increased from -14
         this.jumpHeld = false;
         this.jumpHoldTime = 0;
-        this.maxJumpHoldTime = 12;
+        this.maxJumpHoldTime = 15; // Increased from 12
         this.jumpCutMultiplier = 0.5;
 
         // Coyote time
