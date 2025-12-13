@@ -295,6 +295,10 @@ export class EnhancedAudioSystem {
         }
     }
 
+    setBGMTempo(bpm) {
+        this.bgmTempo = bpm;
+    }
+
     // 8-bit背景音樂模式
     startBGM(mode = 'normal') {
         this.stopBGM();
