@@ -125,7 +125,6 @@ body {
     font-weight: 800;
     color: #fff;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
-    /* Stronger shadow for visibility */
     display: flex;
     align-items: center;
     gap: 5px;
@@ -138,7 +137,6 @@ body {
     border-radius: 50%;
     border: none;
     background: rgba(0, 0, 0, 0.3);
-    /* Darker background for better contrast */
     color: white;
     font-size: 18px;
     cursor: pointer;
@@ -168,7 +166,6 @@ body {
     width: 100%;
     height: 100%;
     background: rgba(20, 20, 40, 0.85);
-    /* Darker background */
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     flex-direction: column;
@@ -214,7 +211,6 @@ body {
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.9);
-    /* Very dark background */
     backdrop-filter: blur(8px);
     flex-direction: column;
     align-items: center;
@@ -235,9 +231,18 @@ body {
 #finalScore {
     font-size: 32px;
     color: #FFD700;
-    margin-bottom: 40px;
+    margin-bottom: 20px;
     font-weight: bold;
     text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
+}
+
+#finalHighScore {
+    font-size: 24px;
+    color: #fff;
+    margin-bottom: 30px;
+    font-weight: bold;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
+    transition: transform 0.5s ease;
 }
 
 #restartButton {
@@ -327,7 +332,6 @@ body {
     margin-bottom: 20px;
     animation: rotatePhone 2s infinite ease-in-out;
     display: block;
-    /* Ensure it takes own line */
 }
 
 #orientationWarning p {
@@ -335,7 +339,6 @@ body {
     line-height: 1.5;
     font-weight: bold;
     color: #fff;
-    /* Pure white for max contrast */
     margin: 0;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
@@ -394,9 +397,7 @@ body {
         padding: 8px 15px;
         gap: 10px;
         width: 95%;
-        /* Wider on mobile */
         justify-content: space-around;
-        /* Better spacing */
     }
 
     #score,

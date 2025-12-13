@@ -1,7 +1,7 @@
-import { Game, preloadImages } from './Game.js?v=1.5.0';
+import { Game, preloadImages } from './Game.js?v=1.5.1';
 
 window.onload = async function () {
-    console.log('%c Game Version: 1.5.0 (UI/UX Update: Glassmorphism & RWD) ', 'background: #222; color: #00ffff; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 1.5.1 (Fix: High Score Display) ', 'background: #222; color: #00ffff; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements
@@ -11,6 +11,7 @@ window.onload = async function () {
         gameOver: document.getElementById('gameOver'),
         gameOverOverlay: document.getElementById('gameOverOverlay'),
         finalScore: document.getElementById('finalScore'),
+        finalHighScore: document.getElementById('finalHighScore'),
         restartBtn: document.getElementById('restartButton'),
         leftBtn: document.getElementById('leftButton'),
         rightBtn: document.getElementById('rightButton'),

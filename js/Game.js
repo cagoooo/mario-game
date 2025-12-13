@@ -984,10 +984,14 @@ export class Game {
         if (this.score > this.highScore) {
             this.highScore = this.score;
             this.ui.highScore.innerHTML = `🏆 <span style="color: #FFD700;">新紀錄!</span> ${this.highScore}`;
+            this.ui.finalHighScore.innerHTML = `🏆 <span style="color: #FFD700; text-shadow: 0 0 10px #FFD700;">新最高分!</span> ${this.highScore}`;
+            this.ui.finalHighScore.style.transform = 'scale(1.2)';
             this.saveHighScore();
             this.playSound('newHighScore');
         } else {
             this.ui.highScore.textContent = `🏆 ${this.highScore}`;
+            this.ui.finalHighScore.textContent = `最高紀錄: ${this.highScore}`;
+            this.ui.finalHighScore.style.transform = 'scale(1)';
         }
 
         this.playSound('gameOver');
