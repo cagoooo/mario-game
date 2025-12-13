@@ -1,7 +1,7 @@
-import { Game, preloadImages } from './Game.js?v=1.6.1';
+import { Game, preloadImages } from './Game.js?v=1.6.2';
 
 window.onload = async function () {
-    console.log('%c Game Version: 1.6.1 (Fix: iPhone Safari Landscape) ', 'background: #222; color: #00ffff; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 1.6.2 (Deploy Fix) ', 'background: #222; color: #00ffff; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements
