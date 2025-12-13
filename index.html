@@ -8,26 +8,12 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#FF0000">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="description" content="經典瑪莉歐風格平台跳躍遊戲 - PWA 離線可玩">
-  <title>超級瑪莉歐冒險</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" type="image/png" href="assets/icon-192.png">
-  <link rel="shortcut icon" type="image/png" href="assets/icon-192.png">
-  <link rel="apple-touch-icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="style.css?v=1.6.4">
-</head>
-
-<body>
-  <!-- Start Screen -->
-  <div id="startScreen">
-    <div id="gameTitle">🍄 超級冒險 🍄</div>
-    <div id="gameSubtitle">Mario Style Platformer</div>
-    <div id="startInstructions">
-      <p>🎮 <strong>操作方式</strong></p>
-      <p>⬅️ ➡️ 方向鍵移動 | 空白鍵跳躍</p>
-      <p>📱 觸控螢幕：點擊移動 | 點擊跳躍</p>
-    </div>
-    <button id="startButton">載入中...</button>
+  <div id="startInstructions">
+    <p>🎮 <strong>操作方式</strong></p>
+    <p>⬅️ ➡️ 方向鍵移動 | 空白鍵跳躍</p>
+    <p>📱 觸控螢幕：點擊移動 | 點擊跳躍</p>
+  </div>
+  <button id="startButton">載入中...</button>
   </div>
 
   <!-- Game Canvas -->
@@ -63,7 +49,7 @@
     <div id="rightButton" class="controlButton">▶</div>
   </div>
 
-  <script type="module" src="js/main.js?v=1.6.4"></script>
+  <script type="module" src="js/main.js?v=1.6.5"></script>
   <script>
     // Unregister Service Worker to prevent caching issues during development/debugging
     if ('serviceWorker' in navigator) {
@@ -90,6 +76,6 @@
       console.error(error);
     };
   </script>
-</body>
+  </body>
 
 </html>

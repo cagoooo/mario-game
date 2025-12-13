@@ -337,8 +337,7 @@ export class Player {
     shrink() {
         if (this.firePower) {
             this.firePower = false;
-            // Fire -> Big (Powered)
-            return true;
+            // Fall through to shrink logic (Fire -> Small)
         }
 
         if (!this.isPowered) return false; // Already small
@@ -360,16 +359,7 @@ export class Player {
         if (this.starPower) return 'kill'; // Kill enemy if star power
         if (this.invincible) return 'invincible';
 
-        if (this.firePower) {
-            this.firePower = false;
-            this.invincible = true;
-            this.invincibleTime = this.invincibleDuration;
-            return 'shrink'; // Lose fire power but stay big? Or shrink? 
-            // Let's make it: Fire -> Small for simplicity and higher stakes, or Fire -> Big.
-            // Let's stick to: Fire -> Small (shrink) to match current shrink logic which resets everything.
-        }
-
-        if (this.isPowered) {
+        if (this.firePower || this.isPowered) {
             this.shrink();
             return 'shrink';
         }
