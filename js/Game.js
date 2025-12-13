@@ -1,17 +1,17 @@
-import { Player } from './Player.js?v=1.5.8';
-import { Background } from './Background.js?v=1.5.8';
-import { InputHandler } from './InputHandler.js?v=1.5.8';
-import { generatePlatforms } from './Platform.js?v=1.5.8';
-import { createEnemies } from './Enemy.js?v=1.5.8';
-import { checkCollision } from './utils.js?v=1.5.8';
-import { Coin, generateCoins } from './Coin.js?v=1.5.8';
-import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.5.8';
-import { Mushroom } from './Mushroom.js?v=1.5.8';
-import { Star } from './Star.js?v=1.5.8';
-import { FireFlower } from './FireFlower.js?v=1.5.8';
-import { Fireball } from './Fireball.js?v=1.5.8';
-import { Pipe, generatePipes } from './Pipe.js?v=1.5.8';
-import { Lava } from './Lava.js?v=1.5.8';
+import { Player } from './Player.js?v=1.5.9';
+import { Background } from './Background.js?v=1.5.9';
+import { InputHandler } from './InputHandler.js?v=1.5.9';
+import { generatePlatforms } from './Platform.js?v=1.5.9';
+import { createEnemies } from './Enemy.js?v=1.5.9';
+import { checkCollision } from './utils.js?v=1.5.9';
+import { Coin, generateCoins } from './Coin.js?v=1.5.9';
+import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.5.9';
+import { Mushroom } from './Mushroom.js?v=1.5.9';
+import { Star } from './Star.js?v=1.5.9';
+import { FireFlower } from './FireFlower.js?v=1.5.9';
+import { Fireball } from './Fireball.js?v=1.5.9';
+import { Pipe, generatePipes } from './Pipe.js?v=1.5.9';
+import { Lava } from './Lava.js?v=1.5.9';
 
 export class Game {
     constructor(canvas, uiElements, images) {
@@ -554,13 +554,19 @@ export class Game {
                         this.updateScore();
                         this.playSound('coin');
                     } else if (result.type === 'mushroom') {
-                        this.mushrooms.push(new Mushroom(block.x, block.y));
+                        const mushroom = new Mushroom(block.x, block.y);
+                        mushroom.spawn();
+                        this.mushrooms.push(mushroom);
                         this.playSound('block');
                     } else if (result.type === 'star') {
-                        this.stars.push(new Star(block.x, block.y));
+                        const star = new Star(block.x, block.y);
+                        star.spawn();
+                        this.stars.push(star);
                         this.playSound('block');
                     } else if (result.type === 'fireflower') {
-                        this.fireflowers.push(new FireFlower(block.x, block.y));
+                        const flower = new FireFlower(block.x, block.y);
+                        flower.spawn();
+                        this.fireflowers.push(flower);
                         this.playSound('block');
                     }
                     this.triggerScreenShake(3);

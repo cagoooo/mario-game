@@ -106,6 +106,7 @@ export class Player {
             this.starTimer--;
             if (this.starTimer <= 0) {
                 this.starPower = false;
+                this.maxSpeed = 3.5; // Reset to normal speed
             }
         }
 
@@ -307,6 +308,7 @@ export class Player {
         this.starTimer = this.starDuration;
         this.invincible = true; // Also invincible to damage
         this.invincibleTime = this.starDuration;
+        this.maxSpeed = 6; // Speed boost!
     }
 
     getFirePower() {
