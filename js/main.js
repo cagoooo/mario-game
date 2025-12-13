@@ -1,7 +1,7 @@
-import { Game, preloadImages } from './Game.js?v=1.4.2';
+import { Game, preloadImages } from './Game.js?v=1.5.0';
 
 window.onload = async function () {
-    console.log('%c Game Version: 1.9.0 (Stable Release: Double Jump, Balance & Visuals) ', 'background: #222; color: #00ffff; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 1.5.0 (UI/UX Update: Glassmorphism & RWD) ', 'background: #222; color: #00ffff; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements

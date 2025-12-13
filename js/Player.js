@@ -334,9 +334,7 @@ export class Player {
     shrink() {
         if (this.firePower) {
             this.firePower = false;
-            // Stay big (powered) but lose fire? Or shrink completely?
-            // Classic Mario: Fire -> Big. But here let's simplify: Fire -> Small.
-            // Actually, let's do Fire -> Big (Powered).
+            // Fire -> Big (Powered)
             return true;
         }
 

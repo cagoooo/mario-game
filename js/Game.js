@@ -11,6 +11,7 @@ import { Star } from './Star.js';
 import { FireFlower } from './FireFlower.js';
 import { Fireball } from './Fireball.js';
 import { Pipe, generatePipes } from './Pipe.js';
+import { Lava } from './Lava.js';
 
 export class Game {
     constructor(canvas, uiElements, images) {
@@ -27,13 +28,16 @@ export class Game {
         canvas.width = this.width * this.dpr;
         canvas.height = this.height * this.dpr;
         // Removed inline styles to allow CSS aspect-ratio to work
+        // Removed inline styles to allow CSS aspect-ratio to work
         this.ctx.scale(this.dpr, this.dpr);
-        this.levelWidth = 4000; // Initial buffer, but effectively infinite
+        // this.levelWidth = 4000; // No longer used for bounds
         this.GROUND_Y = this.height - 50;
 
         this.lastGeneratedX = 0;
-        this.CHUNK_SIZE = 2000;
-        this.renderDistance = 3000;
+        this.CHUNK_SIZE = 1000; // Smaller chunks for smoother generation
+        this.renderDistance = 2000;
+        this.cleanupMargin = 2000; // Distance behind camera to cleanup
+        this.lastCleanedX = 0;
 
         this.camera = { x: 0, y: 0 };
 
@@ -68,7 +72,7 @@ export class Game {
         this.input.attachCanvas(canvas);
         this.input.attachControls(uiElements.leftBtn, uiElements.rightBtn, uiElements.jumpBtn);
 
-        this.background = new Background(this.levelWidth, this.GROUND_Y);
+        this.background = new Background(this.width, this.GROUND_Y);
 
         this.player = null;
         this.platforms = [];
@@ -80,6 +84,7 @@ export class Game {
         this.fireflowers = [];
         this.fireballs = [];
         this.pipes = [];
+        this.lava = [];
 
         this.ui.restartBtn.addEventListener('click', () => this.restart());
 
@@ -286,9 +291,10 @@ export class Game {
         this.fireflowers = [];
         this.fireballs = [];
         this.pipes = [];
+        this.lava = [];
 
         this.lastGeneratedX = 0;
-        this.generateChunk(0, this.levelWidth);
+        this.generateChunk(0, this.CHUNK_SIZE * 2); // Generate initial buffer
 
         // FPS Control
         this.fps = 60;
@@ -336,6 +342,18 @@ export class Game {
         // Generate pipes
         const newPipes = generatePipes(startX, endX, this.platforms, this.GROUND_Y);
         this.pipes.push(...newPipes);
+
+        // Generate Lava (Dangerous Areas)
+        // 30% chance per chunk to have a lava pool
+        if (Math.random() < 0.3) {
+            const lavaWidth = 100 + Math.random() * 150;
+            const lavaX = startX + Math.random() * (this.CHUNK_SIZE - lavaWidth);
+
+            // Safe zone check: Don't spawn lava in the first 800 pixels
+            if (lavaX > 800) {
+                this.lava.push(new Lava(lavaX, this.GROUND_Y, lavaWidth, 40));
+            }
+        }
 
         this.lastGeneratedX = endX;
     }
@@ -412,14 +430,13 @@ export class Game {
         // Camera logic - update BEFORE player so mouse position calculation is accurate
         let targetCamX = this.player.x - this.width / 2 + this.player.width / 2;
         if (targetCamX < 0) targetCamX = 0;
-        // Removed max level width constraint for infinite scrolling
-        // if (targetCamX > this.levelWidth - this.width) targetCamX = this.levelWidth - this.width;
+        // Infinite scrolling: no max limit
         this.camera.x = targetCamX;
 
         // Update enemies
         for (let i = this.enemies.length - 1; i >= 0; i--) {
             const enemy = this.enemies[i];
-            enemy.update(this.levelWidth);
+            enemy.update(this.camera.x + this.width + 1000); // Active area
 
             if (checkCollision(this.player, enemy)) {
                 // Relaxed stomp check: falling and player bottom is above enemy's bottom 20%
@@ -686,6 +703,19 @@ export class Game {
             }
         });
 
+        // Update Lava
+        this.lava.forEach(lava => {
+            lava.update();
+            if (checkCollision(this.player, lava)) {
+                // Instant death
+                if (!this.player.isDead) { // Check if already dead to avoid loop
+                    this.playSound('death');
+                    this.player.die();
+                    this.gameOver();
+                }
+            }
+        });
+
         // Update screen shake
         if (this.screenShake.intensity > 0) {
             this.screenShake.x = (Math.random() - 0.5) * this.screenShake.intensity * 2;
@@ -696,6 +726,18 @@ export class Game {
                 this.screenShake.x = 0;
                 this.screenShake.y = 0;
             }
+        }
+
+        // Dynamic Chunk Generation
+        if (this.camera.x + this.width + this.renderDistance > this.lastGeneratedX) {
+            const nextChunkEnd = this.lastGeneratedX + this.CHUNK_SIZE;
+            this.generateChunk(this.lastGeneratedX, nextChunkEnd);
+        }
+
+        // Object Cleanup
+        if (this.camera.x - this.cleanupMargin > this.lastCleanedX) {
+            this.cleanupObjects(this.camera.x - this.cleanupMargin);
+            this.lastCleanedX = this.camera.x - this.cleanupMargin;
         }
 
         this.background.update(this.score);
@@ -722,6 +764,9 @@ export class Game {
                 console.error('Error drawing pipe:', e);
             }
         });
+
+        // Draw Lava
+        this.lava.forEach(lava => lava.draw(this.ctx, this.camera));
 
         // Draw coins
         this.coins.forEach(coin => coin.draw(this.ctx, this.camera));

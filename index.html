@@ -27,24 +27,20 @@
       <p>⬅️ ➡️ 方向鍵移動 | 空白鍵跳躍</p>
       <p>📱 觸控螢幕：點擊移動 | 點擊跳躍</p>
     </div>
-    <button id="startButton" disabled style="opacity: 0.5; cursor: not-allowed;">載入中...</button>
-  </div>
-
-  <!-- Game UI -->
-  <div id="gameUI">
-    <div id="topBar">
-      <div id="score">⭐ 0</div>
-      <div id="highScore">🏆 0</div>
-      <div id="topButtons">
-        <button id="pauseButton" class="iconButton">⏸️</button>
-        <button id="muteButton" class="iconButton">🔊</button>
-        <button id="fullscreenButton" class="iconButton">⛶</button>
-      </div>
-    </div>
+    <button id="startButton">載入中...</button>
   </div>
 
   <!-- Game Canvas -->
   <canvas id="gameArea" width="800" height="400"></canvas>
+
+  <!-- Game UI -->
+  <div id="gameUI">
+    <div id="score">⭐ 0</div>
+    <div id="highScore">🏆 0</div>
+    <button id="muteButton">🔊</button>
+    <button id="fullscreenButton">⛶</button>
+    <button id="pauseButton">⏸️</button>
+  </div>
 
   <!-- Pause Overlay -->
   <div id="pauseOverlay">
@@ -66,7 +62,7 @@
     <div id="rightButton" class="controlButton">▶</div>
   </div>
 
-  <script type="module" src="js/main.js?v=1.9.0"></script>
+  <script type="module" src="js/main.js?v=1.5.0"></script>
   <script>
     // Unregister Service Worker to prevent caching issues during development/debugging
     if ('serviceWorker' in navigator) {
