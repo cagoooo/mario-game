@@ -1,17 +1,17 @@
-import { Player } from './Player.js?v=1.5.13';
-import { Background } from './Background.js?v=1.5.13';
-import { InputHandler } from './InputHandler.js?v=1.5.13';
-import { generatePlatforms } from './Platform.js?v=1.5.13';
-import { createEnemies } from './Enemy.js?v=1.5.13';
-import { checkCollision } from './utils.js?v=1.5.13';
-import { Coin, generateCoins } from './Coin.js?v=1.5.13';
-import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.5.13';
-import { Mushroom } from './Mushroom.js?v=1.5.13';
-import { Star } from './Star.js?v=1.5.13';
-import { FireFlower } from './FireFlower.js?v=1.5.13';
-import { Fireball } from './Fireball.js?v=1.5.13';
-import { Pipe, generatePipes } from './Pipe.js?v=1.5.13';
-import { Lava } from './Lava.js?v=1.5.13';
+import { Player } from './Player.js?v=1.5.14';
+import { Background } from './Background.js?v=1.5.14';
+import { InputHandler } from './InputHandler.js?v=1.5.14';
+import { generatePlatforms } from './Platform.js?v=1.5.14';
+import { createEnemies } from './Enemy.js?v=1.5.14';
+import { checkCollision } from './utils.js?v=1.5.14';
+import { Coin, generateCoins } from './Coin.js?v=1.5.14';
+import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.5.14';
+import { Mushroom } from './Mushroom.js?v=1.5.14';
+import { Star } from './Star.js?v=1.5.14';
+import { FireFlower } from './FireFlower.js?v=1.5.14';
+import { Fireball } from './Fireball.js?v=1.5.14';
+import { Pipe, generatePipes } from './Pipe.js?v=1.5.14';
+import { Lava } from './Lava.js?v=1.5.14';
 
 export class Game {
     constructor(canvas, uiElements, images) {
