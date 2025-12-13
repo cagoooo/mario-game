@@ -75,56 +75,76 @@ export class Pipe {
 
         // === PIRANHA PLANT ===
         // Draw plant BEFORE pipe so it looks like it's coming out from inside
+        // === PIRANHA PLANT ===
+        // Draw plant BEFORE pipe so it looks like it's coming out from inside
         if (this.hasPiranha && this.piranhaOffset > 0) {
             const plantY = this.y - this.piranhaOffset;
+            const centerX = screenX + 24;
 
-            // Stem
+            // Stem (Green)
             ctx.fillStyle = '#228B22';
-            ctx.fillRect(screenX + 18, plantY + 20, 12, this.piranhaOffset);
+            ctx.fillRect(centerX - 6, plantY + 20, 12, this.piranhaOffset);
 
-            // Head (red spotted)
+            // Stem highlight
+            ctx.fillStyle = '#32CD32';
+            ctx.fillRect(centerX - 4, plantY + 20, 4, this.piranhaOffset);
+
+            // Head (Red Bulb)
             ctx.fillStyle = '#FF0000';
             ctx.beginPath();
-            ctx.ellipse(screenX + 24, plantY + 15, 16, 18, 0, 0, Math.PI * 2);
+            ctx.arc(centerX, plantY + 10, 16, 0, Math.PI * 2);
             ctx.fill();
 
-            // White spots
+            // White Spots (Polka dots)
             ctx.fillStyle = '#FFFFFF';
-            ctx.beginPath();
-            ctx.arc(screenX + 18, plantY + 10, 4, 0, Math.PI * 2);
-            ctx.arc(screenX + 30, plantY + 12, 3, 0, Math.PI * 2);
-            ctx.arc(screenX + 22, plantY + 20, 3, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Mouth (open)
-            ctx.fillStyle = '#8B0000';
-            ctx.beginPath();
-            ctx.ellipse(screenX + 24, plantY + 18, 10, 6, 0, 0, Math.PI);
-            ctx.fill();
-
-            // Teeth
-            ctx.fillStyle = '#FFFFFF';
-            for (let i = 0; i < 4; i++) {
+            const spots = [
+                { x: -8, y: -6, r: 4 },
+                { x: 8, y: -4, r: 3 },
+                { x: 0, y: -10, r: 3 },
+                { x: -6, y: 6, r: 3 },
+                { x: 7, y: 5, r: 4 }
+            ];
+            spots.forEach(spot => {
                 ctx.beginPath();
-                ctx.moveTo(screenX + 16 + i * 5, plantY + 18);
-                ctx.lineTo(screenX + 18 + i * 5, plantY + 22);
-                ctx.lineTo(screenX + 20 + i * 5, plantY + 18);
+                ctx.arc(centerX + spot.x, plantY + 10 + spot.y, spot.r, 0, Math.PI * 2);
                 ctx.fill();
-            }
+            });
 
-            // Eyes
-            ctx.fillStyle = '#FFFFFF';
+            // Lips (White/Pinkish)
+            ctx.fillStyle = '#F0F0F0';
             ctx.beginPath();
-            ctx.arc(screenX + 18, plantY + 8, 4, 0, Math.PI * 2);
-            ctx.arc(screenX + 30, plantY + 8, 4, 0, Math.PI * 2);
+            // Top lip
+            ctx.ellipse(centerX, plantY + 10, 12, 6, 0, Math.PI, 0);
+            // Bottom lip
+            ctx.ellipse(centerX, plantY + 10, 12, 6, 0, 0, Math.PI);
             ctx.fill();
 
-            // Pupils
+            // Mouth interior (Dark)
             ctx.fillStyle = '#000000';
             ctx.beginPath();
-            ctx.arc(screenX + 19, plantY + 8, 2, 0, Math.PI * 2);
-            ctx.arc(screenX + 31, plantY + 8, 2, 0, Math.PI * 2);
+            ctx.ellipse(centerX, plantY + 10, 10, 3, 0, 0, Math.PI * 2);
             ctx.fill();
+
+            // Teeth (Sharp triangles)
+            ctx.fillStyle = '#FFFFFF';
+            // Top teeth
+            for (let i = -2; i <= 2; i++) {
+                if (i === 0) continue;
+                ctx.beginPath();
+                ctx.moveTo(centerX + i * 3, plantY + 7);
+                ctx.lineTo(centerX + i * 3 - 1.5, plantY + 10);
+                ctx.lineTo(centerX + i * 3 + 1.5, plantY + 10);
+                ctx.fill();
+            }
+            // Bottom teeth
+            for (let i = -2; i <= 2; i++) {
+                if (i === 0) continue;
+                ctx.beginPath();
+                ctx.moveTo(centerX + i * 3, plantY + 13);
+                ctx.lineTo(centerX + i * 3 - 1.5, plantY + 10);
+                ctx.lineTo(centerX + i * 3 + 1.5, plantY + 10);
+                ctx.fill();
+            }
         }
 
         // === PIPE BODY ===

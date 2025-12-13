@@ -1,7 +1,7 @@
-import { Game, preloadImages } from './Game.js?v=1.5.3';
+import { Game, preloadImages } from './Game.js?v=1.5.4';
 
 window.onload = async function () {
-    console.log('%c Game Version: 1.5.3 (Balance: Better Loot) ', 'background: #222; color: #00ffff; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 1.5.4 (Visuals: Weather & Animation) ', 'background: #222; color: #00ffff; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements

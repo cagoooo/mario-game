@@ -9,6 +9,13 @@ export class Background {
         this.nearMountains = this.generateMountains(6, 0.8);
         this.clouds = this.generateClouds(8);
         this.bushes = this.generateBushes(12);
+
+        // Weather System
+        this.weather = 'CLEAR'; // CLEAR, RAIN, SNOW
+        this.weatherTimer = 0;
+        this.weatherDuration = 1000 + Math.random() * 1000;
+        this.particles = [];
+        this.skyColorOffset = 0; // For smooth transition
     }
 
     generateMountains(count, sizeFactor) {
@@ -55,6 +62,70 @@ export class Background {
             }
         });
         this.currentScore = score;
+
+        // Update Weather
+        this.updateWeather();
+        this.updateParticles();
+    }
+
+    updateWeather() {
+        this.weatherTimer++;
+        if (this.weatherTimer > this.weatherDuration) {
+            this.weatherTimer = 0;
+            this.weatherDuration = 1000 + Math.random() * 2000; // 15-45 seconds
+
+            // Random weather change
+            const rand = Math.random();
+            if (rand < 0.5) this.weather = 'CLEAR';
+            else if (rand < 0.75) this.weather = 'RAIN';
+            else this.weather = 'SNOW';
+
+            // Reset particles on change
+            if (this.weather === 'CLEAR') this.particles = [];
+        }
+
+        // Generate particles
+        if (this.weather === 'RAIN') {
+            for (let i = 0; i < 5; i++) {
+                this.particles.push({
+                    x: Math.random() * this.canvasWidth + (Math.random() * 500), // Spread wider for wind
+                    y: -20,
+                    vx: -2 - Math.random() * 2,
+                    vy: 10 + Math.random() * 5,
+                    length: 10 + Math.random() * 10,
+                    type: 'rain'
+                });
+            }
+        } else if (this.weather === 'SNOW') {
+            if (Math.random() > 0.5) { // Less dense than rain
+                this.particles.push({
+                    x: Math.random() * this.canvasWidth,
+                    y: -10,
+                    vx: -1 + Math.random() * 2, // Drift
+                    vy: 1 + Math.random() * 2,
+                    size: 2 + Math.random() * 3,
+                    type: 'snow',
+                    angle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+    }
+
+    updateParticles() {
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            const p = this.particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+
+            if (p.type === 'snow') {
+                p.x += Math.sin(p.angle) * 0.5;
+                p.angle += 0.05;
+            }
+
+            if (p.y > this.groundY || p.x < -100 || p.x > this.canvasWidth + 100) {
+                this.particles.splice(i, 1);
+            }
+        }
     }
 
     setTiles(spriteSheet) {
@@ -68,6 +139,38 @@ export class Background {
         this.drawClouds(ctx, camera);
         this.drawBushes(ctx, camera);
         this.drawGround(ctx, canvasHeight, camera);
+        this.drawWeather(ctx);
+    }
+
+    drawWeather(ctx) {
+        ctx.save();
+
+        this.particles.forEach(p => {
+            if (p.type === 'rain') {
+                ctx.strokeStyle = 'rgba(174, 194, 224, 0.6)';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y);
+                ctx.lineTo(p.x + p.vx, p.y + p.vy);
+                ctx.stroke();
+            } else if (p.type === 'snow') {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        });
+
+        // Overlay for atmosphere
+        if (this.weather === 'RAIN') {
+            ctx.fillStyle = 'rgba(0, 0, 20, 0.1)'; // Darken slightly
+            ctx.fillRect(0, 0, this.canvasWidth, this.groundY);
+        } else if (this.weather === 'SNOW') {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'; // Lighten slightly
+            ctx.fillRect(0, 0, this.canvasWidth, this.groundY);
+        }
+
+        ctx.restore();
     }
 
     drawSky(ctx, canvasHeight) {
@@ -78,12 +181,25 @@ export class Background {
 
         if (cycle < 200) {
             // Day (0-200)
-            topColor = '#87CEEB';
-            bottomColor = '#E0F7FA';
+            if (this.weather === 'RAIN') {
+                topColor = '#4a5b6c'; // Gloomy gray
+                bottomColor = '#8fa3b8';
+            } else if (this.weather === 'SNOW') {
+                topColor = '#a8c0d8'; // Snowy white-blue
+                bottomColor = '#e6f0fa';
+            } else {
+                topColor = '#87CEEB';
+                bottomColor = '#E0F7FA';
+            }
         } else if (cycle < 350) {
             // Sunset transition (200-350)
-            topColor = '#FF7F50'; // Coral
-            bottomColor = '#FFD700'; // Gold
+            if (this.weather === 'RAIN') {
+                topColor = '#5d4037'; // Dark muddy
+                bottomColor = '#8d6e63';
+            } else {
+                topColor = '#FF7F50'; // Coral
+                bottomColor = '#FFD700'; // Gold
+            }
         } else {
             // Night (350-500)
             topColor = '#191970'; // MidnightBlue
@@ -98,7 +214,7 @@ export class Background {
         ctx.fillRect(0, 0, this.canvasWidth, this.groundY);
 
         // Draw stars if night
-        if (cycle >= 350) {
+        if (cycle >= 350 && this.weather !== 'RAIN') {
             ctx.fillStyle = '#FFF';
             for (let i = 0; i < 50; i++) {
                 const x = (i * 137) % this.canvasWidth;

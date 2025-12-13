@@ -586,26 +586,51 @@ export class Player {
         ctx.fillText('M', 0, -29);
 
         // === FACE ===
+        // Blinking Logic
+        this.blinkTimer++;
+        if (this.blinkTimer > this.nextBlinkTime) {
+            this.isBlinking = true;
+            if (this.blinkTimer > this.nextBlinkTime + 10) { // Blink for 10 frames
+                this.isBlinking = false;
+                this.blinkTimer = 0;
+                this.nextBlinkTime = Math.random() * 200 + 100;
+            }
+        }
+
         // Eyes
-        ctx.fillStyle = '#FFFFFF';
-        ctx.beginPath();
-        ctx.ellipse(-5, -24, 4, 5, 0, 0, Math.PI * 2);
-        ctx.ellipse(5, -24, 4, 5, 0, 0, Math.PI * 2);
-        ctx.fill();
+        if (this.isBlinking) {
+            // Closed eyes (lines)
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-7, -24);
+            ctx.lineTo(-3, -24);
+            ctx.moveTo(3, -24);
+            ctx.lineTo(7, -24);
+            ctx.stroke();
+        } else {
+            // Open Eyes
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.ellipse(-5, -24, 4, 5, 0, 0, Math.PI * 2);
+            ctx.ellipse(5, -24, 4, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
 
-        // Pupils
-        ctx.fillStyle = '#000080'; // Dark blue
-        ctx.beginPath();
-        ctx.arc(-4, -24, 2, 0, Math.PI * 2);
-        ctx.arc(6, -24, 2, 0, Math.PI * 2);
-        ctx.fill();
+            // Pupils (look direction)
+            const lookOffset = this.direction * 1;
+            ctx.fillStyle = '#000080'; // Dark blue
+            ctx.beginPath();
+            ctx.arc(-4 + lookOffset, -24, 2, 0, Math.PI * 2);
+            ctx.arc(6 + lookOffset, -24, 2, 0, Math.PI * 2);
+            ctx.fill();
 
-        // Eye highlights
-        ctx.fillStyle = '#FFFFFF';
-        ctx.beginPath();
-        ctx.arc(-5, -25, 1, 0, Math.PI * 2);
-        ctx.arc(5, -25, 1, 0, Math.PI * 2);
-        ctx.fill();
+            // Eye highlights
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(-5 + lookOffset, -25, 1, 0, Math.PI * 2);
+            ctx.arc(5 + lookOffset, -25, 1, 0, Math.PI * 2);
+            ctx.fill();
+        }
 
         // Nose
         ctx.fillStyle = '#DEB887'; // Darker skin
@@ -620,12 +645,17 @@ export class Player {
         ctx.ellipse(4, -14, 6, 3, 0, 0, Math.PI);
         ctx.fill();
 
-        // Mouth (smile)
+        // Mouth (smile or open if jumping)
         ctx.strokeStyle = '#8B0000';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.arc(0, -12, 4, 0.2, Math.PI - 0.2);
-        ctx.stroke();
+        if (this.isJumping) {
+            ctx.ellipse(0, -11, 3, 2, 0, 0, Math.PI * 2); // Open mouth
+            ctx.stroke();
+        } else {
+            ctx.arc(0, -12, 4, 0.2, Math.PI - 0.2); // Smile
+            ctx.stroke();
+        }
 
         // === EARS ===
         ctx.fillStyle = '#FFDAB9';
