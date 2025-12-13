@@ -1,17 +1,17 @@
-import { Player } from './Player.js?v=1.6.5';
-import { Background, Biomes } from './Background.js?v=1.6.5';
-import { InputHandler } from './InputHandler.js?v=1.6.5';
-import { generatePlatforms } from './Platform.js?v=1.6.5';
-import { createEnemies } from './Enemy.js?v=1.6.5';
-import { checkCollision } from './utils.js?v=1.6.5';
-import { Coin, generateCoins } from './Coin.js?v=1.6.5';
-import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.6.5';
-import { Mushroom } from './Mushroom.js?v=1.6.5';
-import { Star } from './Star.js?v=1.6.5';
-import { FireFlower } from './FireFlower.js?v=1.6.5';
-import { Fireball } from './Fireball.js?v=1.6.5';
-import { Pipe, generatePipes } from './Pipe.js?v=1.6.5';
-import { Lava } from './Lava.js?v=1.6.5';
+import { Player } from './Player.js?v=1.6.6';
+import { Background, Biomes } from './Background.js?v=1.6.6';
+import { InputHandler } from './InputHandler.js?v=1.6.6';
+import { generatePlatforms } from './Platform.js?v=1.6.6';
+import { createEnemies } from './Enemy.js?v=1.6.6';
+import { checkCollision } from './utils.js?v=1.6.6';
+import { Coin, generateCoins } from './Coin.js?v=1.6.6';
+import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.6.6';
+import { Mushroom } from './Mushroom.js?v=1.6.6';
+import { Star } from './Star.js?v=1.6.6';
+import { FireFlower } from './FireFlower.js?v=1.6.6';
+import { Fireball } from './Fireball.js?v=1.6.6';
+import { Pipe, generatePipes } from './Pipe.js?v=1.6.6';
+import { Lava } from './Lava.js?v=1.6.6';
 
 export class Game {
     constructor(canvas, uiElements, images) {
@@ -59,6 +59,9 @@ export class Game {
 
         // Freeze frame (Hit stop)
         this.freezeFrames = 0;
+
+        // Death Flash
+        this.deathFlashTimer = 0;
 
         // Audio
         this.audioCtx = null;
@@ -226,6 +229,13 @@ export class Game {
         this.scorePopups.push(popup);
     }
 
+    triggerDeathEffect() {
+        this.triggerScreenShake(20); // Strong shake
+        this.triggerFreeze(45); // Long freeze (~0.75s)
+        this.deathFlashTimer = 10; // Flash for 10 frames
+        this.playSound('death');
+    }
+
     addParticles(x, y, count, color) {
         for (let i = 0; i < count; i++) {
             let p;
@@ -384,6 +394,14 @@ export class Game {
                 oscillator.frequency.linearRampToValueAtTime(300, this.audioCtx.currentTime + 0.1);
                 oscillator.frequency.linearRampToValueAtTime(200, this.audioCtx.currentTime + 0.2);
                 gainNode.gain.exponentialRampToValueAtTime(0.00001, this.audioCtx.currentTime + 0.4);
+                break;
+            case 'bump':
+                // Block hit thud
+                oscillator.type = 'square';
+                gainNode.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
+                oscillator.frequency.setValueAtTime(150, this.audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(50, this.audioCtx.currentTime + 0.1);
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, this.audioCtx.currentTime + 0.1);
                 break;
         }
 
@@ -619,6 +637,7 @@ export class Game {
                             this.playSound('newHighScore');
                         }
                     } else if (result === 'dead') {
+                        this.triggerDeathEffect();
                         this.gameOver();
                     } else if (result === 'shrink') {
                         this.triggerScreenShake(5);
@@ -688,6 +707,7 @@ export class Game {
 
                 const result = block.hit();
                 if (result) {
+                    this.playSound('bump'); // Physical hit sound
                     if (result.type === 'coin') {
                         this.score += result.value;
                         this.addScorePopup(block.x + 16, block.y - 20, result.value);
@@ -848,6 +868,7 @@ export class Game {
                 } else {
                     const result = this.player.hit();
                     if (result === 'dead') {
+                        this.triggerDeathEffect();
                         this.gameOver();
                     } else if (result === 'shrink') {
                         this.triggerScreenShake(5);
