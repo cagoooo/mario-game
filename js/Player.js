@@ -592,7 +592,27 @@ export class Player {
         }
 
         // Eyes
-        if (this.isBlinking) {
+        if (this.isDead) {
+            // Dead eyes (X shape)
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2;
+
+            // Left eye
+            ctx.beginPath();
+            ctx.moveTo(-7, -26);
+            ctx.lineTo(-3, -22);
+            ctx.moveTo(-3, -26);
+            ctx.lineTo(-7, -22);
+            ctx.stroke();
+
+            // Right eye
+            ctx.beginPath();
+            ctx.moveTo(3, -26);
+            ctx.lineTo(7, -22);
+            ctx.moveTo(7, -26);
+            ctx.lineTo(3, -22);
+            ctx.stroke();
+        } else if (this.isBlinking) {
             // Closed eyes (lines)
             ctx.strokeStyle = '#000000';
             ctx.lineWidth = 2;
@@ -643,7 +663,17 @@ export class Player {
         ctx.strokeStyle = '#8B0000';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
-        if (this.isJumping) {
+        if (this.isDead) {
+            // Dead mouth with tongue
+            ctx.fillStyle = '#FFB6C1'; // Pink tongue
+            ctx.beginPath();
+            ctx.arc(0, -10, 3, 0, Math.PI, false); // Tongue
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(0, -12, 4, 0.2, Math.PI - 0.2); // Frown/Open
+            ctx.stroke();
+        } else if (this.isJumping) {
             ctx.ellipse(0, -11, 3, 2, 0, 0, Math.PI * 2); // Open mouth
             ctx.stroke();
         } else {

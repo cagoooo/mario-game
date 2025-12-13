@@ -1,7 +1,7 @@
-import { Game, preloadImages } from './Game.js?v=1.6.6';
+import { Game, preloadImages } from './Game.js?v=1.6.7';
 
 window.onload = async function () {
-    console.log('%c Game Version: 1.6.6 (Enhanced FX) ', 'background: #222; color: #00ffff; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 1.6.7 (Audio & Visuals) ', 'background: #222; color: #00ffff; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements
