@@ -11,9 +11,11 @@ export class Background {
         this.bushes = this.generateBushes(12);
 
         // Weather System
-        this.weather = 'CLEAR'; // CLEAR, RAIN, SNOW
+        // Weather System
+        // Force initial weather to be interesting (Rain or Snow) for testing/showcase
+        this.weather = Math.random() > 0.5 ? 'RAIN' : 'SNOW';
         this.weatherTimer = 0;
-        this.weatherDuration = 1000 + Math.random() * 1000;
+        this.weatherDuration = 600 + Math.random() * 600; // 10-20 seconds (shorter for more variety)
         this.particles = [];
         this.skyColorOffset = 0; // For smooth transition
     }
@@ -72,13 +74,14 @@ export class Background {
         this.weatherTimer++;
         if (this.weatherTimer > this.weatherDuration) {
             this.weatherTimer = 0;
-            this.weatherDuration = 1000 + Math.random() * 2000; // 15-45 seconds
+            this.weatherDuration = 600 + Math.random() * 600; // 10-20 seconds
 
             // Random weather change
+            // Random weather change
             const rand = Math.random();
-            if (rand < 0.5) this.weather = 'CLEAR';
-            else if (rand < 0.75) this.weather = 'RAIN';
-            else this.weather = 'SNOW';
+            if (rand < 0.3) this.weather = 'CLEAR';      // 30% Clear
+            else if (rand < 0.65) this.weather = 'RAIN'; // 35% Rain
+            else this.weather = 'SNOW';                  // 35% Snow
 
             // Reset particles on change
             if (this.weather === 'CLEAR') this.particles = [];
