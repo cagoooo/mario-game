@@ -324,8 +324,97 @@ export class EnhancedAudioSystem {
 
     getMusicPattern(mode) {
         const patterns = {
-            // 正常模式 - 經典Mario主題風格
+            // 平原 (PLAINS) - 輕快明亮
+            PLAINS: {
+                tempo: 150,
+                melody: [
+                    { note: 523, duration: 0.15 }, // C5
+                    { note: 659, duration: 0.15 }, // E5
+                    { note: 784, duration: 0.15 }, // G5
+                    { note: 523, duration: 0.15 }, // C5
+                    { note: 880, duration: 0.15 }, // A5
+                    { note: 784, duration: 0.3 },  // G5
+                    { note: 0, duration: 0.15 },   // Rest
+                    { note: 659, duration: 0.15 }, // E5
+                    { note: 523, duration: 0.15 }, // C5
+                    { note: 0, duration: 0.15 },   // Rest
+                ],
+                bass: [
+                    { note: 131, duration: 0.3 }, // C3
+                    { note: 196, duration: 0.3 }, // G3
+                    { note: 131, duration: 0.3 }, // C3
+                    { note: 196, duration: 0.3 }, // G3
+                    { note: 175, duration: 0.3 }, // F3
+                    { note: 196, duration: 0.3 }, // G3
+                ]
+            },
+
+            // 沙漠 (DESERT) - 神秘中東風
+            DESERT: {
+                tempo: 140,
+                melody: [
+                    { note: 523, duration: 0.2 }, // C5
+                    { note: 554, duration: 0.2 }, // Db5
+                    { note: 659, duration: 0.2 }, // E5
+                    { note: 554, duration: 0.2 }, // Db5
+                    { note: 523, duration: 0.2 }, // C5
+                    { note: 494, duration: 0.2 }, // B4
+                    { note: 523, duration: 0.4 }, // C5
+                    { note: 0, duration: 0.2 },   // Rest
+                ],
+                bass: [
+                    { note: 131, duration: 0.4 }, // C3
+                    { note: 196, duration: 0.4 }, // G3
+                    { note: 123, duration: 0.4 }, // B2
+                    { note: 196, duration: 0.4 }, // G3
+                ]
+            },
+
+            // 雪地 (SNOW) - 晶瑩剔透
+            SNOW: {
+                tempo: 130,
+                melody: [
+                    { note: 659, duration: 0.2 }, // E5
+                    { note: 784, duration: 0.2 }, // G5
+                    { note: 988, duration: 0.2 }, // B5
+                    { note: 1175, duration: 0.4 }, // D6
+                    { note: 0, duration: 0.2 },    // Rest
+                    { note: 880, duration: 0.2 }, // A5
+                    { note: 1047, duration: 0.2 }, // C6
+                    { note: 1319, duration: 0.4 }, // E6
+                ],
+                bass: [
+                    { note: 165, duration: 0.4 }, // E3
+                    { note: 247, duration: 0.4 }, // B3
+                    { note: 175, duration: 0.4 }, // F3
+                    { note: 262, duration: 0.4 }, // C4
+                ]
+            },
+
+            // 鬼屋 (SPOOKY) - 詭異沉重
+            SPOOKY: {
+                tempo: 110,
+                melody: [
+                    { note: 392, duration: 0.3 }, // G4
+                    { note: 370, duration: 0.3 }, // Gb4
+                    { note: 349, duration: 0.3 }, // F4
+                    { note: 311, duration: 0.6 }, // Eb4
+                    { note: 0, duration: 0.3 },   // Rest
+                    { note: 294, duration: 0.3 }, // D4
+                    { note: 277, duration: 0.3 }, // Db4
+                    { note: 262, duration: 0.6 }, // C4
+                ],
+                bass: [
+                    { note: 98, duration: 0.6 },  // G2
+                    { note: 92, duration: 0.6 },  // Gb2
+                    { note: 87, duration: 0.6 },  // F2
+                    { note: 82, duration: 0.6 },  // E2
+                ]
+            },
+
+            // 正常模式 (Fallback)
             normal: {
+                tempo: 120,
                 melody: [
                     { note: 659, duration: 0.15 }, // E5
                     { note: 659, duration: 0.15 }, // E5
@@ -354,6 +443,7 @@ export class EnhancedAudioSystem {
 
             // 星星模式 - 更快更興奮
             star: {
+                tempo: 180,
                 melody: [
                     { note: 1047, duration: 0.1 }, // C6
                     { note: 1175, duration: 0.1 }, // D6
@@ -374,6 +464,7 @@ export class EnhancedAudioSystem {
 
             // 地下模式 - 較低沉的音調
             underground: {
+                tempo: 100,
                 melody: [
                     { note: 392, duration: 0.2 }, // G4
                     { note: 370, duration: 0.2 }, // F#4
@@ -392,7 +483,14 @@ export class EnhancedAudioSystem {
             }
         };
 
-        return patterns[mode] || patterns.normal;
+        const selectedPattern = patterns[mode] || patterns.normal;
+
+        // Update tempo if defined
+        if (selectedPattern.tempo && this.bgmTempo !== selectedPattern.tempo) {
+            this.setBGMTempo(selectedPattern.tempo);
+        }
+
+        return selectedPattern;
     }
 
     playBGMNote(pattern) {
