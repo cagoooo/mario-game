@@ -307,6 +307,13 @@ export class Game {
 
         this.ui.pauseOverlay.style.display = 'none';
         this.background.setTiles(this.images.tiles);
+
+        // Initial invincibility (3 seconds)
+        this.player.invincible = true;
+        this.player.invincibleTime = 180;
+
+        // Auto-fireball timer
+        this.autoFireTimer = 0;
     }
 
     generateChunk(startX, endX) {
@@ -380,6 +387,17 @@ export class Game {
     update() {
         if (!this.gameRunning || !this.player) return;
 
+        // Auto-fireball for mobile/ease of use
+        if (this.player.firePower) {
+            this.autoFireTimer++;
+            if (this.autoFireTimer > 45) { // Fire every ~0.75 seconds
+                this.shootFireball();
+                this.autoFireTimer = 0;
+            }
+        } else {
+            this.autoFireTimer = 0;
+        }
+
         // Check for death animation completion
         if (this.player.isDead) {
             this.player.update(this.input, this.platforms, this.width, this.camera);
@@ -404,7 +422,8 @@ export class Game {
             enemy.update(this.levelWidth);
 
             if (checkCollision(this.player, enemy)) {
-                if (this.player.velY > 0 && this.player.y + this.player.height < enemy.y + enemy.height / 2) {
+                // Relaxed stomp check: falling and player bottom is above enemy's bottom 20%
+                if (this.player.velY > 0 && this.player.y + this.player.height < enemy.y + enemy.height * 0.8) {
                     // Add score popup at enemy position
                     this.addScorePopup(enemy.x, enemy.y, 100);
                     // Add particles
@@ -424,7 +443,32 @@ export class Game {
                         this.playSound('newHighScore');
                     }
                 } else {
-                    this.gameOver();
+                    // Handle player hit
+                    const result = this.player.hit();
+
+                    if (result === 'kill') {
+                        // Star power instant kill
+                        this.addScorePopup(enemy.x, enemy.y, 100);
+                        this.addParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 8, '#FFD700');
+                        this.enemies.splice(i, 1);
+                        this.score += 100;
+                        this.updateScore();
+                        this.playSound('stomp'); // Use stomp sound for now
+
+                        // Check for new high score during game
+                        if (this.score > this.highScore && !this.isNewHighScore) {
+                            this.isNewHighScore = true;
+                            this.addParticles(this.player.x, this.player.y, 20, '#FF0000');
+                            this.addParticles(this.player.x, this.player.y, 20, '#FFD700');
+                            this.playSound('newHighScore');
+                        }
+                    } else if (result === 'dead') {
+                        this.gameOver();
+                    } else if (result === 'shrink') {
+                        this.triggerScreenShake(5);
+                        this.playSound('block');
+                    }
+                    // If 'invincible', do nothing (ignore collision)
                 }
             }
         }
@@ -610,17 +654,34 @@ export class Game {
             }
 
             // Check collision with Piranha Plant
+            // Check collision with Piranha Plant
             const hitbox = pipe.getPiranhaHitbox();
             if (hitbox && checkCollision(this.player, hitbox)) {
-                const result = this.player.hit();
-                if (result === 'dead') {
-                    this.gameOver();
-                } else if (result === 'shrink') {
-                    this.triggerScreenShake(5);
-                    this.playSound('block'); // Damage sound
-                } else if (result === 'kill') {
-                    // Star power kills piranha plant? Maybe just ignore it or disable it temporarily
-                    // For now, let's say star power makes you immune but doesn't kill the plant (it's in a pipe)
+                // Check for stomp (falling and above the plant)
+                if (this.player.velY > 0 && this.player.y + this.player.height < hitbox.y + hitbox.height / 2) {
+                    // Stomp success
+                    pipe.killPiranha();
+                    this.player.velY = -12; // Bounce
+                    this.score += 200;
+                    this.addScorePopup(hitbox.x, hitbox.y, 200);
+                    this.addParticles(hitbox.x + hitbox.width / 2, hitbox.y + hitbox.height / 2, 8, '#228B22'); // Green particles
+                    this.updateScore();
+                    this.playSound('stomp');
+                } else {
+                    const result = this.player.hit();
+                    if (result === 'dead') {
+                        this.gameOver();
+                    } else if (result === 'shrink') {
+                        this.triggerScreenShake(5);
+                        this.playSound('block'); // Damage sound
+                    } else if (result === 'kill') {
+                        // Star power kills piranha plant
+                        pipe.killPiranha();
+                        this.score += 200;
+                        this.addScorePopup(hitbox.x, hitbox.y, 200);
+                        this.updateScore();
+                        this.playSound('stomp');
+                    }
                 }
             }
         });
@@ -637,7 +698,7 @@ export class Game {
             }
         }
 
-        this.background.update();
+        this.background.update(this.score);
     }
 
     draw() {
@@ -782,7 +843,10 @@ export class Game {
         this.bgmGain = this.audioCtx.createGain();
 
         this.bgmOscillator.type = 'square';
-        this.bgmOscillator.frequency.value = 220;
+
+        // Determine frequency and tempo based on state
+        let isStarPower = this.player && this.player.starPower;
+
         this.bgmGain.gain.value = 0.03;
 
         this.bgmOscillator.connect(this.bgmGain);
@@ -795,16 +859,35 @@ export class Game {
         const playNote = () => {
             if (!this.bgmOscillator || this.isPaused || !this.gameRunning) return;
 
+            // Check if state changed (e.g. star power ended or started)
+            // We can't easily restart here without recursion issues or complex state management
+            // So we'll just adjust on the fly if possible, or check if we need to restart
+
+            if (this.player) {
+                const currentStarPower = this.player.starPower;
+                if (currentStarPower !== isStarPower) {
+                    // State changed, restart BGM to pick up new settings
+                    this.stopBGM();
+                    this.startBGM();
+                    return;
+                }
+            }
+
             // Calculate tempo based on difficulty and star power
             let tempoMultiplier = this.getDifficultyMultiplier();
-            if (this.player && this.player.starPower) {
-                tempoMultiplier *= 1.5; // 50% faster for Star Power
+            let pitchMultiplier = 1;
+
+            if (isStarPower) {
+                tempoMultiplier *= 1.5; // 50% faster
+                pitchMultiplier = 1.5; // Higher pitch
             }
 
             // Base note duration is 300ms
             const noteDuration = 300 / tempoMultiplier;
 
-            this.bgmOscillator.frequency.setValueAtTime(notes[noteIndex], this.audioCtx.currentTime);
+            const note = notes[noteIndex] * pitchMultiplier;
+            this.bgmOscillator.frequency.setValueAtTime(note, this.audioCtx.currentTime);
+
             noteIndex = (noteIndex + 1) % notes.length;
 
             setTimeout(playNote, noteDuration);

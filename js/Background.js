@@ -47,13 +47,14 @@ export class Background {
         return bushes;
     }
 
-    update() {
+    update(score = 0) {
         this.clouds.forEach(cloud => {
             cloud.x += cloud.speed;
             if (cloud.x - cloud.radius * 2 > this.canvasWidth * 2) {
                 cloud.x = -cloud.radius * 2;
             }
         });
+        this.currentScore = score;
     }
 
     setTiles(spriteSheet) {
@@ -70,15 +71,41 @@ export class Background {
     }
 
     drawSky(ctx, canvasHeight) {
-        // Beautiful gradient sky
+        // Dynamic sky based on score (Day -> Sunset -> Night)
+        // Cycle every 500 points (faster cycle)
+        const cycle = (this.currentScore || 0) % 500;
+        let topColor, bottomColor;
+
+        if (cycle < 200) {
+            // Day (0-200)
+            topColor = '#87CEEB';
+            bottomColor = '#E0F7FA';
+        } else if (cycle < 350) {
+            // Sunset transition (200-350)
+            topColor = '#FF7F50'; // Coral
+            bottomColor = '#FFD700'; // Gold
+        } else {
+            // Night (350-500)
+            topColor = '#191970'; // MidnightBlue
+            bottomColor = '#483D8B'; // DarkSlateBlue
+        }
+
         const gradient = ctx.createLinearGradient(0, 0, 0, this.groundY);
-        gradient.addColorStop(0, '#87CEEB');    // Light sky blue
-        gradient.addColorStop(0.4, '#ADD8E6');  // Light blue
-        gradient.addColorStop(0.7, '#B0E0E6');  // Powder blue
-        gradient.addColorStop(1, '#E0F7FA');    // Very light cyan near horizon
+        gradient.addColorStop(0, topColor);
+        gradient.addColorStop(1, bottomColor);
 
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, this.canvasWidth, this.groundY);
+
+        // Draw stars if night
+        if (cycle >= 350) {
+            ctx.fillStyle = '#FFF';
+            for (let i = 0; i < 50; i++) {
+                const x = (i * 137) % this.canvasWidth;
+                const y = (i * 53) % (this.groundY * 0.8);
+                ctx.fillRect(x, y, 2, 2);
+            }
+        }
     }
 
     drawFarMountains(ctx, camera) {

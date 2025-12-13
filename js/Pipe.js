@@ -13,6 +13,14 @@ export class Pipe {
         this.piranhaWaitTime = 60 + Math.random() * 60;
     }
 
+    killPiranha() {
+        if (!this.hasPiranha) return;
+        this.piranhaState = 'WAITING';
+        this.piranhaOffset = 0;
+        this.piranhaTimer = 0;
+        this.piranhaWaitTime = 300; // Stay dead for 5 seconds (60fps * 5)
+    }
+
     update() {
         if (!this.hasPiranha) return;
 
@@ -22,6 +30,8 @@ export class Pipe {
                 if (this.piranhaTimer > this.piranhaWaitTime) {
                     this.piranhaState = 'EMERGING';
                     this.piranhaTimer = 0;
+                    // Reset wait time for next cycle
+                    this.piranhaWaitTime = 60 + Math.random() * 60;
                 }
                 break;
             case 'EMERGING':

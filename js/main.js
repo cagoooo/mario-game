@@ -1,7 +1,7 @@
 import { Game, preloadImages } from './Game.js?v=1.4.2';
 
 window.onload = async function () {
-    console.log('%c Game Version: 1.5.2 (Desktop Fixed) ', 'background: #222; color: #00ffff; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 1.9.0 (Stable Release: Double Jump, Balance & Visuals) ', 'background: #222; color: #00ffff; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements
@@ -104,15 +104,43 @@ window.onload = async function () {
     }
 
     // Fullscreen button
+    // Fullscreen button
     uiElements.fullscreenBtn.addEventListener('click', () => {
-        if (!document.fullscreenElement) {
-            document.body.requestFullscreen().catch(err => {
-                console.log('Fullscreen error:', err);
-            });
-            uiElements.fullscreenBtn.textContent = '⛶';
-        } else {
-            document.exitFullscreen();
-            uiElements.fullscreenBtn.textContent = '⛶';
+        try {
+            if (!document.fullscreenElement &&
+                !document.webkitFullscreenElement &&
+                !document.mozFullScreenElement &&
+                !document.msFullscreenElement) {
+
+                const docEl = document.documentElement;
+                if (docEl.requestFullscreen) {
+                    docEl.requestFullscreen().catch(err => console.log('Fullscreen error:', err));
+                } else if (docEl.webkitRequestFullscreen) {
+                    docEl.webkitRequestFullscreen();
+                } else if (docEl.mozRequestFullScreen) {
+                    docEl.mozRequestFullScreen();
+                } else if (docEl.msRequestFullscreen) {
+                    docEl.msRequestFullscreen();
+                } else {
+                    console.log('Fullscreen API not supported');
+                    // Optional: Show a gentle toast instead of crashing
+                }
+                uiElements.fullscreenBtn.textContent = '⛶';
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+                uiElements.fullscreenBtn.textContent = '⛶';
+            }
+        } catch (error) {
+            console.warn('Fullscreen toggle failed:', error);
+            // Prevent the global error handler from showing the red box
         }
     });
 

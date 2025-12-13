@@ -1,33 +1,33 @@
-# Major Game Polish - Task List
+# 遊戲優化 - 任務列表
 
-## Phase 1: User Experience
-- [x] Start screen with title and instructions
-- [x] Pause functionality (ESC key + button)
-- [x] Fullscreen mode button
+## 第一階段：使用者體驗
+- [x] 開始畫面（含標題與說明）
+- [x] 暫停功能（ESC 鍵 + 按鈕）
+- [x] 全螢幕模式按鈕
 
-## Phase 2: Advanced Visuals
-- [x] Green pipe obstacles
-- [ ] Danger zones (lava/water)
-- [x] Enhanced particle effects
+## 第二階段：進階視覺效果
+- [x] 綠色水管障礙物
+- [ ] 危險區域（岩漿/水）
+- [x] 強化粒子效果
 
-## Phase 3: Audio System
-- [x] Background music (Web Audio generated)
-- [x] Landing/block hit sounds
-- [x] Mute toggle button
+## 第三階段：音效系統
+- [x] 背景音樂（Web Audio 生成）
+- [x] 落地/撞擊磚塊音效
+- [x] 靜音切換按鈕
 
-## Phase 4: More Enemies
-- [x] Koopa (turtle) - shrinks to shell when stomped
-- [x] Flying enemy - bounces up and down
-- [x] Piranha plant - emerges from pipes
+## 第四階段：更多敵人
+- [x] 烏龜 (Koopa) - 被踩踏時縮成龜殼
+- [x] 飛行敵人 - 上下彈跳
+- [x] 食人花 - 從水管出現
 
-## Phase 5: Optimization & Deployment
-- [x] GitHub Pages Deployment
-- [x] PWA Support (Manifest + Service Worker)
-- [x] Mushroom Power-up
-- [x] Mouse Control Fix (Camera Sync)
-- [x] Any Key Restart (Keyboard/Mouse/Touch)
-- [x] Hybrid Input Support (Pointer Events for robust mouse/touch)
-- [x] Mouse Edge Movement Fix (Global mouse tracking)
-- [x] Button Input Compatibility Fix (Touchstart/Mousedown fallback)
-- [x] Restart Crash Fix (Missing method implementation)
-- [x] Deployment Caching Fix (Version tagging)
+## 第五階段：最佳化與部署
+- [x] GitHub Pages 部署
+- [x] PWA 支援（Manifest + Service Worker）
+- [x] 蘑菇道具
+- [x] 滑鼠控制修復（攝影機同步）
+- [x] 任意鍵重新開始（鍵盤/滑鼠/觸控）
+- [x] 混合輸入支援（Pointer Events 確保滑鼠/觸控穩健）
+- [x] 滑鼠邊緣移動修復（全域滑鼠追蹤）
+- [x] 按鈕輸入相容性修復（Touchstart/Mousedown 備援）
+- [x] 重新開始崩潰修復（遺失的方法實作）
+- [x] 部署快取修復（版本標記）

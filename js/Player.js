@@ -40,6 +40,10 @@ export class Player {
         this.isJumping = false;
         this.isDead = false; // New death state
 
+        // Double Jump
+        this.jumpCount = 0;
+        this.maxJumps = 2;
+
         this.GROUND_Y = 0;
 
         // Power-up state
@@ -105,6 +109,9 @@ export class Player {
             }
         }
 
+        // Update Invincibility
+        this.updateInvincibility();
+
         // Store previous grounded state
         this.wasGrounded = this.grounded;
         this.justLanded = false;
@@ -146,6 +153,11 @@ export class Player {
         }
 
         if (moveInput !== 0) {
+            // Check for skid (moving opposite to velocity)
+            if (this.grounded && Math.abs(this.velX) > 2 && Math.sign(moveInput) !== Math.sign(this.velX)) {
+                this.spawnDust('skid');
+            }
+
             // Accelerate
             this.velX += moveInput * this.acceleration;
             // Cap speed
@@ -228,6 +240,7 @@ export class Player {
             this.velY = 0;
             this.grounded = true;
             this.jumping = false;
+            this.jumpCount = 0;
         }
 
         // === PLATFORM COLLISION ===
@@ -242,6 +255,7 @@ export class Player {
                     this.velY = 0;
                     this.grounded = true;
                     this.jumping = false;
+                    this.jumpCount = 0;
                 }
             }
         });
@@ -268,8 +282,12 @@ export class Player {
     }
 
     spawnDust(type) {
-        const count = type === 'land' ? 8 : 2;
+        const count = type === 'land' ? 8 : (type === 'skid' ? 4 : 2);
         const speed = type === 'land' ? 3 : 1;
+
+        let color = '#E0E0E0'; // Default whitish
+        if (type === 'land') color = '#C4A484'; // Brown
+        if (type === 'skid') color = '#A9A9A9'; // Dark gray
 
         for (let i = 0; i < count; i++) {
             this.dustParticles.push({
@@ -279,7 +297,7 @@ export class Player {
                 vy: -Math.random() * speed,
                 life: 20 + Math.random() * 10,
                 size: 4 + Math.random() * 4,
-                color: type === 'land' ? '#C4A484' : '#E0E0E0' // Brown for land, whitish for run
+                color: color
             });
         }
     }
@@ -371,12 +389,20 @@ export class Player {
     }
 
     jump() {
-        // Can jump if grounded OR within coyote time window
-        if (this.grounded || this.coyoteTime > 0) {
+        // Can jump if grounded OR within coyote time window OR has jumps remaining (double jump)
+        if (this.grounded || this.coyoteTime > 0 || this.jumpCount < this.maxJumps) {
             this.velY = this.JUMP_FORCE;
             this.jumping = true;
             this.jumpHeld = true;
             this.jumpHoldTime = 0;
+
+            if (this.grounded || this.coyoteTime > 0) {
+                this.jumpCount = 1; // First jump
+            } else {
+                this.jumpCount++; // Double jump
+                this.spawnDust('run'); // Small effect for double jump
+            }
+
             this.grounded = false;
             this.coyoteTime = 0; // Consume coyote time
 
@@ -391,6 +417,15 @@ export class Player {
 
     draw(ctx, camera) {
         ctx.save();
+
+        // Flashing effect when invincible
+        if (this.invincible) {
+            // Flash every 4 frames
+            if (Math.floor(this.flashTimer / 4) % 2 === 0) {
+                ctx.globalAlpha = 0.5;
+            }
+        }
+
         const drawX = this.x - camera.x + this.width / 2;
         const drawY = this.y + this.height; // Pivot at bottom
 
