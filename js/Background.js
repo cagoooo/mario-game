@@ -1,3 +1,30 @@
+export const Biomes = {
+    PLAINS: {
+        sky: { day: ['#87CEEB', '#E0F7FA'], sunset: ['#FF7F50', '#FFD700'], night: ['#191970', '#483D8B'] },
+        mountains: { far: '#B8C5D6', near: '#6B8E6B' },
+        ground: { top: '#228B22', middle: '#8B4513', bottom: '#696969' },
+        bush: { main: '#2E7D32', highlight: '#4CAF50' }
+    },
+    DESERT: {
+        sky: { day: ['#87CEEB', '#FFF3E0'], sunset: ['#FF6F00', '#FFD54F'], night: ['#212121', '#424242'] },
+        mountains: { far: '#D7CCC8', near: '#A1887F' }, // Sandy mountains
+        ground: { top: '#FDD835', middle: '#FBC02D', bottom: '#5D4037' }, // Sand
+        bush: { main: '#558B2F', highlight: '#7CB342' } // Cactus-ish green
+    },
+    SNOW: {
+        sky: { day: ['#B3E5FC', '#E1F5FE'], sunset: ['#F48FB1', '#F8BBD0'], night: ['#1A237E', '#303F9F'] },
+        mountains: { far: '#CFD8DC', near: '#90A4AE' }, // Snowy mountains
+        ground: { top: '#FFFFFF', middle: '#ECEFF1', bottom: '#78909C' }, // Snow
+        bush: { main: '#00695C', highlight: '#4DB6AC' } // Frozen bushes
+    },
+    SPOOKY: {
+        sky: { day: ['#4A148C', '#7B1FA2'], sunset: ['#311B92', '#4527A0'], night: ['#000000', '#212121'] },
+        mountains: { far: '#424242', near: '#212121' }, // Dark mountains
+        ground: { top: '#3E2723', middle: '#263238', bottom: '#000000' }, // Dark earth
+        bush: { main: '#1B5E20', highlight: '#388E3C' } // Dark green
+    }
+};
+
 export class Background {
     constructor(canvasWidth, groundY) {
         this.canvasWidth = canvasWidth;
@@ -11,13 +38,28 @@ export class Background {
         this.bushes = this.generateBushes(12);
 
         // Weather System
-        // Weather System
-        // Force initial weather to be interesting (Rain or Snow) for testing/showcase
-        this.weather = Math.random() > 0.5 ? 'RAIN' : 'SNOW';
+        this.weather = 'CLEAR';
         this.weatherTimer = 0;
-        this.weatherDuration = 600 + Math.random() * 600; // 10-20 seconds (shorter for more variety)
+        this.weatherDuration = 600 + Math.random() * 600;
         this.particles = [];
-        this.skyColorOffset = 0; // For smooth transition
+        this.skyColorOffset = 0;
+
+        // Biome System
+        this.currentBiome = 'PLAINS';
+        this.biomeData = Biomes.PLAINS;
+    }
+
+    setBiome(biomeType) {
+        if (Biomes[biomeType]) {
+            this.currentBiome = biomeType;
+            this.biomeData = Biomes[biomeType];
+
+            // Reset weather on biome change for thematic consistency
+            if (biomeType === 'SNOW') this.weather = 'SNOW';
+            else if (biomeType === 'DESERT') this.weather = 'CLEAR';
+            else if (biomeType === 'SPOOKY') this.weather = Math.random() > 0.5 ? 'RAIN' : 'CLEAR';
+            else this.weather = Math.random() > 0.7 ? 'RAIN' : 'CLEAR';
+        }
     }
 
     generateMountains(count, sizeFactor) {
@@ -74,16 +116,20 @@ export class Background {
         this.weatherTimer++;
         if (this.weatherTimer > this.weatherDuration) {
             this.weatherTimer = 0;
-            this.weatherDuration = 600 + Math.random() * 600; // 10-20 seconds
+            this.weatherDuration = 600 + Math.random() * 600;
 
-            // Random weather change
-            // Random weather change
+            // Weather logic based on biome
             const rand = Math.random();
-            if (rand < 0.3) this.weather = 'CLEAR';      // 30% Clear
-            else if (rand < 0.65) this.weather = 'RAIN'; // 35% Rain
-            else this.weather = 'SNOW';                  // 35% Snow
+            if (this.currentBiome === 'SNOW') {
+                this.weather = rand < 0.8 ? 'SNOW' : 'CLEAR';
+            } else if (this.currentBiome === 'DESERT') {
+                this.weather = 'CLEAR';
+            } else {
+                if (rand < 0.3) this.weather = 'CLEAR';
+                else if (rand < 0.65) this.weather = 'RAIN';
+                else this.weather = 'CLEAR'; // No snow in plains/spooky usually
+            }
 
-            // Reset particles on change
             if (this.weather === 'CLEAR') this.particles = [];
         }
 
@@ -91,7 +137,7 @@ export class Background {
         if (this.weather === 'RAIN') {
             for (let i = 0; i < 5; i++) {
                 this.particles.push({
-                    x: Math.random() * this.canvasWidth + (Math.random() * 500), // Spread wider for wind
+                    x: Math.random() * this.canvasWidth + (Math.random() * 500),
                     y: -20,
                     vx: -2 - Math.random() * 2,
                     vy: 10 + Math.random() * 5,
@@ -100,11 +146,11 @@ export class Background {
                 });
             }
         } else if (this.weather === 'SNOW') {
-            if (Math.random() > 0.5) { // Less dense than rain
+            if (Math.random() > 0.5) {
                 this.particles.push({
                     x: Math.random() * this.canvasWidth,
                     y: -10,
-                    vx: -1 + Math.random() * 2, // Drift
+                    vx: -1 + Math.random() * 2,
                     vy: 1 + Math.random() * 2,
                     size: 2 + Math.random() * 3,
                     type: 'snow',
@@ -166,10 +212,10 @@ export class Background {
 
         // Overlay for atmosphere
         if (this.weather === 'RAIN') {
-            ctx.fillStyle = 'rgba(0, 0, 20, 0.1)'; // Darken slightly
+            ctx.fillStyle = 'rgba(0, 0, 20, 0.1)';
             ctx.fillRect(0, 0, this.canvasWidth, this.groundY);
         } else if (this.weather === 'SNOW') {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'; // Lighten slightly
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
             ctx.fillRect(0, 0, this.canvasWidth, this.groundY);
         }
 
@@ -177,36 +223,19 @@ export class Background {
     }
 
     drawSky(ctx, canvasHeight) {
-        // Dynamic sky based on score (Day -> Sunset -> Night)
-        // Cycle every 500 points (faster cycle)
-        const cycle = (this.currentScore || 0) % 500;
+        const cycle = (this.currentScore || 0) % 5000; // Slower cycle
         let topColor, bottomColor;
+        const colors = this.biomeData.sky;
 
-        if (cycle < 200) {
-            // Day (0-200)
-            if (this.weather === 'RAIN') {
-                topColor = '#4a5b6c'; // Gloomy gray
-                bottomColor = '#8fa3b8';
-            } else if (this.weather === 'SNOW') {
-                topColor = '#a8c0d8'; // Snowy white-blue
-                bottomColor = '#e6f0fa';
-            } else {
-                topColor = '#87CEEB';
-                bottomColor = '#E0F7FA';
-            }
-        } else if (cycle < 350) {
-            // Sunset transition (200-350)
-            if (this.weather === 'RAIN') {
-                topColor = '#5d4037'; // Dark muddy
-                bottomColor = '#8d6e63';
-            } else {
-                topColor = '#FF7F50'; // Coral
-                bottomColor = '#FFD700'; // Gold
-            }
+        if (cycle < 2000) {
+            // Day
+            [topColor, bottomColor] = colors.day;
+        } else if (cycle < 3500) {
+            // Sunset
+            [topColor, bottomColor] = colors.sunset;
         } else {
-            // Night (350-500)
-            topColor = '#191970'; // MidnightBlue
-            bottomColor = '#483D8B'; // DarkSlateBlue
+            // Night
+            [topColor, bottomColor] = colors.night;
         }
 
         const gradient = ctx.createLinearGradient(0, 0, 0, this.groundY);
@@ -217,7 +246,7 @@ export class Background {
         ctx.fillRect(0, 0, this.canvasWidth, this.groundY);
 
         // Draw stars if night
-        if (cycle >= 350 && this.weather !== 'RAIN') {
+        if (cycle >= 3500 && this.weather !== 'RAIN') {
             ctx.fillStyle = '#FFF';
             for (let i = 0; i < 50; i++) {
                 const x = (i * 137) % this.canvasWidth;
@@ -228,12 +257,11 @@ export class Background {
     }
 
     drawFarMountains(ctx, camera) {
-        ctx.fillStyle = '#B8C5D6'; // Distant blue-gray
+        ctx.fillStyle = this.biomeData.mountains.far;
         const parallaxFactor = 0.1;
-        const width = this.canvasWidth * 2; // Repeat width
+        const width = this.canvasWidth * 2;
 
         this.farMountains.forEach(m => {
-            // Calculate relative position with wrapping
             let relX = (m.x - camera.x * parallaxFactor) % width;
             if (relX < -200) relX += width;
             if (relX > this.canvasWidth) relX -= width;
@@ -248,7 +276,7 @@ export class Background {
     }
 
     drawNearMountains(ctx, camera) {
-        ctx.fillStyle = '#6B8E6B'; // Green hills
+        ctx.fillStyle = this.biomeData.mountains.near;
         const parallaxFactor = 0.25;
         const width = this.canvasWidth * 2;
 
@@ -294,16 +322,16 @@ export class Background {
             if (relX < -50) relX += width;
             if (relX > this.canvasWidth) relX -= width;
 
-            // Dark green bush
-            ctx.fillStyle = '#2E7D32';
+            // Main bush color
+            ctx.fillStyle = this.biomeData.bush.main;
             ctx.beginPath();
             ctx.arc(relX, this.groundY - bush.size / 2, bush.size, 0, Math.PI * 2);
             ctx.arc(relX + bush.size * 0.8, this.groundY - bush.size / 2, bush.size * 0.8, 0, Math.PI * 2);
             ctx.arc(relX - bush.size * 0.6, this.groundY - bush.size / 2, bush.size * 0.7, 0, Math.PI * 2);
             ctx.fill();
 
-            // Lighter highlights
-            ctx.fillStyle = '#4CAF50';
+            // Highlight
+            ctx.fillStyle = this.biomeData.bush.highlight;
             ctx.beginPath();
             ctx.arc(relX, this.groundY - bush.size, bush.size * 0.5, 0, Math.PI * 2);
             ctx.fill();
@@ -312,51 +340,25 @@ export class Background {
 
     drawGround(ctx, canvasHeight, camera) {
         const groundHeight = canvasHeight - this.groundY;
-        const tileSize = 800; // Keep texture tile size fixed
+        const tileSize = 800;
         const scrollX = -camera.x % tileSize;
-
-        // Draw enough tiles to cover the screen width + buffer
         const tilesNeeded = Math.ceil(this.canvasWidth / tileSize) + 1;
 
         for (let i = 0; i < tilesNeeded; i++) {
             const drawX = scrollX + (i * tileSize);
-            if (drawX + tileSize < 0) continue; // Skip if off-screen left
+            if (drawX + tileSize < 0) continue;
 
-            // Grass layer on top
-            ctx.fillStyle = '#228B22';
+            // Top layer
+            ctx.fillStyle = this.biomeData.ground.top;
             ctx.fillRect(drawX, this.groundY, tileSize, 10);
 
-            // Grass texture (triangles)
-            ctx.fillStyle = '#32CD32';
-            for (let j = 0; j < tileSize; j += 12) {
-                ctx.beginPath();
-                ctx.moveTo(drawX + j, this.groundY);
-                ctx.lineTo(drawX + j + 6, this.groundY - 8);
-                ctx.lineTo(drawX + j + 12, this.groundY);
-                ctx.fill();
-            }
-
-            // Brown soil layer
-            ctx.fillStyle = '#8B4513';
+            // Middle layer
+            ctx.fillStyle = this.biomeData.ground.middle;
             ctx.fillRect(drawX, this.groundY + 10, tileSize, 25);
 
-            // Soil texture (darker lines)
-            ctx.fillStyle = '#654321';
-            for (let j = 0; j < tileSize; j += 30) {
-                ctx.fillRect(drawX + j, this.groundY + 15, 20, 3);
-            }
-
-            // Stone/bedrock layer
-            ctx.fillStyle = '#696969';
+            // Bottom layer
+            ctx.fillStyle = this.biomeData.ground.bottom;
             ctx.fillRect(drawX, this.groundY + 35, tileSize, groundHeight - 35);
-
-            // Stone texture
-            ctx.fillStyle = '#808080';
-            for (let j = 0; j < tileSize; j += 40) {
-                ctx.beginPath();
-                ctx.arc(drawX + j + 20, this.groundY + 50, 8, 0, Math.PI * 2);
-                ctx.fill();
-            }
         }
     }
 }

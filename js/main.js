@@ -1,7 +1,7 @@
-import { Game, preloadImages } from './Game.js?v=1.5.15';
+import { Game, preloadImages } from './Game.js?v=1.6.0';
 
 window.onload = async function () {
-    console.log('%c Game Version: 1.5.15 (Fix: Compact Landscape UI) ', 'background: #222; color: #00ffff; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 1.6.0 (Biomes & Parallax) ', 'background: #222; color: #00ffff; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements
@@ -105,7 +105,6 @@ window.onload = async function () {
     }
 
     // Fullscreen button
-    // Fullscreen button
     uiElements.fullscreenBtn.addEventListener('click', () => {
         try {
             if (!document.fullscreenElement &&
@@ -124,7 +123,6 @@ window.onload = async function () {
                     docEl.msRequestFullscreen();
                 } else {
                     console.log('Fullscreen API not supported');
-                    // Optional: Show a gentle toast instead of crashing
                 }
                 uiElements.fullscreenBtn.textContent = '⛶';
             } else {
@@ -141,7 +139,6 @@ window.onload = async function () {
             }
         } catch (error) {
             console.warn('Fullscreen toggle failed:', error);
-            // Prevent the global error handler from showing the red box
         }
     });
 

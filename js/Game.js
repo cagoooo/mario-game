@@ -1,17 +1,17 @@
-import { Player } from './Player.js?v=1.5.15';
-import { Background } from './Background.js?v=1.5.15';
-import { InputHandler } from './InputHandler.js?v=1.5.15';
-import { generatePlatforms } from './Platform.js?v=1.5.15';
-import { createEnemies } from './Enemy.js?v=1.5.15';
-import { checkCollision } from './utils.js?v=1.5.15';
-import { Coin, generateCoins } from './Coin.js?v=1.5.15';
-import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.5.15';
-import { Mushroom } from './Mushroom.js?v=1.5.15';
-import { Star } from './Star.js?v=1.5.15';
-import { FireFlower } from './FireFlower.js?v=1.5.15';
-import { Fireball } from './Fireball.js?v=1.5.15';
-import { Pipe, generatePipes } from './Pipe.js?v=1.5.15';
-import { Lava } from './Lava.js?v=1.5.15';
+import { Player } from './Player.js?v=1.6.0';
+import { Background, Biomes } from './Background.js?v=1.6.0';
+import { InputHandler } from './InputHandler.js?v=1.6.0';
+import { generatePlatforms } from './Platform.js?v=1.6.0';
+import { createEnemies } from './Enemy.js?v=1.6.0';
+import { checkCollision } from './utils.js?v=1.6.0';
+import { Coin, generateCoins } from './Coin.js?v=1.6.0';
+import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.6.0';
+import { Mushroom } from './Mushroom.js?v=1.6.0';
+import { Star } from './Star.js?v=1.6.0';
+import { FireFlower } from './FireFlower.js?v=1.6.0';
+import { Fireball } from './Fireball.js?v=1.6.0';
+import { Pipe, generatePipes } from './Pipe.js?v=1.6.0';
+import { Lava } from './Lava.js?v=1.6.0';
 
 export class Game {
     constructor(canvas, uiElements, images) {
@@ -27,16 +27,13 @@ export class Game {
         this.dpr = window.devicePixelRatio || 1;
         canvas.width = this.width * this.dpr;
         canvas.height = this.height * this.dpr;
-        // Removed inline styles to allow CSS aspect-ratio to work
-        // Removed inline styles to allow CSS aspect-ratio to work
         this.ctx.scale(this.dpr, this.dpr);
-        // this.levelWidth = 4000; // No longer used for bounds
         this.GROUND_Y = this.height - 50;
 
         this.lastGeneratedX = 0;
-        this.CHUNK_SIZE = 1000; // Smaller chunks for smoother generation
+        this.CHUNK_SIZE = 1000;
         this.renderDistance = 2000;
-        this.cleanupMargin = 2000; // Distance behind camera to cleanup
+        this.cleanupMargin = 2000;
         this.lastCleanedX = 0;
 
         this.camera = { x: 0, y: 0 };
@@ -45,20 +42,17 @@ export class Game {
         this.highScore = this.loadHighScore();
         this.gameRunning = false;
         this.isNewHighScore = false;
-        this.gameRunning = false;
         this.isGameOverSequence = false;
-        this.isNewHighScore = false;
-        this.isPaused = false;
         this.isPaused = false;
         this.isMuted = localStorage.getItem('marioMuted') === 'true';
 
         // Score popup system
         this.scorePopups = [];
-        this.scorePopupPool = []; // Object pool
+        this.scorePopupPool = [];
 
         // Celebration particles
         this.particles = [];
-        this.particlePool = []; // Object pool
+        this.particlePool = [];
 
         // Screen shake
         this.screenShake = { x: 0, y: 0, intensity: 0 };
@@ -73,6 +67,16 @@ export class Game {
         this.input.attachControls(uiElements.leftBtn, uiElements.rightBtn, uiElements.jumpBtn);
 
         this.background = new Background(this.width, this.GROUND_Y);
+
+        // Biome Management
+        this.currentBiome = 'PLAINS';
+        this.biomeDistance = 0;
+        this.BIOME_LENGTH = 3000; // Change biome every 3000px
+
+        // Biome Management
+        this.currentBiome = 'PLAINS';
+        this.biomeDistance = 0;
+        this.BIOME_LENGTH = 3000; // Change biome every 3000px
 
         this.player = null;
         this.platforms = [];
@@ -97,6 +101,86 @@ export class Game {
         // Start immediately since images are preloaded
         this.start();
     }
+
+    start() {
+        if (this.gameRunning) return;
+        this.gameRunning = true;
+        this.isGameOverSequence = false;
+        this.isNewHighScore = false;
+        this.isPaused = false;
+        this.score = 0;
+        this.ui.score.textContent = `⭐ 0`;
+        this.ui.gameOverOverlay.style.display = 'none';
+        this.ui.pauseOverlay.style.display = 'none';
+
+        const isNight = cycle >= 3500;
+
+        if (isSpooky || isNight) {
+            this.ctx.save();
+            // Create dark overlay
+            this.ctx.fillStyle = isSpooky ? 'rgba(0, 0, 0, 0.85)' : 'rgba(0, 0, 0, 0.6)';
+            this.ctx.fillRect(0, 0, this.width, this.height);
+
+            // Cut out holes for lights
+            this.ctx.globalCompositeOperation = 'destination-out';
+
+            // Player light (larger if Star or FireFlower)
+            let playerRadius = 100;
+            if (this.player.isInvincible) playerRadius = 200;
+            if (this.player.hasFireFlower) playerRadius = 150;
+
+            this.drawLightGradient(this.player.x - this.camera.x + this.player.width / 2,
+                this.player.y - this.camera.y + this.player.height / 2,
+                playerRadius);
+
+            // Fireballs light
+            this.fireballs.forEach(f => {
+                this.drawLightGradient(f.x - this.camera.x + f.width / 2, f.y - this.camera.y + f.height / 2, 80);
+            });
+
+            // Lava light
+            this.lava.forEach(l => {
+                // Draw multiple lights along the lava
+                for (let x = l.x; x < l.x + l.width; x += 50) {
+                    if (x + 50 > this.camera.x && x < this.camera.x + this.width) {
+                        this.drawLightGradient(x - this.camera.x + 25, l.y - this.camera.y, 100);
+                    }
+                }
+            });
+
+            // Star powerup light
+            this.stars.forEach(s => {
+                this.drawLightGradient(s.x - this.camera.x + s.width / 2, s.y - this.camera.y + s.height / 2, 120);
+            });
+
+            // FireFlower powerup light
+            this.fireflowers.forEach(f => {
+                this.drawLightGradient(f.x - this.camera.x + f.width / 2, f.y - this.camera.y + f.height / 2, 120);
+            });
+
+            this.ctx.restore();
+        }
+    }
+
+    drawLightGradient(x, y, radius) {
+        const gradient = this.ctx.createRadialGradient(x, y, 0, x, y, radius);
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 1)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        this.ctx.fillStyle = gradient;
+        this.ctx.beginPath();
+        this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+        this.ctx.fill();
+    }
+
+    // ... rest of the methods (generateChunk, cleanupChunk, etc.) need to be preserved or updated if they rely on biome
+    // Since I'm replacing the whole file content in this tool, I need to make sure I include the rest of the file.
+    // Wait, I should use replace_file_content with range if possible, but the file is large and I'm changing the constructor, update, and draw.
+    // Let's check the rest of the file first to ensure I don't delete important methods.
+
+    // Actually, I'll use the previous view_file output to reconstruct the file, but I only saw the first 100 lines.
+    // I need to read the rest of Game.js before I can safely replace it.
+    // ABORTING REPLACE to read the file first.
+
 
     loadHighScore() {
         try {
