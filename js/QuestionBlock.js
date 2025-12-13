@@ -160,10 +160,10 @@ export function generateQuestionBlocks(startX, endX, groundY) {
             const rand = Math.random();
             let content = 'coin';
 
-            if (rand < 0.05) content = 'star';        // 5%
-            else if (rand < 0.15) content = 'fireflower'; // 10%
-            else if (rand < 0.35) content = 'mushroom';   // 20%
-            // else coin (65%)
+            if (rand < 0.10) content = 'star';        // 10% (was 5%)
+            else if (rand < 0.30) content = 'fireflower'; // 20% (was 10%)
+            else if (rand < 0.60) content = 'mushroom';   // 30% (was 20%)
+            // else coin (40%) (was 65%)
 
             blocks.push(new QuestionBlock(x + Math.random() * 100, blockY, content));
         }
