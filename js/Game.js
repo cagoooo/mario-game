@@ -1,17 +1,17 @@
-import { Player } from './Player.js?v=1.6.2';
-import { Background, Biomes } from './Background.js?v=1.6.2';
-import { InputHandler } from './InputHandler.js?v=1.6.2';
-import { generatePlatforms } from './Platform.js?v=1.6.2';
-import { createEnemies } from './Enemy.js?v=1.6.2';
-import { checkCollision } from './utils.js?v=1.6.2';
-import { Coin, generateCoins } from './Coin.js?v=1.6.2';
-import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.6.2';
-import { Mushroom } from './Mushroom.js?v=1.6.2';
-import { Star } from './Star.js?v=1.6.2';
-import { FireFlower } from './FireFlower.js?v=1.6.2';
-import { Fireball } from './Fireball.js?v=1.6.2';
-import { Pipe, generatePipes } from './Pipe.js?v=1.6.2';
-import { Lava } from './Lava.js?v=1.6.2';
+import { Player } from './Player.js?v=1.6.3';
+import { Background, Biomes } from './Background.js?v=1.6.3';
+import { InputHandler } from './InputHandler.js?v=1.6.3';
+import { generatePlatforms } from './Platform.js?v=1.6.3';
+import { createEnemies } from './Enemy.js?v=1.6.3';
+import { checkCollision } from './utils.js?v=1.6.3';
+import { Coin, generateCoins } from './Coin.js?v=1.6.3';
+import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.6.3';
+import { Mushroom } from './Mushroom.js?v=1.6.3';
+import { Star } from './Star.js?v=1.6.3';
+import { FireFlower } from './FireFlower.js?v=1.6.3';
+import { Fireball } from './Fireball.js?v=1.6.3';
+import { Pipe, generatePipes } from './Pipe.js?v=1.6.3';
+import { Lava } from './Lava.js?v=1.6.3';
 
 export class Game {
     constructor(canvas, uiElements, images) {
@@ -376,6 +376,12 @@ export class Game {
         this.fireballs = [];
         this.pipes = [];
         this.lava = [];
+
+        // Randomize Starting Biome
+        const biomeKeys = Object.keys(Biomes);
+        this.currentBiome = biomeKeys[Math.floor(Math.random() * biomeKeys.length)];
+        this.background.setBiome(this.currentBiome);
+        this.biomeDistance = 0; // Reset distance for next transition
 
         this.lastGeneratedX = 0;
         this.generateChunk(0, this.CHUNK_SIZE * 2); // Generate initial buffer
