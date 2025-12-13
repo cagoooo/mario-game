@@ -1,17 +1,17 @@
-import { Player } from './Player.js?v=1.6.3';
-import { Background, Biomes } from './Background.js?v=1.6.3';
-import { InputHandler } from './InputHandler.js?v=1.6.3';
-import { generatePlatforms } from './Platform.js?v=1.6.3';
-import { createEnemies } from './Enemy.js?v=1.6.3';
-import { checkCollision } from './utils.js?v=1.6.3';
-import { Coin, generateCoins } from './Coin.js?v=1.6.3';
-import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.6.3';
-import { Mushroom } from './Mushroom.js?v=1.6.3';
-import { Star } from './Star.js?v=1.6.3';
-import { FireFlower } from './FireFlower.js?v=1.6.3';
-import { Fireball } from './Fireball.js?v=1.6.3';
-import { Pipe, generatePipes } from './Pipe.js?v=1.6.3';
-import { Lava } from './Lava.js?v=1.6.3';
+import { Player } from './Player.js?v=1.6.4';
+import { Background, Biomes } from './Background.js?v=1.6.4';
+import { InputHandler } from './InputHandler.js?v=1.6.4';
+import { generatePlatforms } from './Platform.js?v=1.6.4';
+import { createEnemies } from './Enemy.js?v=1.6.4';
+import { checkCollision } from './utils.js?v=1.6.4';
+import { Coin, generateCoins } from './Coin.js?v=1.6.4';
+import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.6.4';
+import { Mushroom } from './Mushroom.js?v=1.6.4';
+import { Star } from './Star.js?v=1.6.4';
+import { FireFlower } from './FireFlower.js?v=1.6.4';
+import { Fireball } from './Fireball.js?v=1.6.4';
+import { Pipe, generatePipes } from './Pipe.js?v=1.6.4';
+import { Lava } from './Lava.js?v=1.6.4';
 
 export class Game {
     constructor(canvas, uiElements, images) {
@@ -56,6 +56,9 @@ export class Game {
 
         // Screen shake
         this.screenShake = { x: 0, y: 0, intensity: 0 };
+
+        // Freeze frame (Hit stop)
+        this.freezeFrames = 0;
 
         // Audio
         this.audioCtx = null;
@@ -170,6 +173,10 @@ export class Game {
         this.ctx.beginPath();
         this.ctx.arc(x, y, radius, 0, Math.PI * 2);
         this.ctx.fill();
+    }
+
+    triggerFreeze(frames) {
+        this.freezeFrames = frames;
     }
 
     // ... rest of the methods (generateChunk, cleanupChunk, etc.) need to be preserved or updated if they rely on biome
@@ -331,6 +338,42 @@ export class Game {
                 oscillator.frequency.setValueAtTime(400, this.audioCtx.currentTime);
                 oscillator.frequency.linearRampToValueAtTime(800, this.audioCtx.currentTime + 0.1);
                 oscillator.frequency.linearRampToValueAtTime(1200, this.audioCtx.currentTime + 0.2);
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, this.audioCtx.currentTime + 0.3);
+                break;
+            case 'powerup_mushroom':
+                // Classic rising sound
+                oscillator.type = 'square';
+                gainNode.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
+                oscillator.frequency.setValueAtTime(440, this.audioCtx.currentTime);
+                oscillator.frequency.linearRampToValueAtTime(880, this.audioCtx.currentTime + 0.1);
+                oscillator.frequency.linearRampToValueAtTime(1760, this.audioCtx.currentTime + 0.2);
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, this.audioCtx.currentTime + 0.3);
+                break;
+            case 'powerup_fire':
+                // Energetic swoop
+                oscillator.type = 'sawtooth';
+                gainNode.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
+                oscillator.frequency.setValueAtTime(200, this.audioCtx.currentTime);
+                oscillator.frequency.linearRampToValueAtTime(600, this.audioCtx.currentTime + 0.1);
+                oscillator.frequency.linearRampToValueAtTime(400, this.audioCtx.currentTime + 0.2);
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, this.audioCtx.currentTime + 0.3);
+                break;
+            case 'powerup_star':
+                // Rapid high pitch
+                oscillator.type = 'triangle';
+                gainNode.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
+                oscillator.frequency.setValueAtTime(1000, this.audioCtx.currentTime);
+                oscillator.frequency.linearRampToValueAtTime(2000, this.audioCtx.currentTime + 0.1);
+                oscillator.frequency.linearRampToValueAtTime(1000, this.audioCtx.currentTime + 0.2);
+                oscillator.frequency.linearRampToValueAtTime(2000, this.audioCtx.currentTime + 0.3);
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, this.audioCtx.currentTime + 0.4);
+                break;
+            case 'shrink':
+                // Descending sound
+                oscillator.type = 'sawtooth';
+                gainNode.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
+                oscillator.frequency.setValueAtTime(880, this.audioCtx.currentTime);
+                oscillator.frequency.linearRampToValueAtTime(220, this.audioCtx.currentTime + 0.3);
                 gainNode.gain.exponentialRampToValueAtTime(0.00001, this.audioCtx.currentTime + 0.3);
                 break;
             case 'death':
@@ -495,6 +538,12 @@ export class Game {
     update() {
         if (!this.gameRunning || !this.player) return;
 
+        // Freeze frame logic
+        if (this.freezeFrames > 0) {
+            this.freezeFrames--;
+            return;
+        }
+
         // Auto-fireball for mobile/ease of use
         if (this.player.firePower) {
             this.autoFireTimer++;
@@ -573,7 +622,8 @@ export class Game {
                         this.gameOver();
                     } else if (result === 'shrink') {
                         this.triggerScreenShake(5);
-                        this.playSound('block');
+                        this.triggerFreeze(20); // Freeze on damage
+                        this.playSound('shrink');
                     }
                     // If 'invincible', do nothing (ignore collision)
                 }
@@ -708,10 +758,11 @@ export class Game {
             if (checkCollision(this.player, mushroom) && mushroom.active && !mushroom.spawning) {
                 if (this.player.powerUp()) {
                     // Powered up!
-                    this.playSound('powerup');
+                    this.playSound('powerup_mushroom');
+                    this.triggerFreeze(20); // Freeze on powerup
                 } else {
                     // Already big, just add points
-                    this.playSound('coin'); // Or powerup sound
+                    this.playSound('coin');
                 }
                 mushroom.collected = true;
                 this.score += 1000;
@@ -735,7 +786,8 @@ export class Game {
                 this.score += 1000;
                 this.addScorePopup(star.x, star.y, 1000);
                 this.updateScore();
-                this.playSound('powerup');
+                this.playSound('powerup_star');
+                this.triggerFreeze(20); // Freeze on star
 
                 // Always refresh star power
                 if (this.player.getStarPower) this.player.getStarPower();
@@ -757,8 +809,17 @@ export class Game {
                 this.score += 1000;
                 this.addScorePopup(flower.x, flower.y, 1000);
                 this.updateScore();
-                this.playSound('powerup');
-                if (this.player.getFirePower) this.player.getFirePower();
+
+                if (this.player.getFirePower) {
+                    const changed = !this.player.firePower;
+                    this.player.getFirePower();
+                    if (changed) {
+                        this.playSound('powerup_fire');
+                        this.triggerFreeze(20);
+                    } else {
+                        this.playSound('coin');
+                    }
+                }
             }
         }
 
@@ -790,7 +851,8 @@ export class Game {
                         this.gameOver();
                     } else if (result === 'shrink') {
                         this.triggerScreenShake(5);
-                        this.playSound('block'); // Damage sound
+                        this.triggerFreeze(20);
+                        this.playSound('shrink');
                     } else if (result === 'kill') {
                         // Star power kills piranha plant
                         pipe.killPiranha();

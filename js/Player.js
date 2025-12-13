@@ -320,7 +320,8 @@ export class Player {
         if (this.isPowered) return false; // Already powered
 
         this.isPowered = true;
-        this.powerScale = 1.4;
+        this.isPowered = true;
+        this.powerScale = 1.6; // Increased from 1.4 for better visibility
 
         // Grow Mario
         const oldHeight = this.height;
@@ -430,8 +431,9 @@ export class Player {
         const drawY = this.y + this.height; // Pivot at bottom
 
         ctx.translate(drawX, drawY);
-        ctx.scale(this.direction * this.scaleX, this.scaleY);
-        ctx.translate(0, -this.height / 2); // Move back to center for drawing
+        // Apply powerScale to visual drawing as well
+        ctx.scale(this.direction * this.scaleX * this.powerScale, this.scaleY * this.powerScale);
+        ctx.translate(0, -this.baseHeight / 2); // Move back to center using BASE height since we scaled up
 
         // Define colors based on state
         let pantsColor = '#1E90FF'; // Blue

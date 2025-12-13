@@ -1,7 +1,7 @@
-import { Game, preloadImages } from './Game.js?v=1.6.3';
+import { Game, preloadImages } from './Game.js?v=1.6.4';
 
 window.onload = async function () {
-    console.log('%c Game Version: 1.6.3 (Random Biome) ', 'background: #222; color: #00ffff; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 1.6.4 (Power-up FX) ', 'background: #222; color: #00ffff; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements
