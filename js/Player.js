@@ -13,9 +13,9 @@ export class Player {
         // Movement physics
         this.velX = 0;
         this.velY = 0;
-        this.maxSpeed = 5;
-        this.acceleration = 0.5;
-        this.friction = 0.85;
+        this.maxSpeed = 3.5; // Reduced from 5
+        this.acceleration = 0.3; // Reduced from 0.5
+        this.friction = 0.9; // Increased from 0.85 (less slippery)
 
         // Jump physics
         this.GRAVITY = 0.6;

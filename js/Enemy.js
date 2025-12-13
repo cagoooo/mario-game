@@ -248,7 +248,7 @@ export function createEnemies(startX, endX, canvasHeight, spriteSheet, difficult
     for (let i = 0; i < count; i++) {
         const x = startX + Math.random() * width;
         // Speed increases with difficulty
-        const baseSpeed = 1 + Math.random() * 1.5;
+        const baseSpeed = 0.5 + Math.random() * 1.0; // Reduced from 1.0 + random*1.5
         const speed = baseSpeed * difficultyMultiplier;
 
         const direction = Math.random() < 0.5 ? -1 : 1;
