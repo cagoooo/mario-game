@@ -1,17 +1,17 @@
-import { Player } from './Player.js?v=1.5.9';
-import { Background } from './Background.js?v=1.5.9';
-import { InputHandler } from './InputHandler.js?v=1.5.9';
-import { generatePlatforms } from './Platform.js?v=1.5.9';
-import { createEnemies } from './Enemy.js?v=1.5.9';
-import { checkCollision } from './utils.js?v=1.5.9';
-import { Coin, generateCoins } from './Coin.js?v=1.5.9';
-import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.5.9';
-import { Mushroom } from './Mushroom.js?v=1.5.9';
-import { Star } from './Star.js?v=1.5.9';
-import { FireFlower } from './FireFlower.js?v=1.5.9';
-import { Fireball } from './Fireball.js?v=1.5.9';
-import { Pipe, generatePipes } from './Pipe.js?v=1.5.9';
-import { Lava } from './Lava.js?v=1.5.9';
+import { Player } from './Player.js?v=1.5.10';
+import { Background } from './Background.js?v=1.5.10';
+import { InputHandler } from './InputHandler.js?v=1.5.10';
+import { generatePlatforms } from './Platform.js?v=1.5.10';
+import { createEnemies } from './Enemy.js?v=1.5.10';
+import { checkCollision } from './utils.js?v=1.5.10';
+import { Coin, generateCoins } from './Coin.js?v=1.5.10';
+import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.5.10';
+import { Mushroom } from './Mushroom.js?v=1.5.10';
+import { Star } from './Star.js?v=1.5.10';
+import { FireFlower } from './FireFlower.js?v=1.5.10';
+import { Fireball } from './Fireball.js?v=1.5.10';
+import { Pipe, generatePipes } from './Pipe.js?v=1.5.10';
+import { Lava } from './Lava.js?v=1.5.10';
 
 export class Game {
     constructor(canvas, uiElements, images) {
@@ -617,12 +617,16 @@ export class Game {
             // Check collision with player
             if (checkCollision(this.player, mushroom) && mushroom.active && !mushroom.spawning) {
                 if (this.player.powerUp()) {
-                    mushroom.collected = true;
-                    this.score += 1000;
-                    this.addScorePopup(mushroom.x, mushroom.y, 1000);
-                    this.updateScore();
-                    this.playSound('powerup'); // Need to add this sound
+                    // Powered up!
+                    this.playSound('powerup');
+                } else {
+                    // Already big, just add points
+                    this.playSound('coin'); // Or powerup sound
                 }
+                mushroom.collected = true;
+                this.score += 1000;
+                this.addScorePopup(mushroom.x, mushroom.y, 1000);
+                this.updateScore();
             }
         }
 
@@ -642,7 +646,8 @@ export class Game {
                 this.addScorePopup(star.x, star.y, 1000);
                 this.updateScore();
                 this.playSound('powerup');
-                // TODO: Implement Star Power logic in Player
+
+                // Always refresh star power
                 if (this.player.getStarPower) this.player.getStarPower();
             }
         }
@@ -663,7 +668,6 @@ export class Game {
                 this.addScorePopup(flower.x, flower.y, 1000);
                 this.updateScore();
                 this.playSound('powerup');
-                // TODO: Implement Fire Power logic in Player
                 if (this.player.getFirePower) this.player.getFirePower();
             }
         }

@@ -19,6 +19,10 @@ export class Star {
         this.spawnTimer = 0;
     }
 
+    spawn() {
+        this.spawning = true;
+    }
+
     update(platforms, groundY, canvasWidth) {
         if (this.collected) return;
 
