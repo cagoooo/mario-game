@@ -1,7 +1,7 @@
-import { Game, preloadImages } from './Game.js?v=1.5.12';
+import { Game, preloadImages } from './Game.js?v=1.5.13';
 
 window.onload = async function () {
-    console.log('%c Game Version: 1.5.12 (Fix: Landscape UI CSS) ', 'background: #222; color: #00ffff; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 1.5.13 (Fix: iPhone Landscape UI) ', 'background: #222; color: #00ffff; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements
@@ -149,20 +149,8 @@ window.onload = async function () {
     const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     const isSmallScreen = window.innerWidth <= 850;
 
-    // Always show controls if touch device, small screen, or for testing
-    if (isTouchDevice || isSmallScreen) {
-        document.getElementById('controlButtons').style.display = 'flex';
-    }
-
     // Handle window resize to show/hide buttons
     window.addEventListener('resize', () => {
-        if (window.innerWidth <= 850 || ('ontouchstart' in window) || (navigator.maxTouchPoints > 0)) {
-            document.getElementById('controlButtons').style.display = 'flex';
-        } else {
-            // Optional: hide if you want, but for now let's keep them if they were shown
-            // or strictly follow the rule:
-            // document.getElementById('controlButtons').style.display = 'none';
-        }
         checkOrientation();
     });
 
