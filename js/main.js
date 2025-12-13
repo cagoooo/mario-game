@@ -1,7 +1,7 @@
-import { Game, preloadImages } from './Game.js?v=1.5.11';
+import { Game, preloadImages } from './Game.js?v=1.5.12';
 
 window.onload = async function () {
-    console.log('%c Game Version: 1.5.11 (UI: Hide Controls in Landscape) ', 'background: #222; color: #00ffff; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 1.5.12 (Fix: Landscape UI CSS) ', 'background: #222; color: #00ffff; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements
