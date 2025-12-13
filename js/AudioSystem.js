@@ -19,6 +19,13 @@ export class EnhancedAudioSystem {
     }
 
     initAudio() {
+        if (this.audioCtx) {
+            if (this.audioCtx.state === 'suspended') {
+                this.audioCtx.resume();
+            }
+            return;
+        }
+
         try {
             this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
