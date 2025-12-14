@@ -295,53 +295,57 @@ export class EnhancedAudioSystem {
         }
     }
 
+    setBGMTempo(bpm) {
+        this.bgmTempo = bpm;
+    }
+
+    // 8-bit背景音樂模式
     startBGM(mode = 'normal') {
-        if (this.isMuted || !this.audioCtx) return;
-
-        // 如果已經在播放且模式相同，不重新開始
-        if (this.bgmInterval && this.currentBGMMode === mode) return;
-
+        console.log(`[AudioSystem] startBGM called with mode: ${mode}`);
         this.stopBGM();
-        this.currentBGMMode = mode;
-        this.currentBGMPattern = 0;
 
+        if (!this.audioCtx) {
+            console.warn('[AudioSystem] AudioContext is missing');
+            return;
+        }
+
+        console.log(`[AudioSystem] AudioContext state: ${this.audioCtx.state}`);
+
+        // Ensure context is running
         if (this.audioCtx.state === 'suspended') {
-            this.audioCtx.resume().catch(e => console.warn('Audio resume failed:', e));
+            console.log('[AudioSystem] Resuming suspended AudioContext...');
+            this.audioCtx.resume().then(() => {
+                console.log('[AudioSystem] AudioContext resumed successfully');
+            }).catch(e => console.warn('[AudioSystem] Audio resume failed:', e));
+        }
+
+        if (this.isMuted) {
+            console.log('[AudioSystem] System is muted, skipping BGM');
+            return;
         }
 
         try {
+            // 根據模式選擇音樂模式
             const musicPattern = this.getMusicPattern(mode);
-            const interval = (60 / musicPattern.tempo) * 1000;
+            console.log(`[AudioSystem] Selected pattern:`, musicPattern);
 
-            // 立即播放第一音
-            this.playBGMNote(musicPattern);
+            this.currentBGMPattern = 0;
 
-            // 設定循環
+            // 設定節拍間隔
+            const beatInterval = (60 / this.bgmTempo) * 1000; // 毫秒
+            console.log(`[AudioSystem] Starting BGM interval. Tempo: ${this.bgmTempo}, Interval: ${beatInterval}ms`);
+
             this.bgmInterval = setInterval(() => {
-                this.playBGMNote(musicPattern);
-            }, interval);
+                if (!this.isMuted && this.audioCtx && this.audioCtx.state === 'running') {
+                    this.playBGMNote(musicPattern);
+                } else {
+                    // console.log('[AudioSystem] Skipping note. Muted:', this.isMuted, 'State:', this.audioCtx ? this.audioCtx.state : 'No Ctx');
+                }
+            }, beatInterval);
 
         } catch (e) {
-            console.warn('BGM start failed:', e);
+            console.warn('[AudioSystem] BGM start failed:', e);
         }
-    }
-
-    stopBGM() {
-        if (this.bgmInterval) {
-            clearInterval(this.bgmInterval);
-            this.bgmInterval = null;
-        }
-
-        // 停止所有正在播放的音符
-        this.bgmNodes.forEach(node => {
-            try {
-                node.oscillator.stop();
-                node.gainNode.disconnect();
-            } catch (e) {
-                // Ignore errors if already stopped
-            }
-        });
-        this.bgmNodes = [];
     }
 
     getMusicPattern(mode) {
@@ -518,6 +522,10 @@ export class EnhancedAudioSystem {
     playBGMNote(pattern) {
         if (!this.audioCtx) return;
 
+        console.log(`[AudioSystem] Playing note index: ${this.currentBGMPattern}`);
+
+        const currentTime = this.audioCtx.currentTime;
+
         // 播放主旋律
         if (pattern.melody && pattern.melody.length > 0) {
             const melodyNote = pattern.melody[this.currentBGMPattern % pattern.melody.length];
@@ -539,8 +547,6 @@ export class EnhancedAudioSystem {
 
     createBGMOscillator(frequency, duration, volume, type) {
         try {
-            if (!this.audioCtx) return;
-
             const oscillator = this.audioCtx.createOscillator();
             const gainNode = this.audioCtx.createGain();
 
@@ -557,27 +563,37 @@ export class EnhancedAudioSystem {
             oscillator.start(this.audioCtx.currentTime);
             oscillator.stop(this.audioCtx.currentTime + duration);
 
-            const node = { oscillator, gainNode };
-            this.bgmNodes.push(node);
+            this.bgmNodes.push({ oscillator, gainNode });
 
             // 清理過期節點
             setTimeout(() => {
-                try {
-                    const index = this.bgmNodes.indexOf(node);
-                    if (index > -1) {
-                        this.bgmNodes.splice(index, 1);
-                    }
-                    // 確保停止與斷開連接
-                    try { oscillator.stop(); } catch (e) { }
-                    try { gainNode.disconnect(); } catch (e) { }
-                } catch (e) {
-                    // 忽略錯誤
+                const index = this.bgmNodes.findIndex(node => node.oscillator === oscillator);
+                if (index > -1) {
+                    this.bgmNodes.splice(index, 1);
                 }
             }, duration * 1000 + 100);
 
         } catch (e) {
-            console.warn('Create oscillator failed:', e);
+            console.warn('[AudioSystem] BGM oscillator creation failed:', e);
         }
+    }
+
+    stopBGM() {
+        if (this.bgmInterval) {
+            clearInterval(this.bgmInterval);
+            this.bgmInterval = null;
+        }
+
+        // 停止所有BGM節點
+        this.bgmNodes.forEach(node => {
+            try {
+                node.oscillator.stop();
+                node.gainNode.disconnect();
+            } catch (e) {
+                // 節點可能已經停止
+            }
+        });
+        this.bgmNodes = [];
     }
 
     // 設定音量

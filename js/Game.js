@@ -1,18 +1,18 @@
-import { Player } from './Player.js?v=1.6.23';
-import { Background, Biomes } from './Background.js?v=1.6.23';
-import { InputHandler } from './InputHandler.js?v=1.6.23';
-import { generatePlatforms } from './Platform.js?v=1.6.23';
-import { createEnemies } from './Enemy.js?v=1.6.23';
-import { checkCollision } from './utils.js?v=1.6.23';
-import { Coin, generateCoins } from './Coin.js?v=1.6.23';
-import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.6.23';
-import { Mushroom } from './Mushroom.js?v=1.6.23';
-import { Star } from './Star.js?v=1.6.23';
-import { FireFlower } from './FireFlower.js?v=1.6.23';
-import { Fireball } from './Fireball.js?v=1.6.23';
-import { Pipe, generatePipes } from './Pipe.js?v=1.6.23';
-import { Lava } from './Lava.js?v=1.6.23';
-import { EnhancedAudioSystem } from './AudioSystem.js?v=1.6.23';
+import { Player } from './Player.js?v=1.6.19';
+import { Background, Biomes } from './Background.js?v=1.6.19';
+import { InputHandler } from './InputHandler.js?v=1.6.19';
+import { generatePlatforms } from './Platform.js?v=1.6.19';
+import { createEnemies } from './Enemy.js?v=1.6.19';
+import { checkCollision } from './utils.js?v=1.6.19';
+import { Coin, generateCoins } from './Coin.js?v=1.6.19';
+import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.6.19';
+import { Mushroom } from './Mushroom.js?v=1.6.19';
+import { Star } from './Star.js?v=1.6.19';
+import { FireFlower } from './FireFlower.js?v=1.6.19';
+import { Fireball } from './Fireball.js?v=1.6.19';
+import { Pipe, generatePipes } from './Pipe.js?v=1.6.19';
+import { Lava } from './Lava.js?v=1.6.19';
+import { EnhancedAudioSystem } from './AudioSystem.js?v=1.6.19';
 
 export class Game {
     constructor(canvas, uiElements, images) {
@@ -105,8 +105,17 @@ export class Game {
         this.handleAnyKeyRestart = this.handleAnyKeyRestart.bind(this);
 
         // Start immediately since images are preloaded
+        console.log('[Game] Calling start()...');
         this.start();
-        this.startBGM();
+        console.log('[Game] Calling startBGM()...');
+        console.log('[Game] Type of startBGM:', typeof this.startBGM);
+        console.log('[Game] startBGM source:', this.startBGM.toString());
+        try {
+            this.startBGM();
+        } catch (e) {
+            console.error('[Game] Error calling startBGM:', e);
+        }
+        console.log('[Game] Constructor finished.');
     }
 
     start() {
@@ -274,6 +283,33 @@ export class Game {
 
 
     playSound(type) {
+        if (this.audioSystem) {
+            this.audioSystem.playSound(type);
+        }
+    }
+
+    startBGM() {
+        console.log('[Game] startBGM method called');
+        if (this.audioSystem) {
+            // Use current biome for BGM, fallback to PLAINS
+            const bgmMode = this.currentBiome || 'PLAINS';
+            console.log(`[Game] Current BGM Mode: ${this.currentBGMMode}, Target: ${bgmMode}`);
+
+            if (this.currentBGMMode !== bgmMode) {
+                console.log(`[Game] Switching BGM to ${bgmMode}`);
+                this.audioSystem.startBGM(bgmMode);
+                this.currentBGMMode = bgmMode;
+            } else {
+                console.log('[Game] BGM mode unchanged, forcing restart check');
+                // Force restart if it's the first run or if audio context was suspended
+                this.audioSystem.startBGM(bgmMode);
+            }
+        } else {
+            console.warn('[Game] audioSystem is null in startBGM');
+        }
+    }
+
+    toggleMute() {
         if (this.audioSystem) {
             this.isMuted = this.audioSystem.toggleMute();
             return this.isMuted;
@@ -937,88 +973,9 @@ export class Game {
         this.gameLoop();
     }
 
-    toggleMute() {
-        this.isMuted = !this.isMuted;
-        localStorage.setItem('marioMuted', this.isMuted);
-        if (this.bgmGain) {
-            this.bgmGain.gain.value = this.isMuted ? 0 : 0.05;
-        }
-        if (this.isMuted) {
-            this.stopBGM();
-        } else {
-            this.startBGM();
-        }
-    }
-
-    startBGM() {
-        if (this.isMuted || !this.audioCtx) return;
-        if (this.bgmOscillator) return; // Already playing
-
-        // Simple looping melody
-        this.bgmOscillator = this.audioCtx.createOscillator();
-        this.bgmGain = this.audioCtx.createGain();
-
-        this.bgmOscillator.type = 'square';
-
-        // Determine frequency and tempo based on state
-        let isStarPower = this.player && this.player.starPower;
-
-        this.bgmGain.gain.value = 0.03;
-
-        this.bgmOscillator.connect(this.bgmGain);
-        this.bgmGain.connect(this.audioCtx.destination);
-
-        // Simple melody pattern
-        const notes = [262, 294, 330, 349, 392, 349, 330, 294];
-        let noteIndex = 0;
-
-        const playNote = () => {
-            if (!this.bgmOscillator || this.isPaused || !this.gameRunning) return;
-
-            // Check if state changed (e.g. star power ended or started)
-            // We can't easily restart here without recursion issues or complex state management
-            // So we'll just adjust on the fly if possible, or check if we need to restart
-
-            if (this.player) {
-                const currentStarPower = this.player.starPower;
-                if (currentStarPower !== isStarPower) {
-                    // State changed, restart BGM to pick up new settings
-                    this.stopBGM();
-                    this.startBGM();
-                    return;
-                }
-            }
-
-            // Calculate tempo based on difficulty and star power
-            let tempoMultiplier = this.getDifficultyMultiplier();
-            let pitchMultiplier = 1;
-
-            if (isStarPower) {
-                tempoMultiplier *= 1.5; // 50% faster
-                pitchMultiplier = 1.5; // Higher pitch
-            }
-
-            // Base note duration is 300ms
-            const noteDuration = 300 / tempoMultiplier;
-
-            const note = notes[noteIndex] * pitchMultiplier;
-            this.bgmOscillator.frequency.setValueAtTime(note, this.audioCtx.currentTime);
-
-            noteIndex = (noteIndex + 1) % notes.length;
-
-            setTimeout(playNote, noteDuration);
-        };
-
-        this.bgmOscillator.start();
-        playNote();
-    }
-
     stopBGM() {
-        if (this.bgmOscillator) {
-            this.bgmOscillator.stop();
-            this.bgmOscillator.disconnect();
-            this.bgmOscillator = null;
-            this.bgmGain = null;
+        if (this.audioSystem) {
+            this.audioSystem.stopBGM();
         }
     }
 
