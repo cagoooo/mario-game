@@ -24,7 +24,7 @@ export class Player {
         this.JUMP_FORCE = -16; // Increased from -14
         this.jumpHeld = false;
         this.jumpHoldTime = 0;
-        this.maxJumpHoldTime = 15; // Increased from 12
+        this.maxJumpHoldTime = 24; // Increased from 15 for higher max jump
         this.jumpCutMultiplier = 0.5;
 
         // Coyote time
@@ -221,7 +221,7 @@ export class Player {
 
         // Cut jump short if button released early (only after minimum hold time)
         // This ensures clicks/taps still give a decent jump
-        const minJumpHoldTime = 6; // Minimum frames before jump can be cut
+        const minJumpHoldTime = 10; // Increased from 6 for better light tap height
         if (!input.keys['Space'] && this.jumpHeld && this.velY < 0 && this.jumpHoldTime > minJumpHoldTime) {
             this.velY *= this.jumpCutMultiplier;
             this.jumpHeld = false;
