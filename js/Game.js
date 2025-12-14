@@ -1,18 +1,18 @@
-import { Player } from './Player.js?v=1.6.15';
-import { Background, Biomes } from './Background.js?v=1.6.15';
-import { InputHandler } from './InputHandler.js?v=1.6.15';
-import { generatePlatforms } from './Platform.js?v=1.6.15';
-import { createEnemies } from './Enemy.js?v=1.6.15';
-import { checkCollision } from './utils.js?v=1.6.15';
-import { Coin, generateCoins } from './Coin.js?v=1.6.15';
-import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.6.15';
-import { Mushroom } from './Mushroom.js?v=1.6.15';
-import { Star } from './Star.js?v=1.6.15';
-import { FireFlower } from './FireFlower.js?v=1.6.15';
-import { Fireball } from './Fireball.js?v=1.6.15';
-import { Pipe, generatePipes } from './Pipe.js?v=1.6.15';
-import { Lava } from './Lava.js?v=1.6.15';
-import { EnhancedAudioSystem } from './AudioSystem.js?v=1.6.15';
+import { Player } from './Player.js?v=1.6.16';
+import { Background, Biomes } from './Background.js?v=1.6.16';
+import { InputHandler } from './InputHandler.js?v=1.6.16';
+import { generatePlatforms } from './Platform.js?v=1.6.16';
+import { createEnemies } from './Enemy.js?v=1.6.16';
+import { checkCollision } from './utils.js?v=1.6.16';
+import { Coin, generateCoins } from './Coin.js?v=1.6.16';
+import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.6.16';
+import { Mushroom } from './Mushroom.js?v=1.6.16';
+import { Star } from './Star.js?v=1.6.16';
+import { FireFlower } from './FireFlower.js?v=1.6.16';
+import { Fireball } from './Fireball.js?v=1.6.16';
+import { Pipe, generatePipes } from './Pipe.js?v=1.6.16';
+import { Lava } from './Lava.js?v=1.6.16';
+import { EnhancedAudioSystem } from './AudioSystem.js?v=1.6.16';
 
 export class Game {
     constructor(canvas, uiElements, images) {
@@ -105,8 +105,11 @@ export class Game {
         this.handleAnyKeyRestart = this.handleAnyKeyRestart.bind(this);
 
         // Start immediately since images are preloaded
+        console.log('[Game] Calling start()...');
         this.start();
+        console.log('[Game] Calling startBGM()...');
         this.startBGM();
+        console.log('[Game] Constructor finished.');
     }
 
     start() {
