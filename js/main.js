@@ -1,7 +1,7 @@
-import { Game, preloadImages } from './Game.js?v=1.6.13';
+import { Game, preloadImages } from './Game.js?v=1.6.14';
 
 window.onload = async function () {
-    console.log('%c Game Version: 1.6.13 (Tempo Fix) ', 'background: #222; color: #00ffff; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 1.6.14 (Chrome Audio Fix) ', 'background: #222; color: #00ffff; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements

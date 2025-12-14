@@ -303,11 +303,16 @@ export class EnhancedAudioSystem {
     startBGM(mode = 'normal') {
         this.stopBGM();
 
-        if (!this.audioCtx || this.isMuted) return;
+        if (!this.audioCtx) return;
+
+        // Ensure context is running
+        if (this.audioCtx.state === 'suspended') {
+            this.audioCtx.resume().catch(e => console.warn('Audio resume failed:', e));
+        }
+
+        if (this.isMuted) return;
 
         try {
-            this.audioCtx.resume();
-
             // 根據模式選擇音樂模式
             const musicPattern = this.getMusicPattern(mode);
             this.currentBGMPattern = 0;
@@ -316,7 +321,7 @@ export class EnhancedAudioSystem {
             const beatInterval = (60 / this.bgmTempo) * 1000; // 毫秒
 
             this.bgmInterval = setInterval(() => {
-                if (!this.isMuted && this.audioCtx) {
+                if (!this.isMuted && this.audioCtx && this.audioCtx.state === 'running') {
                     this.playBGMNote(musicPattern);
                 }
             }, beatInterval);
