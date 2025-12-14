@@ -560,42 +560,6 @@ export class Game {
                     }
                     // If 'invincible', do nothing (ignore collision)
                 }
-            }
-        }
-
-        // Update score popups
-        for (let i = this.scorePopups.length - 1; i >= 0; i--) {
-            const popup = this.scorePopups[i];
-            popup.y += popup.velocity;
-            popup.life--;
-            if (popup.life <= 0) {
-                this.scorePopupPool.push(popup); // Return to pool
-                this.scorePopups.splice(i, 1);
-            }
-        }
-
-        // Update particles
-        for (let i = this.particles.length - 1; i >= 0; i--) {
-            const p = this.particles[i];
-            p.x += p.vx;
-            p.y += p.vy;
-            p.vy += 0.15;
-            p.life--;
-            if (p.life <= 0) {
-                this.particlePool.push(p); // Return to pool
-                this.particles.splice(i, 1);
-            }
-        }
-
-        // Update coins
-        for (let i = this.coins.length - 1; i >= 0; i--) {
-            const coin = this.coins[i];
-            coin.update();
-
-            if (!coin.collected && checkCollision(this.player, coin)) {
-                coin.collected = true;
-                this.coins.splice(i, 1);
-                this.score += 10;
                 this.addScorePopup(coin.x, coin.y, 10);
                 this.addParticles(coin.x + 10, coin.y + 12, 5, '#FFD700');
                 this.updateScore();
