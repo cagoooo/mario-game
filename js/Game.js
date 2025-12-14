@@ -1,18 +1,18 @@
-import { Player } from './Player.js?v=1.6.22';
-import { Background, Biomes } from './Background.js?v=1.6.22';
-import { InputHandler } from './InputHandler.js?v=1.6.22';
-import { generatePlatforms } from './Platform.js?v=1.6.22';
-import { createEnemies } from './Enemy.js?v=1.6.22';
-import { checkCollision } from './utils.js?v=1.6.22';
-import { Coin, generateCoins } from './Coin.js?v=1.6.22';
-import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.6.22';
-import { Mushroom } from './Mushroom.js?v=1.6.22';
-import { Star } from './Star.js?v=1.6.22';
-import { FireFlower } from './FireFlower.js?v=1.6.22';
-import { Fireball } from './Fireball.js?v=1.6.22';
-import { Pipe, generatePipes } from './Pipe.js?v=1.6.22';
-import { Lava } from './Lava.js?v=1.6.22';
-import { EnhancedAudioSystem } from './AudioSystem.js?v=1.6.22';
+import { Player } from './Player.js?v=1.7.0';
+import { Background, Biomes } from './Background.js?v=1.7.0';
+import { InputHandler } from './InputHandler.js?v=1.7.0';
+import { generatePlatforms } from './Platform.js?v=1.7.0';
+import { createEnemies } from './Enemy.js?v=1.7.0';
+import { checkCollision } from './utils.js?v=1.7.0';
+import { Coin, generateCoins } from './Coin.js?v=1.7.0';
+import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.7.0';
+import { Mushroom } from './Mushroom.js?v=1.7.0';
+import { Star } from './Star.js?v=1.7.0';
+import { FireFlower } from './FireFlower.js?v=1.7.0';
+import { Fireball } from './Fireball.js?v=1.7.0';
+import { Pipe, generatePipes } from './Pipe.js?v=1.7.0';
+import { Lava } from './Lava.js?v=1.7.0';
+import { EnhancedAudioSystem } from './AudioSystem.js?v=1.7.0';
 
 export class Game {
     constructor(canvas, uiElements, images) {
@@ -105,6 +105,7 @@ export class Game {
         this.handleAnyKeyRestart = this.handleAnyKeyRestart.bind(this);
 
         // Start immediately since images are preloaded
+        this.initLightSystem();
         this.start();
         this.startBGM();
     }
@@ -169,14 +170,39 @@ export class Game {
         }
     }
 
+    initLightSystem() {
+        this.lightSystem = {
+            cache: {},
+            getLight: (radius) => {
+                // Round radius to nearest 10 to reduce cache entries
+                const r = Math.ceil(radius / 10) * 10;
+                if (!this.lightSystem.cache[r]) {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = r * 2;
+                    canvas.height = r * 2;
+                    const ctx = canvas.getContext('2d');
+
+                    const gradient = ctx.createRadialGradient(r, r, 0, r, r, r);
+                    gradient.addColorStop(0, 'rgba(0, 0, 0, 1)');
+                    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(r, r, r, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    this.lightSystem.cache[r] = canvas;
+                }
+                return this.lightSystem.cache[r];
+            }
+        };
+    }
+
     drawLightGradient(x, y, radius) {
-        const gradient = this.ctx.createRadialGradient(x, y, 0, x, y, radius);
-        gradient.addColorStop(0, 'rgba(0, 0, 0, 1)');
-        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        this.ctx.fillStyle = gradient;
-        this.ctx.beginPath();
-        this.ctx.arc(x, y, radius, 0, Math.PI * 2);
-        this.ctx.fill();
+        const lightCanvas = this.lightSystem.getLight(radius);
+        const r = Math.ceil(radius / 10) * 10;
+        // Draw cached image centered at x, y
+        this.ctx.drawImage(lightCanvas, x - r, y - r);
     }
 
     triggerFreeze(frames) {
