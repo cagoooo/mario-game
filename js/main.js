@@ -1,7 +1,7 @@
-import { Game, preloadImages } from './Game.js?v=1.8.5';
+import { Game, preloadImages } from './Game.js?v=1.8.6';
 
 window.onload = async function () {
-    console.log('%c Game Version: 1.8.5 (Feature: Mobile Double Jump & Controls Polish) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 1.8.6 (Fix: Mobile Double Jump Debounce) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements

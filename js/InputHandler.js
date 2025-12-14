@@ -8,6 +8,7 @@ export class InputHandler {
         // Touch direction: -1 = left, 0 = none, 1 = right
         this.touchDirection = 0;
         this.isTouching = false;
+        this.lastTouchTime = 0;
 
         window.addEventListener('keydown', e => this.handleKeyDown(e));
         window.addEventListener('keyup', e => this.handleKeyUp(e));
@@ -34,8 +35,13 @@ export class InputHandler {
             this.mouseX = (e.clientX - rect.left) * scaleX;
         });
 
-        // Click handler - jump and set direction
-        canvas.addEventListener('click', (e) => {
+        // Mouse down handler - jump and set direction (replaces click for better responsiveness and to avoid conflicts)
+        canvas.addEventListener('mousedown', (e) => {
+            // Ignore if touch just happened (prevent ghost clicks)
+            if (this.lastTouchTime && Date.now() - this.lastTouchTime < 500) {
+                return;
+            }
+
             const rect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / rect.width;
             const clickX = (e.clientX - rect.left) * scaleX;
@@ -66,6 +72,7 @@ export class InputHandler {
             const centerX = canvas.width / 2;
 
             this.isTouching = true;
+            this.lastTouchTime = Date.now();
 
             // Set direction based on touch position
             if (touchX < centerX - 50) {
