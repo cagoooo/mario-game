@@ -129,6 +129,70 @@ export class Background {
     }
 
     // ... (updateWeather and updateParticles remain unchanged)
+    updateWeather() {
+        this.weatherTimer++;
+        if (this.weatherTimer > this.weatherDuration) {
+            this.weatherTimer = 0;
+            this.weatherDuration = 600 + Math.random() * 600;
+
+            // Weather logic based on biome
+            const rand = Math.random();
+            if (this.currentBiome === 'SNOW') {
+                this.weather = rand < 0.8 ? 'SNOW' : 'CLEAR';
+            } else if (this.currentBiome === 'DESERT') {
+                this.weather = 'CLEAR';
+            } else {
+                if (rand < 0.3) this.weather = 'CLEAR';
+                else if (rand < 0.65) this.weather = 'RAIN';
+                else this.weather = 'CLEAR'; // No snow in plains/spooky usually
+            }
+
+            if (this.weather === 'CLEAR') this.particles = [];
+        }
+
+        // Generate particles
+        if (this.weather === 'RAIN') {
+            for (let i = 0; i < 5; i++) {
+                this.particles.push({
+                    x: Math.random() * this.canvasWidth + (Math.random() * 500),
+                    y: -20,
+                    vx: -2 - Math.random() * 2,
+                    vy: 10 + Math.random() * 5,
+                    length: 10 + Math.random() * 10,
+                    type: 'rain'
+                });
+            }
+        } else if (this.weather === 'SNOW') {
+            if (Math.random() > 0.5) {
+                this.particles.push({
+                    x: Math.random() * this.canvasWidth,
+                    y: -10,
+                    vx: -1 + Math.random() * 2,
+                    vy: 1 + Math.random() * 2,
+                    size: 2 + Math.random() * 3,
+                    type: 'snow',
+                    angle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+    }
+
+    updateParticles() {
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            const p = this.particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+
+            if (p.type === 'snow') {
+                p.x += Math.sin(p.angle) * 0.5;
+                p.angle += 0.05;
+            }
+
+            if (p.y > this.groundY || p.x < -100 || p.x > this.canvasWidth + 100) {
+                this.particles.splice(i, 1);
+            }
+        }
+    }
 
     setTiles(spriteSheet) {
         this.tiles = spriteSheet;
