@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mario-game-v1.7.3';
+const CACHE_NAME = 'mario-game-v1.7.4';
 const urlsToCache = [
     './',
     './index.html',
@@ -23,11 +23,16 @@ const urlsToCache = [
     './assets/player.png',
     './assets/enemy.png',
     './assets/tiles.png',
-    './assets/icon-192.png'
+    './assets/tiles.png',
+    './assets/icon-192.png',
+    './favicon.ico'
 ];
 
 // Install event - cache files
 self.addEventListener('install', event => {
+    // Force immediate activation
+    self.skipWaiting();
+
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => {
@@ -45,7 +50,8 @@ self.addEventListener('fetch', event => {
                 // Return cached version or fetch from network
                 return response || fetch(event.request).catch(error => {
                     console.error('Fetch failed:', event.request.url, error);
-                    // Optional: Return a fallback image or offline page here
+                    // Return a 404 response or offline image if needed
+                    // return new Response('Offline', { status: 404, statusText: 'Offline' });
                 });
             })
     );
@@ -53,6 +59,9 @@ self.addEventListener('fetch', event => {
 
 // Activate event - clean old caches
 self.addEventListener('activate', event => {
+    // Claim clients immediately
+    event.waitUntil(self.clients.claim());
+
     event.waitUntil(
         caches.keys().then(cacheNames => {
             return Promise.all(
