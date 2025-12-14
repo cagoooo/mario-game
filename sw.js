@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mario-game-v1.6.23';
+const CACHE_NAME = 'mario-game-v1.6.24';
 const urlsToCache = [
     './',
     './index.html',
@@ -29,6 +29,7 @@ const urlsToCache = [
 
 // Install event - cache files
 self.addEventListener('install', event => {
+    self.skipWaiting(); // Force activation
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => {
@@ -46,8 +47,6 @@ self.addEventListener('fetch', event => {
                 // Return cached version or fetch from network
                 return response || fetch(event.request).catch(error => {
                     console.warn('Fetch failed for:', event.request.url, error);
-                    // You could return a custom offline page or placeholder image here
-                    // For now, we just let the error propagate so the browser knows it failed
                     throw error;
                 });
             })
@@ -66,6 +65,6 @@ self.addEventListener('activate', event => {
                     }
                 })
             );
-        })
+        }).then(() => self.clients.claim()) // Take control immediately
     );
 });

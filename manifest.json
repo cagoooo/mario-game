@@ -2,7 +2,7 @@
   "name": "超級瑪莉歐冒險",
   "short_name": "瑪莉歐冒險",
   "description": "經典瑪莉歐風格平台跳躍遊戲",
-  "start_url": "/mario-game/",
+  "start_url": "./index.html",
   "display": "fullscreen",
   "orientation": "landscape",
   "background_color": "#87CEEB",
