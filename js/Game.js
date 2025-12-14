@@ -1,18 +1,18 @@
-import { Player } from './Player.js?v=1.6.16';
-import { Background, Biomes } from './Background.js?v=1.6.16';
-import { InputHandler } from './InputHandler.js?v=1.6.16';
-import { generatePlatforms } from './Platform.js?v=1.6.16';
-import { createEnemies } from './Enemy.js?v=1.6.16';
-import { checkCollision } from './utils.js?v=1.6.16';
-import { Coin, generateCoins } from './Coin.js?v=1.6.16';
-import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.6.16';
-import { Mushroom } from './Mushroom.js?v=1.6.16';
-import { Star } from './Star.js?v=1.6.16';
-import { FireFlower } from './FireFlower.js?v=1.6.16';
-import { Fireball } from './Fireball.js?v=1.6.16';
-import { Pipe, generatePipes } from './Pipe.js?v=1.6.16';
-import { Lava } from './Lava.js?v=1.6.16';
-import { EnhancedAudioSystem } from './AudioSystem.js?v=1.6.16';
+import { Player } from './Player.js?v=1.6.17';
+import { Background, Biomes } from './Background.js?v=1.6.17';
+import { InputHandler } from './InputHandler.js?v=1.6.17';
+import { generatePlatforms } from './Platform.js?v=1.6.17';
+import { createEnemies } from './Enemy.js?v=1.6.17';
+import { checkCollision } from './utils.js?v=1.6.17';
+import { Coin, generateCoins } from './Coin.js?v=1.6.17';
+import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.6.17';
+import { Mushroom } from './Mushroom.js?v=1.6.17';
+import { Star } from './Star.js?v=1.6.17';
+import { FireFlower } from './FireFlower.js?v=1.6.17';
+import { Fireball } from './Fireball.js?v=1.6.17';
+import { Pipe, generatePipes } from './Pipe.js?v=1.6.17';
+import { Lava } from './Lava.js?v=1.6.17';
+import { EnhancedAudioSystem } from './AudioSystem.js?v=1.6.17';
 
 export class Game {
     constructor(canvas, uiElements, images) {
@@ -283,13 +283,23 @@ export class Game {
     }
 
     startBGM() {
+        console.log('[Game] startBGM method called');
         if (this.audioSystem) {
             // Use current biome for BGM, fallback to PLAINS
             const bgmMode = this.currentBiome || 'PLAINS';
+            console.log(`[Game] Current BGM Mode: ${this.currentBGMMode}, Target: ${bgmMode}`);
+
             if (this.currentBGMMode !== bgmMode) {
+                console.log(`[Game] Switching BGM to ${bgmMode}`);
                 this.audioSystem.startBGM(bgmMode);
                 this.currentBGMMode = bgmMode;
+            } else {
+                console.log('[Game] BGM mode unchanged, forcing restart check');
+                // Force restart if it's the first run or if audio context was suspended
+                this.audioSystem.startBGM(bgmMode);
             }
+        } else {
+            console.warn('[Game] audioSystem is null in startBGM');
         }
     }
 
