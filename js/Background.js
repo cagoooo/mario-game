@@ -47,57 +47,12 @@ export class Background {
         // Biome System
         this.currentBiome = 'PLAINS';
         this.biomeData = Biomes.PLAINS;
-
-        // Prerendering Cache
-        this.cache = {
-            farMountains: null,
-            nearMountains: null,
-            clouds: null,
-            bushes: null
-        };
-        this.needsRedraw = true;
-    }
-
-    prerenderLayer(width, height, drawCallback) {
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        drawCallback(ctx);
-        return canvas;
-    }
-
-    updateCache(canvasHeight) {
-        if (!this.needsRedraw) return;
-
-        // Far Mountains
-        this.cache.farMountains = this.prerenderLayer(this.canvasWidth * 2, canvasHeight, (ctx) => {
-            this.drawFarMountains(ctx, { x: 0 }, true);
-        });
-
-        // Near Mountains
-        this.cache.nearMountains = this.prerenderLayer(this.canvasWidth * 2, canvasHeight, (ctx) => {
-            this.drawNearMountains(ctx, { x: 0 }, true);
-        });
-
-        // Clouds
-        this.cache.clouds = this.prerenderLayer(this.canvasWidth * 2, canvasHeight, (ctx) => {
-            this.drawClouds(ctx, { x: 0 }, true);
-        });
-
-        // Bushes
-        this.cache.bushes = this.prerenderLayer(this.canvasWidth * 1.5, canvasHeight, (ctx) => {
-            this.drawBushes(ctx, { x: 0 }, true);
-        });
-
-        this.needsRedraw = false;
     }
 
     setBiome(biomeType) {
-        if (Biomes[biomeType] && this.currentBiome !== biomeType) {
+        if (Biomes[biomeType]) {
             this.currentBiome = biomeType;
             this.biomeData = Biomes[biomeType];
-            this.needsRedraw = true; // Trigger cache update
 
             // Reset weather on biome change for thematic consistency
             if (biomeType === 'SNOW') this.weather = 'SNOW';
@@ -227,35 +182,44 @@ export class Background {
     }
 
     draw(ctx, canvasHeight, camera) {
-        if (this.needsRedraw) {
-            this.updateCache(canvasHeight);
-        }
-
         this.drawSky(ctx, canvasHeight);
-
-        // Draw cached layers
-        this.drawLayer(ctx, this.cache.farMountains, camera, 0.1);
-        this.drawLayer(ctx, this.cache.nearMountains, camera, 0.25);
-        this.drawLayer(ctx, this.cache.clouds, camera, 0.15);
-        this.drawLayer(ctx, this.cache.bushes, camera, 0.7);
-
+        this.drawFarMountains(ctx, camera);
+        this.drawNearMountains(ctx, camera);
+        this.drawClouds(ctx, camera);
+        this.drawBushes(ctx, camera);
         this.drawGround(ctx, canvasHeight, camera);
         this.drawWeather(ctx);
     }
 
-    drawLayer(ctx, cachedCanvas, camera, parallaxFactor) {
-        if (!cachedCanvas) return;
-        const width = cachedCanvas.width;
-        const relX = -(camera.x * parallaxFactor) % width;
+    drawWeather(ctx) {
+        ctx.save();
 
-        ctx.drawImage(cachedCanvas, relX, 0);
-        // Draw second copy for seamless looping
-        if (relX < 0) {
-            ctx.drawImage(cachedCanvas, relX + width, 0);
+        this.particles.forEach(p => {
+            if (p.type === 'rain') {
+                ctx.strokeStyle = 'rgba(174, 194, 224, 0.6)';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y);
+                ctx.lineTo(p.x + p.vx, p.y + p.vy);
+                ctx.stroke();
+            } else if (p.type === 'snow') {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        });
+
+        // Overlay for atmosphere
+        if (this.weather === 'RAIN') {
+            ctx.fillStyle = 'rgba(0, 0, 20, 0.1)';
+            ctx.fillRect(0, 0, this.canvasWidth, this.groundY);
+        } else if (this.weather === 'SNOW') {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.fillRect(0, 0, this.canvasWidth, this.groundY);
         }
-        if (relX > 0) {
-            ctx.drawImage(cachedCanvas, relX - width, 0);
-        }
+
+        ctx.restore();
     }
 
     drawSky(ctx, canvasHeight) {
@@ -292,50 +256,15 @@ export class Background {
         }
     }
 
-    drawWeather(ctx) {
-        ctx.save();
-
-        this.particles.forEach(p => {
-            if (p.type === 'rain') {
-                ctx.strokeStyle = 'rgba(174, 194, 224, 0.6)';
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                ctx.moveTo(p.x, p.y);
-                ctx.lineTo(p.x + p.vx, p.y + p.vy);
-                ctx.stroke();
-            } else if (p.type === 'snow') {
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        });
-
-        // Overlay for atmosphere
-        if (this.weather === 'RAIN') {
-            ctx.fillStyle = 'rgba(0, 0, 20, 0.1)';
-            ctx.fillRect(0, 0, this.canvasWidth, this.groundY);
-        } else if (this.weather === 'SNOW') {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-            ctx.fillRect(0, 0, this.canvasWidth, this.groundY);
-        }
-
-        ctx.restore();
-    }
-
-    // Original draw methods modified to support prerendering (isPrerender flag)
-    drawFarMountains(ctx, camera, isPrerender = false) {
+    drawFarMountains(ctx, camera) {
         ctx.fillStyle = this.biomeData.mountains.far;
-        const parallaxFactor = isPrerender ? 0 : 0.1;
-        const width = isPrerender ? this.canvasWidth * 2 : this.canvasWidth * 2;
+        const parallaxFactor = 0.1;
+        const width = this.canvasWidth * 2;
 
         this.farMountains.forEach(m => {
-            let relX = (m.x - camera.x * parallaxFactor);
-            if (!isPrerender) {
-                relX = relX % width;
-                if (relX < -200) relX += width;
-                if (relX > this.canvasWidth) relX -= width;
-            }
+            let relX = (m.x - camera.x * parallaxFactor) % width;
+            if (relX < -200) relX += width;
+            if (relX > this.canvasWidth) relX -= width;
 
             ctx.beginPath();
             ctx.moveTo(relX, this.groundY);
@@ -346,18 +275,15 @@ export class Background {
         });
     }
 
-    drawNearMountains(ctx, camera, isPrerender = false) {
+    drawNearMountains(ctx, camera) {
         ctx.fillStyle = this.biomeData.mountains.near;
-        const parallaxFactor = isPrerender ? 0 : 0.25;
-        const width = isPrerender ? this.canvasWidth * 2 : this.canvasWidth * 2;
+        const parallaxFactor = 0.25;
+        const width = this.canvasWidth * 2;
 
         this.nearMountains.forEach(m => {
-            let relX = (m.x - camera.x * parallaxFactor);
-            if (!isPrerender) {
-                relX = relX % width;
-                if (relX < -200) relX += width;
-                if (relX > this.canvasWidth) relX -= width;
-            }
+            let relX = (m.x - camera.x * parallaxFactor) % width;
+            if (relX < -200) relX += width;
+            if (relX > this.canvasWidth) relX -= width;
 
             ctx.beginPath();
             ctx.moveTo(relX, this.groundY);
@@ -367,18 +293,15 @@ export class Background {
         });
     }
 
-    drawClouds(ctx, camera, isPrerender = false) {
+    drawClouds(ctx, camera) {
         ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-        const parallaxFactor = isPrerender ? 0 : 0.15;
-        const width = isPrerender ? this.canvasWidth * 2 : this.canvasWidth * 2;
+        const parallaxFactor = 0.15;
+        const width = this.canvasWidth * 2;
 
         this.clouds.forEach(cloud => {
-            let relX = (cloud.x - camera.x * parallaxFactor);
-            if (!isPrerender) {
-                relX = relX % width;
-                if (relX < -100) relX += width;
-                if (relX > this.canvasWidth) relX -= width;
-            }
+            let relX = (cloud.x - camera.x * parallaxFactor) % width;
+            if (relX < -100) relX += width;
+            if (relX > this.canvasWidth) relX -= width;
 
             ctx.beginPath();
             ctx.arc(relX, cloud.y, cloud.radius, 0, Math.PI * 2);
@@ -390,17 +313,14 @@ export class Background {
         });
     }
 
-    drawBushes(ctx, camera, isPrerender = false) {
-        const parallaxFactor = isPrerender ? 0 : 0.7;
-        const width = isPrerender ? this.canvasWidth * 1.5 : this.canvasWidth * 1.5;
+    drawBushes(ctx, camera) {
+        const parallaxFactor = 0.7;
+        const width = this.canvasWidth * 1.5;
 
         this.bushes.forEach(bush => {
-            let relX = (bush.x - camera.x * parallaxFactor);
-            if (!isPrerender) {
-                relX = relX % width;
-                if (relX < -50) relX += width;
-                if (relX > this.canvasWidth) relX -= width;
-            }
+            let relX = (bush.x - camera.x * parallaxFactor) % width;
+            if (relX < -50) relX += width;
+            if (relX > this.canvasWidth) relX -= width;
 
             // Main bush color
             ctx.fillStyle = this.biomeData.bush.main;
