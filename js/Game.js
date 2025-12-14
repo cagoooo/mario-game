@@ -1,7 +1,7 @@
 import { Player } from './Player.js?v=1.6.22';
 import { Background, Biomes } from './Background.js?v=1.6.22';
 import { InputHandler } from './InputHandler.js?v=1.6.22';
-import { checkCollision } from './utils.js?v=1.6.22';
+import { checkCollision, isEntityVisible } from './utils.js?v=1.6.22';
 import { LevelGenerator } from './LevelGenerator.js?v=1.7.5';
 import { CollisionSystem } from './CollisionSystem.js?v=1.7.6';
 import { EnemyManager } from './EnemyManager.js?v=1.7.7';
@@ -626,53 +626,98 @@ export class Game {
         this.background.draw(this.ctx, this.height, this.camera);
 
         // Draw question blocks
-        this.questionBlocks.forEach(block => block.draw(this.ctx, this.camera));
+        this.questionBlocks.forEach(block => {
+            if (isEntityVisible(block, this.camera, this.width, this.height)) {
+                block.draw(this.ctx, this.camera);
+            }
+        });
 
         // Draw pipes
         this.pipes.forEach(pipe => {
-            try {
-                pipe.draw(this.ctx, this.camera);
-            } catch (e) {
-                console.error('Error drawing pipe:', e);
+            if (isEntityVisible(pipe, this.camera, this.width, this.height)) {
+                try {
+                    pipe.draw(this.ctx, this.camera);
+                } catch (e) {
+                    console.error('Error drawing pipe:', e);
+                }
             }
         });
 
         // Draw Lava
-        this.lava.forEach(lava => lava.draw(this.ctx, this.camera));
+        this.lava.forEach(lava => {
+            if (isEntityVisible(lava, this.camera, this.width, this.height)) {
+                lava.draw(this.ctx, this.camera);
+            }
+        });
 
         // Draw coins
-        this.coins.forEach(coin => coin.draw(this.ctx, this.camera));
+        this.coins.forEach(coin => {
+            if (isEntityVisible(coin, this.camera, this.width, this.height)) {
+                coin.draw(this.ctx, this.camera);
+            }
+        });
 
-        this.platforms.forEach(p => p.draw(this.ctx, this.camera));
-        this.enemies.forEach(e => e.draw(this.ctx, this.camera));
+        this.platforms.forEach(p => {
+            if (isEntityVisible(p, this.camera, this.width, this.height)) {
+                p.draw(this.ctx, this.camera);
+            }
+        });
+
+        this.enemies.forEach(e => {
+            if (isEntityVisible(e, this.camera, this.width, this.height)) {
+                e.draw(this.ctx, this.camera);
+            }
+        });
 
         if (this.player) this.player.draw(this.ctx, this.camera);
 
         // Draw score popups
         this.scorePopups.forEach(popup => {
-            const screenX = popup.x - this.camera.x;
-            const alpha = popup.life / 60;
-            this.ctx.save();
-            this.ctx.globalAlpha = alpha;
-            this.ctx.font = 'bold 20px Arial';
-            this.ctx.fillStyle = '#FFD700';
-            this.ctx.strokeStyle = '#000';
-            this.ctx.lineWidth = 3;
-            this.ctx.textAlign = 'center';
-            this.ctx.strokeText(`+${popup.value}`, screenX, popup.y);
-            this.ctx.fillText(`+${popup.value}`, screenX, popup.y);
-            this.ctx.restore();
+            // Popups are small, simple check or just draw them (they fade out anyway)
+            // But let's cull them too if they are far off screen
+            if (popup.x > this.camera.x - 50 && popup.x < this.camera.x + this.width + 50) {
+                const screenX = popup.x - this.camera.x;
+                const alpha = popup.life / 60;
+                this.ctx.save();
+                this.ctx.globalAlpha = alpha;
+                this.ctx.font = 'bold 20px Arial';
+                this.ctx.fillStyle = '#FFD700';
+                this.ctx.strokeStyle = '#000';
+                this.ctx.lineWidth = 3;
+                this.ctx.textAlign = 'center';
+                this.ctx.strokeText(`+${popup.value}`, screenX, popup.y);
+                this.ctx.fillText(`+${popup.value}`, screenX, popup.y);
+                this.ctx.restore();
+            }
         });
 
         // Draw mushrooms
         this.mushrooms.forEach(mushroom => {
-            mushroom.draw(this.ctx, this.camera);
+            if (isEntityVisible(mushroom, this.camera, this.width, this.height)) {
+                mushroom.draw(this.ctx, this.camera);
+            }
         });
-        this.stars.forEach(star => star.draw(this.ctx, this.camera));
-        this.fireflowers.forEach(flower => flower.draw(this.ctx, this.camera));
-        this.fireballs.forEach(fb => fb.draw(this.ctx, this.camera));
+
+        this.stars.forEach(star => {
+            if (isEntityVisible(star, this.camera, this.width, this.height)) {
+                star.draw(this.ctx, this.camera);
+            }
+        });
+
+        this.fireflowers.forEach(flower => {
+            if (isEntityVisible(flower, this.camera, this.width, this.height)) {
+                flower.draw(this.ctx, this.camera);
+            }
+        });
+
+        this.fireballs.forEach(fb => {
+            if (isEntityVisible(fb, this.camera, this.width, this.height)) {
+                fb.draw(this.ctx, this.camera);
+            }
+        });
 
         // Draw particles
+        // ParticleSystem handles its own drawing, we might want to optimize inside it later
         this.particleSystem.draw(this.ctx, this.camera);
 
         // Draw new high score indicator
@@ -691,8 +736,6 @@ export class Game {
         }
 
         this.ctx.restore(); // Restore from screen shake
-
-
     }
 
     triggerScreenShake(intensity) {

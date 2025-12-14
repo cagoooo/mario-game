@@ -47,6 +47,10 @@ export class Background {
         // Biome System
         this.currentBiome = 'PLAINS';
         this.biomeData = Biomes.PLAINS;
+
+        // Off-screen Canvases
+        this.layerCanvases = {};
+        this.initLayerCanvases();
     }
 
     setBiome(biomeType) {
@@ -59,7 +63,81 @@ export class Background {
             else if (biomeType === 'DESERT') this.weather = 'CLEAR';
             else if (biomeType === 'SPOOKY') this.weather = Math.random() > 0.5 ? 'RAIN' : 'CLEAR';
             else this.weather = Math.random() > 0.7 ? 'RAIN' : 'CLEAR';
+
+            // Regenerate canvases with new biome colors
+            this.initLayerCanvases();
         }
+    }
+
+    initLayerCanvases() {
+        // Far Mountains
+        this.layerCanvases.farMountains = this.createLayerCanvas(this.canvasWidth * 2, (ctx) => {
+            ctx.fillStyle = this.biomeData.mountains.far;
+            this.farMountains.forEach(m => {
+                ctx.beginPath();
+                ctx.moveTo(m.x, this.groundY);
+                ctx.lineTo(m.x + m.width / 2, this.groundY - m.height);
+                ctx.lineTo(m.x + m.width, this.groundY);
+                ctx.closePath();
+                ctx.fill();
+            });
+        });
+
+        // Near Mountains
+        this.layerCanvases.nearMountains = this.createLayerCanvas(this.canvasWidth * 2, (ctx) => {
+            ctx.fillStyle = this.biomeData.mountains.near;
+            this.nearMountains.forEach(m => {
+                ctx.beginPath();
+                ctx.moveTo(m.x, this.groundY);
+                ctx.quadraticCurveTo(m.x + m.width / 2, this.groundY - m.height, m.x + m.width, this.groundY);
+                ctx.closePath();
+                ctx.fill();
+            });
+        });
+
+        // Clouds
+        this.layerCanvases.clouds = this.createLayerCanvas(this.canvasWidth * 2, (ctx) => {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+            this.clouds.forEach(cloud => {
+                // Draw cloud at its base position (we handle movement in update/draw)
+                // Wait, clouds move independently! They are NOT static.
+                // We cannot pre-render clouds easily if they move relative to each other.
+                // But in update(), they move: cloud.x += cloud.speed.
+                // So they are dynamic. We should NOT pre-render clouds if they move individually.
+                // Checking update(): yes, cloud.x changes.
+                // So we skip clouds for off-screen canvas, or we pre-render individual clouds?
+                // Individual cloud sprites?
+                // For now, let's skip clouds optimization or just pre-render the cloud SHAPE and draw that.
+            });
+        });
+
+        // Bushes
+        this.layerCanvases.bushes = this.createLayerCanvas(this.canvasWidth * 1.5, (ctx) => {
+            this.bushes.forEach(bush => {
+                // Main bush color
+                ctx.fillStyle = this.biomeData.bush.main;
+                ctx.beginPath();
+                ctx.arc(bush.x, this.groundY - bush.size / 2, bush.size, 0, Math.PI * 2);
+                ctx.arc(bush.x + bush.size * 0.8, this.groundY - bush.size / 2, bush.size * 0.8, 0, Math.PI * 2);
+                ctx.arc(bush.x - bush.size * 0.6, this.groundY - bush.size / 2, bush.size * 0.7, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Highlight
+                ctx.fillStyle = this.biomeData.bush.highlight;
+                ctx.beginPath();
+                ctx.arc(bush.x, this.groundY - bush.size, bush.size * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        });
+    }
+
+    createLayerCanvas(width, drawFn) {
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = this.groundY + 50; // Add some buffer
+        const ctx = canvas.getContext('2d');
+        drawFn(ctx);
+        return canvas;
     }
 
     generateMountains(count, sizeFactor) {
@@ -200,12 +278,41 @@ export class Background {
 
     draw(ctx, canvasHeight, camera) {
         this.drawSky(ctx, canvasHeight);
-        this.drawFarMountains(ctx, camera);
-        this.drawNearMountains(ctx, camera);
+
+        // Draw pre-rendered layers
+        this.drawLayer(ctx, this.layerCanvases.farMountains, camera, 0.05);
+        this.drawLayer(ctx, this.layerCanvases.nearMountains, camera, 0.15);
+
+        // Clouds are dynamic, draw normally
         this.drawClouds(ctx, camera);
-        this.drawBushes(ctx, camera);
+
+        this.drawLayer(ctx, this.layerCanvases.bushes, camera, 0.7);
+
         this.drawGround(ctx, canvasHeight, camera);
         this.drawWeather(ctx);
+    }
+
+    drawLayer(ctx, layerCanvas, camera, parallaxFactor) {
+        if (!layerCanvas) return;
+
+        const width = layerCanvas.width;
+        // Calculate scroll position
+        // We want: (x - camera * factor) % width
+        // But since we draw the whole canvas, we just need the offset.
+        // The original logic was: relX = (m.x - camera.x * parallaxFactor) % width
+        // So the whole layer shifts by -camera.x * parallaxFactor
+
+        let xOffset = -(camera.x * parallaxFactor) % width;
+        if (xOffset > 0) xOffset -= width; // Ensure it's negative or zero to start drawing from left
+
+        // Draw the canvas twice to cover the screen (seamless scrolling)
+        ctx.drawImage(layerCanvas, xOffset, 0);
+        ctx.drawImage(layerCanvas, xOffset + width, 0);
+
+        // If the screen is wider than the layer (unlikely given width=2*canvasWidth), we might need more
+        if (xOffset + width < this.canvasWidth) {
+            ctx.drawImage(layerCanvas, xOffset + width * 2, 0);
+        }
     }
 
     drawWeather(ctx) {
@@ -265,43 +372,8 @@ export class Background {
         }
     }
 
-    drawFarMountains(ctx, camera) {
-        ctx.fillStyle = this.biomeData.mountains.far;
-        const parallaxFactor = 0.05; // More distant feel
-        const width = this.canvasWidth * 2;
-
-        this.farMountains.forEach(m => {
-            let relX = (m.x - camera.x * parallaxFactor) % width;
-            if (relX < -200) relX += width;
-            if (relX > this.canvasWidth) relX -= width;
-
-            ctx.beginPath();
-            ctx.moveTo(relX, this.groundY);
-            ctx.lineTo(relX + m.width / 2, this.groundY - m.height);
-            ctx.lineTo(relX + m.width, this.groundY);
-            ctx.closePath();
-            ctx.fill();
-        });
-    }
-
-    drawNearMountains(ctx, camera) {
-        ctx.fillStyle = this.biomeData.mountains.near;
-        const parallaxFactor = 0.15; // Distinct from far mountains
-        const width = this.canvasWidth * 2;
-
-        this.nearMountains.forEach(m => {
-            let relX = (m.x - camera.x * parallaxFactor) % width;
-            if (relX < -200) relX += width;
-            if (relX > this.canvasWidth) relX -= width;
-
-            ctx.beginPath();
-            ctx.moveTo(relX, this.groundY);
-            ctx.quadraticCurveTo(relX + m.width / 2, this.groundY - m.height, relX + m.width, this.groundY);
-            ctx.closePath();
-            ctx.fill();
-        });
-    }
-
+    // Removed drawFarMountains, drawNearMountains, drawBushes as they are replaced by drawLayer
+    // Kept drawClouds as it is dynamic
     drawClouds(ctx, camera) {
         ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
         const parallaxFactor = 0.1; // Clouds move slowly
@@ -324,30 +396,7 @@ export class Background {
         });
     }
 
-    drawBushes(ctx, camera) {
-        const parallaxFactor = 0.7;
-        const width = this.canvasWidth * 1.5;
-
-        this.bushes.forEach(bush => {
-            let relX = (bush.x - camera.x * parallaxFactor) % width;
-            if (relX < -50) relX += width;
-            if (relX > this.canvasWidth) relX -= width;
-
-            // Main bush color
-            ctx.fillStyle = this.biomeData.bush.main;
-            ctx.beginPath();
-            ctx.arc(relX, this.groundY - bush.size / 2, bush.size, 0, Math.PI * 2);
-            ctx.arc(relX + bush.size * 0.8, this.groundY - bush.size / 2, bush.size * 0.8, 0, Math.PI * 2);
-            ctx.arc(relX - bush.size * 0.6, this.groundY - bush.size / 2, bush.size * 0.7, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Highlight
-            ctx.fillStyle = this.biomeData.bush.highlight;
-            ctx.beginPath();
-            ctx.arc(relX, this.groundY - bush.size, bush.size * 0.5, 0, Math.PI * 2);
-            ctx.fill();
-        });
-    }
+    // Removed drawBushes
 
     drawGround(ctx, canvasHeight, camera) {
         const groundHeight = canvasHeight - this.groundY;
