@@ -62,8 +62,13 @@ export class InputHandler {
             }, 500);
         });
 
-        // Touch start - jump and set direction
-        canvas.addEventListener('touchstart', (e) => {
+        // Touch start - jump and set direction (Global listener for full screen touch)
+        window.addEventListener('touchstart', (e) => {
+            // Ignore if touching a button or UI element
+            if (e.target.tagName === 'BUTTON' || e.target.closest('.controlButton') || e.target.closest('#gameUI')) {
+                return;
+            }
+
             e.preventDefault();
             const rect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / rect.width;
@@ -74,7 +79,7 @@ export class InputHandler {
             this.isTouching = true;
             this.lastTouchTime = Date.now();
 
-            // Set direction based on touch position
+            // Set direction based on touch position (relative to canvas center)
             if (touchX < centerX - 50) {
                 this.touchDirection = -1;
             } else if (touchX > centerX + 50) {
@@ -92,7 +97,12 @@ export class InputHandler {
         }, { passive: false });
 
         // Touch move - update direction continuously
-        canvas.addEventListener('touchmove', (e) => {
+        window.addEventListener('touchmove', (e) => {
+            // Ignore if touching a button or UI element
+            if (e.target.tagName === 'BUTTON' || e.target.closest('.controlButton') || e.target.closest('#gameUI')) {
+                return;
+            }
+
             e.preventDefault();
             const rect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / rect.width;
@@ -111,7 +121,7 @@ export class InputHandler {
         }, { passive: false });
 
         // Touch end - stop moving and release jump
-        canvas.addEventListener('touchend', (e) => {
+        window.addEventListener('touchend', (e) => {
             this.isTouching = false;
             this.touchDirection = 0;
             this.keys['Space'] = false; // Release jump button
