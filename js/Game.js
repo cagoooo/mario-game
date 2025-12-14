@@ -613,6 +613,20 @@ export class Game {
             }
         });
 
+        // Update score popups
+        for (let i = this.scorePopups.length - 1; i >= 0; i--) {
+            const popup = this.scorePopups[i];
+            popup.y += popup.velocity;
+            popup.life--;
+            if (popup.life <= 0) {
+                // this.scorePopupPool.push(popup); // Return to pool if implemented
+                this.scorePopups.splice(i, 1);
+            }
+        }
+
+        // Update particles
+        this.updateParticles();
+
         // Update Fireballs
         for (let i = this.fireballs.length - 1; i >= 0; i--) {
             const fireball = this.fireballs[i];
@@ -1007,6 +1021,71 @@ export class Game {
         if (!this.gameRunning) {
             // Prevent default behavior for some keys if needed, but generally let it pass
             this.restart();
+        }
+    }
+
+    addParticles(x, y, count, color, type = 'normal') {
+        for (let i = 0; i < count; i++) {
+            const particle = {
+                x: x,
+                y: y,
+                vx: (Math.random() - 0.5) * 6,
+                vy: (Math.random() - 0.5) * 6,
+                life: 1.0,
+                color: color,
+                type: type
+            };
+
+            if (type === 'sparkle') {
+                particle.vx *= 1.5; // Explode faster
+                particle.vy *= 1.5;
+                particle.size = Math.random() * 3 + 2;
+            } else if (type === 'dust') {
+                particle.vx = (Math.random() - 0.5) * 2;
+                particle.vy = -Math.random() * 2; // Float up
+                particle.life = 0.6;
+                particle.size = Math.random() * 4 + 2;
+                particle.color = 'rgba(255, 255, 255, 0.5)';
+            }
+
+            this.particles.push(particle);
+        }
+    }
+
+    createDustParticle(x, y) {
+        if (Math.random() > 0.3) return; // Don't spawn every frame
+        this.particles.push({
+            x: x + (Math.random() - 0.5) * 20,
+            y: y,
+            vx: (Math.random() - 0.5) * 1,
+            vy: -Math.random() * 1.5,
+            life: 0.5,
+            color: 'rgba(240, 240, 240, 0.4)',
+            type: 'dust',
+            size: Math.random() * 3 + 2
+        });
+    }
+
+    updateParticles() {
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            const p = this.particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life -= 0.02;
+
+            if (p.type === 'normal') {
+                p.vy += 0.2; // Gravity
+            } else if (p.type === 'sparkle') {
+                p.vy += 0.05; // Light gravity
+                p.size *= 0.95; // Shrink
+            } else if (p.type === 'dust') {
+                p.size *= 0.95; // Shrink
+                p.vx *= 0.9; // Slow down
+            }
+
+            if (p.life <= 0) {
+                this.particles.splice(i, 1);
+            }
         }
     }
 
