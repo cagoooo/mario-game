@@ -1,6 +1,16 @@
+import { ObjectPool } from './ObjectPool.js?v=1.7.2';
+
 // Base Enemy class (Goomba)
 export class Enemy {
     constructor(x, y, speed, direction, spriteSheet) {
+        this.init(x, y, speed, direction, spriteSheet);
+        this.type = 'goomba';
+
+        this.frameWidth = 32;
+        this.frameHeight = 32;
+    }
+
+    init(x, y, speed, direction, spriteSheet) {
         this.x = x;
         this.y = y;
         this.width = 30;
@@ -8,11 +18,7 @@ export class Enemy {
         this.speed = speed;
         this.direction = direction;
         this.spriteSheet = spriteSheet;
-        this.type = 'goomba';
         this.alive = true;
-
-        this.frameWidth = 32;
-        this.frameHeight = 32;
         this.animationFrame = 0;
         this.animationTick = 0;
     }
@@ -88,7 +94,12 @@ export class Enemy {
 export class Koopa extends Enemy {
     constructor(x, y, speed, direction) {
         super(x, y, speed, direction, null);
+        this.init(x, y, speed, direction);
         this.type = 'koopa';
+    }
+
+    init(x, y, speed, direction) {
+        super.init(x, y, speed, direction, null);
         this.height = 40;
         this.isShell = false;
         this.shellSpeed = 8;
@@ -175,7 +186,12 @@ export class Koopa extends Enemy {
 export class FlyingEnemy extends Enemy {
     constructor(x, y, speed, direction) {
         super(x, y, speed, direction, null);
+        this.init(x, y, speed, direction);
         this.type = 'flying';
+    }
+
+    init(x, y, speed, direction) {
+        super.init(x, y, speed, direction, null);
         this.baseY = y;
         this.floatOffset = 0;
         this.floatSpeed = 0.05;
@@ -235,6 +251,13 @@ export class FlyingEnemy extends Enemy {
     }
 }
 
+// Global Pools
+const enemyPools = {
+    goomba: new ObjectPool(() => new Enemy(0, 0, 0, 0, null), (e, x, y, s, d, sp) => e.init(x, y, s, d, sp), 20),
+    koopa: new ObjectPool(() => new Koopa(0, 0, 0, 0), (e, x, y, s, d) => e.init(x, y, s, d), 10),
+    flying: new ObjectPool(() => new FlyingEnemy(0, 0, 0, 0), (e, x, y, s, d) => e.init(x, y, s, d), 10)
+};
+
 export function createEnemies(startX, endX, canvasHeight, spriteSheet, difficultyMultiplier = 1) {
     const enemies = [];
     const groundY = canvasHeight - 50;
@@ -256,14 +279,20 @@ export function createEnemies(startX, endX, canvasHeight, spriteSheet, difficult
 
         if (type < 0.4) {
             // Regular Goomba (40%)
-            enemies.push(new Enemy(x, groundY - 30, speed, direction, spriteSheet));
+            enemies.push(enemyPools.goomba.get(x, groundY - 30, speed, direction, spriteSheet));
         } else if (type < 0.6) {
             // Koopa (20%)
-            enemies.push(new Koopa(x, groundY - 40, speed, direction));
+            enemies.push(enemyPools.koopa.get(x, groundY - 40, speed, direction));
         } else {
             // Flying enemy (40%)
-            enemies.push(new FlyingEnemy(x, groundY - 100 - Math.random() * 80, speed, direction));
+            enemies.push(enemyPools.flying.get(x, groundY - 100 - Math.random() * 80, speed, direction));
         }
     }
     return enemies;
+}
+
+export function releaseEnemy(enemy) {
+    if (enemyPools[enemy.type]) {
+        enemyPools[enemy.type].release(enemy);
+    }
 }

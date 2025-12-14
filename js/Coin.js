@@ -1,9 +1,15 @@
+import { ObjectPool } from './ObjectPool.js?v=1.7.2';
+
 export class Coin {
     constructor(x, y) {
-        this.x = x;
-        this.y = y;
+        this.init(x, y);
         this.width = 20;
         this.height = 24;
+    }
+
+    init(x, y) {
+        this.x = x;
+        this.y = y;
         this.collected = false;
 
         // Animation
@@ -105,6 +111,8 @@ export class Coin {
     }
 }
 
+const coinPool = new ObjectPool(() => new Coin(0, 0), (c, x, y) => c.init(x, y), 50);
+
 export function generateCoins(startX, endX, platforms) {
     const coins = [];
 
@@ -114,7 +122,7 @@ export function generateCoins(startX, endX, platforms) {
 
     for (let x = firstCoinX; x < endX; x += 150) {
         if (Math.random() > 0.3) {
-            coins.push(new Coin(x, 300)); // Adjust Y based on ground
+            coins.push(coinPool.get(x, 300)); // Adjust Y based on ground
         }
     }
 
@@ -124,10 +132,14 @@ export function generateCoins(startX, endX, platforms) {
             if (Math.random() > 0.4) {
                 const coinX = platform.x + platform.width / 2 - 10;
                 const coinY = platform.y - 50;
-                coins.push(new Coin(coinX, coinY));
+                coins.push(coinPool.get(coinX, coinY));
             }
         }
     });
 
     return coins;
+}
+
+export function releaseCoin(coin) {
+    coinPool.release(coin);
 }

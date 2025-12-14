@@ -1,18 +1,19 @@
-import { Player } from './Player.js?v=1.7.1';
-import { Background, Biomes } from './Background.js?v=1.7.1';
-import { InputHandler } from './InputHandler.js?v=1.7.1';
-import { generatePlatforms } from './Platform.js?v=1.7.1';
-import { createEnemies } from './Enemy.js?v=1.7.1';
-import { checkCollision } from './utils.js?v=1.7.1';
-import { Coin, generateCoins } from './Coin.js?v=1.7.1';
-import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.7.1';
-import { Mushroom } from './Mushroom.js?v=1.7.1';
-import { Star } from './Star.js?v=1.7.1';
-import { FireFlower } from './FireFlower.js?v=1.7.1';
-import { Fireball } from './Fireball.js?v=1.7.1';
-import { Pipe, generatePipes } from './Pipe.js?v=1.7.1';
-import { Lava } from './Lava.js?v=1.7.1';
-import { EnhancedAudioSystem } from './AudioSystem.js?v=1.7.1';
+import { Player } from './Player.js?v=1.7.2';
+import { Background, Biomes } from './Background.js?v=1.7.2';
+import { InputHandler } from './InputHandler.js?v=1.7.2';
+import { generatePlatforms } from './Platform.js?v=1.7.2';
+import { createEnemies, releaseEnemy } from './Enemy.js?v=1.7.2';
+import { checkCollision } from './utils.js?v=1.7.2';
+import { Coin, generateCoins, releaseCoin } from './Coin.js?v=1.7.2';
+import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.7.2';
+import { Mushroom } from './Mushroom.js?v=1.7.2';
+import { Star } from './Star.js?v=1.7.2';
+import { FireFlower } from './FireFlower.js?v=1.7.2';
+import { Fireball } from './Fireball.js?v=1.7.2';
+import { Pipe, generatePipes } from './Pipe.js?v=1.7.2';
+import { Lava } from './Lava.js?v=1.7.2';
+import { EnhancedAudioSystem } from './AudioSystem.js?v=1.7.2';
+import { ObjectPool } from './ObjectPool.js?v=1.7.2';
 
 export class Game {
     constructor(canvas, uiElements, images) {
@@ -53,7 +54,7 @@ export class Game {
 
         // Celebration particles
         this.particles = [];
-        this.particlePool = [];
+        this.initParticlePool();
 
         // Screen shake
         this.screenShake = { x: 0, y: 0, intensity: 0 };
@@ -79,10 +80,7 @@ export class Game {
         this.biomeDistance = 0;
         this.BIOME_LENGTH = 3000; // Change biome every 3000px
 
-        // Biome Management
-        this.currentBiome = 'PLAINS';
-        this.biomeDistance = 0;
-        this.BIOME_LENGTH = 3000; // Change biome every 3000px
+
 
         this.player = null;
         this.platforms = [];
@@ -263,11 +261,10 @@ export class Game {
         this.playSound('death');
     }
 
-    addParticles(x, y, count, color) {
-        for (let i = 0; i < count; i++) {
-            let p;
-            if (this.particlePool.length > 0) {
-                p = this.particlePool.pop();
+    initParticlePool() {
+        this.particlePool = new ObjectPool(
+            () => ({ x: 0, y: 0, vx: 0, vy: 0, life: 0, color: '#FFF', size: 0 }),
+            (p, x, y, color) => {
                 p.x = x;
                 p.y = y;
                 p.vx = (Math.random() - 0.5) * 8;
@@ -275,18 +272,16 @@ export class Game {
                 p.life = 60 + Math.random() * 30;
                 p.color = color;
                 p.size = 3 + Math.random() * 4;
-            } else {
-                p = {
-                    x: x,
-                    y: y,
-                    vx: (Math.random() - 0.5) * 8,
-                    vy: (Math.random() - 0.5) * 8 - 3,
-                    life: 60 + Math.random() * 30,
-                    color: color,
-                    size: 3 + Math.random() * 4
-                };
-            }
-            this.particles.push(p);
+            },
+            50
+        );
+    }
+
+    addParticles(x, y, count, color) {
+        if (!this.particlePool) this.initParticlePool();
+
+        for (let i = 0; i < count; i++) {
+            this.particles.push(this.particlePool.get(x, y, color));
         }
     }
 
@@ -538,6 +533,7 @@ export class Game {
                     // Add particles
                     this.addParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 8, '#FFD700');
 
+                    releaseEnemy(enemy); // Release to pool
                     this.enemies.splice(i, 1);
                     this.player.velY = -12 * 0.7;
                     this.score += 100;
@@ -559,6 +555,8 @@ export class Game {
                         // Star power instant kill
                         this.addScorePopup(enemy.x, enemy.y, 100);
                         this.addParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 8, '#FFD700');
+
+                        releaseEnemy(enemy); // Release to pool
                         this.enemies.splice(i, 1);
                         this.score += 100;
                         this.updateScore();
@@ -603,7 +601,9 @@ export class Game {
             p.vy += 0.15;
             p.life--;
             if (p.life <= 0) {
-                this.particlePool.push(p); // Return to pool
+                if (this.particlePool) {
+                    this.particlePool.release(p);
+                }
                 this.particles.splice(i, 1);
             }
         }
@@ -615,6 +615,7 @@ export class Game {
 
             if (!coin.collected && checkCollision(this.player, coin)) {
                 coin.collected = true;
+                releaseCoin(coin); // Release to pool
                 this.coins.splice(i, 1);
                 this.score += 10;
                 this.addScorePopup(coin.x, coin.y, 10);
