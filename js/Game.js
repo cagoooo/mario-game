@@ -493,6 +493,11 @@ export class Game {
 
         this.player.update(this.input, this.platforms, this.levelWidth, this.camera);
 
+        // Dust particles when running
+        if (this.player.grounded && Math.abs(this.player.velX) > 0.5) {
+            this.createDustParticle(this.player.x + this.player.width / 2, this.player.y + this.player.height);
+        }
+
         // Camera logic - update BEFORE player so mouse position calculation is accurate
         let targetCamX = this.player.x - this.width / 2 + this.player.width / 2;
         if (targetCamX < 0) targetCamX = 0;
@@ -620,6 +625,7 @@ export class Game {
                     if (result.type === 'coin') {
                         this.score += result.value;
                         this.addScorePopup(block.x + 16, block.y - 20, result.value);
+                        this.addParticles(block.x + 16, block.y - 20, 10, '#FFD700', 'sparkle'); // Sparkle burst
                         this.updateScore();
                         this.playSound('coin');
                     } else if (result.type === 'mushroom') {
