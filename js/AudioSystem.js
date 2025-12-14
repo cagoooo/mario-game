@@ -295,6 +295,55 @@ export class EnhancedAudioSystem {
         }
     }
 
+    startBGM(mode = 'normal') {
+        if (this.isMuted || !this.audioCtx) return;
+
+        // 如果已經在播放且模式相同，不重新開始
+        if (this.bgmInterval && this.currentBGMMode === mode) return;
+
+        this.stopBGM();
+        this.currentBGMMode = mode;
+        this.currentBGMPattern = 0;
+
+        if (this.audioCtx.state === 'suspended') {
+            this.audioCtx.resume().catch(e => console.warn('Audio resume failed:', e));
+        }
+
+        try {
+            const musicPattern = this.getMusicPattern(mode);
+            const interval = (60 / musicPattern.tempo) * 1000;
+
+            // 立即播放第一音
+            this.playBGMNote(musicPattern);
+
+            // 設定循環
+            this.bgmInterval = setInterval(() => {
+                this.playBGMNote(musicPattern);
+            }, interval);
+
+        } catch (e) {
+            console.warn('BGM start failed:', e);
+        }
+    }
+
+    stopBGM() {
+        if (this.bgmInterval) {
+            clearInterval(this.bgmInterval);
+            this.bgmInterval = null;
+        }
+
+        // 停止所有正在播放的音符
+        this.bgmNodes.forEach(node => {
+            try {
+                node.oscillator.stop();
+                node.gainNode.disconnect();
+            } catch (e) {
+                // Ignore errors if already stopped
+            }
+        });
+        this.bgmNodes = [];
+    }
+
     getMusicPattern(mode) {
         const patterns = {
             // 平原 (PLAINS) - 輕快明亮
