@@ -301,33 +301,50 @@ export class EnhancedAudioSystem {
 
     // 8-bit背景音樂模式
     startBGM(mode = 'normal') {
+        console.log(`[AudioSystem] startBGM called with mode: ${mode}`);
         this.stopBGM();
 
-        if (!this.audioCtx) return;
+        if (!this.audioCtx) {
+            console.warn('[AudioSystem] AudioContext is missing');
+            return;
+        }
+
+        console.log(`[AudioSystem] AudioContext state: ${this.audioCtx.state}`);
 
         // Ensure context is running
         if (this.audioCtx.state === 'suspended') {
-            this.audioCtx.resume().catch(e => console.warn('Audio resume failed:', e));
+            console.log('[AudioSystem] Resuming suspended AudioContext...');
+            this.audioCtx.resume().then(() => {
+                console.log('[AudioSystem] AudioContext resumed successfully');
+            }).catch(e => console.warn('[AudioSystem] Audio resume failed:', e));
         }
 
-        if (this.isMuted) return;
+        if (this.isMuted) {
+            console.log('[AudioSystem] System is muted, skipping BGM');
+            return;
+        }
 
         try {
             // 根據模式選擇音樂模式
             const musicPattern = this.getMusicPattern(mode);
+            console.log(`[AudioSystem] Selected pattern:`, musicPattern);
+
             this.currentBGMPattern = 0;
 
             // 設定節拍間隔
             const beatInterval = (60 / this.bgmTempo) * 1000; // 毫秒
+            console.log(`[AudioSystem] Starting BGM interval. Tempo: ${this.bgmTempo}, Interval: ${beatInterval}ms`);
 
             this.bgmInterval = setInterval(() => {
                 if (!this.isMuted && this.audioCtx && this.audioCtx.state === 'running') {
                     this.playBGMNote(musicPattern);
+                } else {
+                    // console.log('[AudioSystem] Skipping note. Muted:', this.isMuted, 'State:', this.audioCtx ? this.audioCtx.state : 'No Ctx');
                 }
             }, beatInterval);
 
         } catch (e) {
-            console.warn('BGM start failed:', e);
+            console.warn('[AudioSystem] BGM start failed:', e);
         }
     }
 
@@ -505,18 +522,24 @@ export class EnhancedAudioSystem {
     playBGMNote(pattern) {
         if (!this.audioCtx) return;
 
+        // console.log(`[AudioSystem] Playing note index: ${this.currentBGMPattern}`);
+
         const currentTime = this.audioCtx.currentTime;
 
         // 播放主旋律
-        const melodyNote = pattern.melody[this.currentBGMPattern % pattern.melody.length];
-        if (melodyNote.note > 0) {
-            this.createBGMOscillator(melodyNote.note, melodyNote.duration, 0.15, 'square');
+        if (pattern.melody && pattern.melody.length > 0) {
+            const melodyNote = pattern.melody[this.currentBGMPattern % pattern.melody.length];
+            if (melodyNote && melodyNote.note > 0) {
+                this.createBGMOscillator(melodyNote.note, melodyNote.duration, 0.15, 'square');
+            }
         }
 
         // 播放低音
-        const bassNote = pattern.bass[Math.floor(this.currentBGMPattern / 2) % pattern.bass.length];
-        if (bassNote.note > 0) {
-            this.createBGMOscillator(bassNote.note, bassNote.duration, 0.1, 'triangle');
+        if (pattern.bass && pattern.bass.length > 0) {
+            const bassNote = pattern.bass[Math.floor(this.currentBGMPattern / 2) % pattern.bass.length];
+            if (bassNote && bassNote.note > 0) {
+                this.createBGMOscillator(bassNote.note, bassNote.duration, 0.1, 'triangle');
+            }
         }
 
         this.currentBGMPattern++;
@@ -551,7 +574,7 @@ export class EnhancedAudioSystem {
             }, duration * 1000 + 100);
 
         } catch (e) {
-            console.warn('BGM oscillator creation failed:', e);
+            console.warn('[AudioSystem] BGM oscillator creation failed:', e);
         }
     }
 
