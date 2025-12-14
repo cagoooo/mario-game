@@ -1,21 +1,21 @@
-import { Player } from './Player.js?v=1.6.22';
-import { Background, Biomes } from './Background.js?v=1.6.22';
-import { InputHandler } from './InputHandler.js?v=1.6.22';
-import { checkCollision, isEntityVisible } from './utils.js?v=1.6.22';
-import { LevelGenerator } from './LevelGenerator.js?v=1.7.5';
-import { CollisionSystem } from './CollisionSystem.js?v=1.7.6';
-import { EnemyManager } from './EnemyManager.js?v=1.7.7';
-import { Coin } from './Coin.js?v=1.6.22';
-import { QuestionBlock } from './QuestionBlock.js?v=1.6.22';
-import { Mushroom } from './Mushroom.js?v=1.6.22';
-import { Star } from './Star.js?v=1.6.22';
-import { FireFlower } from './FireFlower.js?v=1.6.22';
-import { Fireball } from './Fireball.js?v=1.6.22';
-import { Pipe } from './Pipe.js?v=1.6.22';
-import { Lava } from './Lava.js?v=1.6.22';
-import { EnhancedAudioSystem } from './AudioSystem.js?v=1.6.22';
-import { ParticleSystem } from './ParticleSystem.js?v=1.8.0';
-import { ObjectPool } from './ObjectPool.js?v=1.8.0';
+import { Player } from './Player.js?v=1.8.9';
+import { Background, Biomes } from './Background.js?v=1.8.9';
+import { InputHandler } from './InputHandler.js?v=1.8.9';
+import { checkCollision, isEntityVisible } from './utils.js?v=1.8.9';
+import { LevelGenerator } from './LevelGenerator.js?v=1.8.9';
+import { CollisionSystem } from './CollisionSystem.js?v=1.8.9';
+import { EnemyManager } from './EnemyManager.js?v=1.8.9';
+import { Coin } from './Coin.js?v=1.8.9';
+import { QuestionBlock } from './QuestionBlock.js?v=1.8.9';
+import { Mushroom } from './Mushroom.js?v=1.8.9';
+import { Star } from './Star.js?v=1.8.9';
+import { FireFlower } from './FireFlower.js?v=1.8.9';
+import { Fireball } from './Fireball.js?v=1.8.9';
+import { Pipe } from './Pipe.js?v=1.8.9';
+import { Lava } from './Lava.js?v=1.8.9';
+import { EnhancedAudioSystem } from './AudioSystem.js?v=1.8.9';
+import { ParticleSystem } from './ParticleSystem.js?v=1.8.9';
+import { ObjectPool } from './ObjectPool.js?v=1.8.9';
 
 export class Game {
     constructor(canvas, uiElements, images) {
