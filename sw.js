@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mario-game-v1.7.2';
+const CACHE_NAME = 'mario-game-v1.7.3';
 const urlsToCache = [
     './',
     './index.html',
@@ -19,7 +19,11 @@ const urlsToCache = [
     './js/Fireball.js',
     './js/Pipe.js',
     './js/utils.js',
-    './manifest.json'
+    './manifest.json',
+    './assets/player.png',
+    './assets/enemy.png',
+    './assets/tiles.png',
+    './assets/icon-192.png'
 ];
 
 // Install event - cache files
@@ -39,7 +43,10 @@ self.addEventListener('fetch', event => {
         caches.match(event.request)
             .then(response => {
                 // Return cached version or fetch from network
-                return response || fetch(event.request);
+                return response || fetch(event.request).catch(error => {
+                    console.error('Fetch failed:', event.request.url, error);
+                    // Optional: Return a fallback image or offline page here
+                });
             })
     );
 });

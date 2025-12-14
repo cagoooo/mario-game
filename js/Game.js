@@ -1,19 +1,19 @@
-import { Player } from './Player.js?v=1.7.2';
-import { Background, Biomes } from './Background.js?v=1.7.2';
-import { InputHandler } from './InputHandler.js?v=1.7.2';
-import { generatePlatforms } from './Platform.js?v=1.7.2';
-import { createEnemies, releaseEnemy } from './Enemy.js?v=1.7.2';
-import { checkCollision } from './utils.js?v=1.7.2';
-import { Coin, generateCoins, releaseCoin } from './Coin.js?v=1.7.2';
-import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.7.2';
-import { Mushroom } from './Mushroom.js?v=1.7.2';
-import { Star } from './Star.js?v=1.7.2';
-import { FireFlower } from './FireFlower.js?v=1.7.2';
-import { Fireball } from './Fireball.js?v=1.7.2';
-import { Pipe, generatePipes } from './Pipe.js?v=1.7.2';
-import { Lava } from './Lava.js?v=1.7.2';
-import { EnhancedAudioSystem } from './AudioSystem.js?v=1.7.2';
-import { ObjectPool } from './ObjectPool.js?v=1.7.2';
+import { Player } from './Player.js?v=1.7.3';
+import { Background, Biomes } from './Background.js?v=1.7.3';
+import { InputHandler } from './InputHandler.js?v=1.7.3';
+import { generatePlatforms } from './Platform.js?v=1.7.3';
+import { createEnemies, releaseEnemy } from './Enemy.js?v=1.7.3';
+import { checkCollision } from './utils.js?v=1.7.3';
+import { Coin, generateCoins, releaseCoin } from './Coin.js?v=1.7.3';
+import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.7.3';
+import { Mushroom } from './Mushroom.js?v=1.7.3';
+import { Star } from './Star.js?v=1.7.3';
+import { FireFlower } from './FireFlower.js?v=1.7.3';
+import { Fireball } from './Fireball.js?v=1.7.3';
+import { Pipe, generatePipes } from './Pipe.js?v=1.7.3';
+import { Lava } from './Lava.js?v=1.7.3';
+import { EnhancedAudioSystem } from './AudioSystem.js?v=1.7.3';
+import { ObjectPool } from './ObjectPool.js?v=1.7.3';
 
 export class Game {
     constructor(canvas, uiElements, images) {
