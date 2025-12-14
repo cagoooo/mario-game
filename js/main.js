@@ -1,7 +1,7 @@
 import { Game, preloadImages } from './Game.js?v=1.6.22';
 
 window.onload = async function () {
-    console.log('%c Game Version: 1.7.6 (Refactor: CollisionSystem) ', 'background: #222; color: #00ffff; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 1.7.7 (Refactor: EnemyManager) ', 'background: #222; color: #00ffff; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements

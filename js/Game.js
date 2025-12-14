@@ -4,6 +4,7 @@ import { InputHandler } from './InputHandler.js?v=1.6.22';
 import { checkCollision } from './utils.js?v=1.6.22';
 import { LevelGenerator } from './LevelGenerator.js?v=1.7.5';
 import { CollisionSystem } from './CollisionSystem.js?v=1.7.6';
+import { EnemyManager } from './EnemyManager.js?v=1.7.7';
 import { Coin } from './Coin.js?v=1.6.22';
 import { QuestionBlock } from './QuestionBlock.js?v=1.6.22';
 import { Mushroom } from './Mushroom.js?v=1.6.22';
@@ -75,6 +76,7 @@ export class Game {
         this.background = new Background(this.width, this.GROUND_Y);
         this.levelGenerator = new LevelGenerator();
         this.collisionSystem = new CollisionSystem(this);
+        this.enemyManager = new EnemyManager();
 
         // Biome Management
         this.currentBiome = 'PLAINS';
@@ -88,7 +90,7 @@ export class Game {
 
         this.player = null;
         this.platforms = [];
-        this.enemies = [];
+        // this.enemies is now managed by EnemyManager, accessed via getter
         this.coins = [];
         this.questionBlocks = [];
         this.mushrooms = [];
@@ -507,10 +509,7 @@ export class Game {
         this.camera.x = targetCamX;
 
         // Update enemies
-        for (let i = this.enemies.length - 1; i >= 0; i--) {
-            const enemy = this.enemies[i];
-            enemy.update(this.camera.x + this.width + 1000); // Active area
-        }
+        this.enemyManager.update(this.camera.x + this.width + 1000);
 
         // Update question blocks
         this.questionBlocks.forEach(block => {
@@ -916,7 +915,7 @@ export class Game {
         const generated = this.levelGenerator.generateChunk(startX, endX, context);
 
         this.platforms.push(...generated.platforms);
-        this.enemies.push(...generated.enemies);
+        this.enemyManager.addEnemies(generated.enemies);
         this.coins.push(...generated.coins);
         this.questionBlocks.push(...generated.questionBlocks);
         this.pipes.push(...generated.pipes);
@@ -927,7 +926,7 @@ export class Game {
 
     cleanupObjects(minX) {
         this.platforms = this.platforms.filter(p => p.x + p.width > minX);
-        this.enemies = this.enemies.filter(e => e.x + e.width > minX);
+        this.enemyManager.cleanup(minX);
         this.coins = this.coins.filter(c => c.x + c.width > minX);
         this.questionBlocks = this.questionBlocks.filter(b => b.x + b.width > minX);
         this.pipes = this.pipes.filter(p => p.x + p.width > minX);
