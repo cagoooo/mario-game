@@ -490,6 +490,8 @@ export class EnhancedAudioSystem {
 
     createBGMOscillator(frequency, duration, volume, type) {
         try {
+            if (!this.audioCtx) return;
+
             const oscillator = this.audioCtx.createOscillator();
             const gainNode = this.audioCtx.createGain();
 
@@ -506,81 +508,86 @@ export class EnhancedAudioSystem {
             oscillator.start(this.audioCtx.currentTime);
             oscillator.stop(this.audioCtx.currentTime + duration);
 
-            this.bgmNodes.push({ oscillator, gainNode });
+            const node = { oscillator, gainNode };
+            this.bgmNodes.push(node);
 
             // 清理過期節點
             setTimeout(() => {
-                const index = this.bgmNodes.findIndex(node => node.oscillator === oscillator);
-
-                // 停止所有BGM節點
-                this.bgmNodes.forEach(node => {
-                    try {
-                        node.oscillator.stop();
-                        node.gainNode.disconnect();
-                    } catch (e) {
-                        // 節點可能已經停止
+                try {
+                    const index = this.bgmNodes.indexOf(node);
+                    if (index > -1) {
+                        this.bgmNodes.splice(index, 1);
                     }
-                });
-                this.bgmNodes = [];
-            }
-
-// 設定音量
-setMasterVolume(volume) {
-                if(this.masterGain) {
-                this.masterGain.gain.value = this.isMuted ? 0 : Math.max(0, Math.min(1, volume));
-            }
-        }
-
-setSFXVolume(volume) {
-            if (this.sfxGain) {
-                this.sfxGain.gain.value = Math.max(0, Math.min(1, volume));
-            }
-        }
-
-        setMusicVolume(volume) {
-            if (this.musicGain) {
-                this.musicGain.gain.value = Math.max(0, Math.min(1, volume));
-            }
-        }
-
-        // 切換靜音
-        toggleMute() {
-            this.isMuted = !this.isMuted;
-            localStorage.setItem('marioMuted', this.isMuted.toString());
-
-            if (this.masterGain) {
-                this.masterGain.gain.value = this.isMuted ? 0 : 0.3;
-            }
-
-            if (this.isMuted) {
-                this.stopBGM();
-            } else {
-                this.startBGM(); // Resume BGM
-            }
-
-            return this.isMuted;
-        }
-
-        // 設定BGM節拍速度
-        setBGMTempo(bpm) {
-            this.bgmTempo = Math.max(60, Math.min(200, bpm));
-
-            // 如果BGM正在播放，重新啟動以應用新節拍
-            if (this.bgmInterval) {
-                const wasPlaying = true;
-                this.stopBGM();
-                if (wasPlaying) {
-                    setTimeout(() => this.startBGM(), 100);
+                    // 確保停止與斷開連接
+                    try { oscillator.stop(); } catch (e) { }
+                    try { gainNode.disconnect(); } catch (e) { }
+                } catch (e) {
+                    // 忽略錯誤
                 }
-            }
+            }, duration * 1000 + 100);
+
+        } catch (e) {
+            console.warn('Create oscillator failed:', e);
+        }
+    }
+
+    // 設定音量
+    setMasterVolume(volume) {
+        if (this.masterGain) {
+            this.masterGain.gain.value = this.isMuted ? 0 : Math.max(0, Math.min(1, volume));
+        }
+    }
+
+    setSFXVolume(volume) {
+        if (this.sfxGain) {
+            this.sfxGain.gain.value = Math.max(0, Math.min(1, volume));
+        }
+    }
+
+    setMusicVolume(volume) {
+        if (this.musicGain) {
+            this.musicGain.gain.value = Math.max(0, Math.min(1, volume));
+        }
+    }
+
+    // 切換靜音
+    toggleMute() {
+        this.isMuted = !this.isMuted;
+        localStorage.setItem('marioMuted', this.isMuted.toString());
+
+        if (this.masterGain) {
+            this.masterGain.gain.value = this.isMuted ? 0 : 0.3;
         }
 
-        // 清理資源
-        destroy() {
+        if (this.isMuted) {
             this.stopBGM();
+        } else {
+            this.startBGM(); // Resume BGM
+        }
 
-            if (this.audioCtx) {
-                this.audioCtx.close();
+        return this.isMuted;
+    }
+
+    // 設定BGM節拍速度
+    setBGMTempo(bpm) {
+        this.bgmTempo = Math.max(60, Math.min(200, bpm));
+
+        // 如果BGM正在播放，重新啟動以應用新節拍
+        if (this.bgmInterval) {
+            const wasPlaying = true;
+            this.stopBGM();
+            if (wasPlaying) {
+                setTimeout(() => this.startBGM(), 100);
             }
         }
     }
+
+    // 清理資源
+    destroy() {
+        this.stopBGM();
+
+        if (this.audioCtx) {
+            this.audioCtx.close();
+        }
+    }
+}
