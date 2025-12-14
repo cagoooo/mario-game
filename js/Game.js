@@ -27,8 +27,8 @@ export class Game {
         this.width = 800; // Logical width
         this.height = 400; // Logical height
 
-        // High DPI Support
-        this.dpr = window.devicePixelRatio || 1;
+        // High DPI Support (Capped at 2.0 for performance)
+        this.dpr = Math.min(window.devicePixelRatio || 1, 2);
         canvas.width = this.width * this.dpr;
         canvas.height = this.height * this.dpr;
         this.ctx.scale(this.dpr, this.dpr);
