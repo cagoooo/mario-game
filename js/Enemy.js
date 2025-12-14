@@ -17,6 +17,17 @@ export class Enemy {
         this.animationTick = 0;
     }
 
+    reset(x, y, speed, direction) {
+        this.x = x;
+        this.y = y;
+        this.speed = speed;
+        this.direction = direction;
+        this.alive = true;
+        this.animationFrame = 0;
+        this.animationTick = 0;
+        // Type specific reset logic might be needed if subclasses override properties
+    }
+
     update(canvasWidth) {
         if (!this.alive) return;
 
@@ -94,18 +105,12 @@ export class Koopa extends Enemy {
         this.shellSpeed = 8;
     }
 
-    stomp() {
-        if (!this.isShell) {
-            this.isShell = true;
-            this.height = 20;
-            this.speed = 0;
-            return 100; // Score for first stomp
-        } else if (this.speed === 0) {
-            // Kick the shell
-            this.speed = this.shellSpeed;
-            return 0;
-        }
-        return 100;
+    reset(x, y, speed, direction) {
+        super.reset(x, y, speed, direction);
+        this.type = 'koopa';
+        this.height = 40;
+        this.isShell = false;
+        this.speed = speed; // Restore original speed
     }
 
     draw(ctx, camera) {
@@ -236,7 +241,7 @@ export class FlyingEnemy extends Enemy {
 }
 
 export function createEnemies(startX, endX, canvasHeight, spriteSheet, difficultyMultiplier = 1) {
-    const enemies = [];
+    const enemiesData = [];
     const groundY = canvasHeight - 50;
     const width = endX - startX;
 
@@ -256,14 +261,33 @@ export function createEnemies(startX, endX, canvasHeight, spriteSheet, difficult
 
         if (type < 0.4) {
             // Regular Goomba (40%)
-            enemies.push(new Enemy(x, groundY - 30, speed, direction, spriteSheet));
+            enemiesData.push({
+                type: 'goomba',
+                x: x,
+                y: groundY - 30,
+                speed: speed,
+                direction: direction,
+                spriteSheet: spriteSheet
+            });
         } else if (type < 0.6) {
             // Koopa (20%)
-            enemies.push(new Koopa(x, groundY - 40, speed, direction));
+            enemiesData.push({
+                type: 'koopa',
+                x: x,
+                y: groundY - 40,
+                speed: speed,
+                direction: direction
+            });
         } else {
             // Flying enemy (40%)
-            enemies.push(new FlyingEnemy(x, groundY - 100 - Math.random() * 80, speed, direction));
+            enemiesData.push({
+                type: 'flying',
+                x: x,
+                y: groundY - 100 - Math.random() * 80,
+                speed: speed,
+                direction: direction
+            });
         }
     }
-    return enemies;
+    return enemiesData;
 }
