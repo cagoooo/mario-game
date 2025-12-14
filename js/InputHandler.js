@@ -28,21 +28,11 @@ export class InputHandler {
     attachCanvas(canvas) {
         this.canvasWidth = canvas.width;
 
-        // Cache rect to avoid layout thrashing
-        this.rect = canvas.getBoundingClientRect();
-
-        // Update rect on resize or scroll
-        const updateRect = () => {
-            this.rect = canvas.getBoundingClientRect();
-        };
-        window.addEventListener('resize', updateRect);
-        window.addEventListener('scroll', updateRect);
-
         // Mouse move for position tracking - use window to track even outside canvas/over UI
         window.addEventListener('mousemove', e => {
-            // Use cached rect
-            const scaleX = canvas.width / this.rect.width;
-            this.mouseX = (e.clientX - this.rect.left) * scaleX;
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            this.mouseX = (e.clientX - rect.left) * scaleX;
         });
 
         // Mouse down handler - jump and set direction (replaces click for better responsiveness and to avoid conflicts)
@@ -52,9 +42,9 @@ export class InputHandler {
                 return;
             }
 
-            // Use cached rect
-            const scaleX = canvas.width / this.rect.width;
-            const clickX = (e.clientX - this.rect.left) * scaleX;
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const clickX = (e.clientX - rect.left) * scaleX;
             const centerX = canvas.width / 2;
 
             // Set direction based on click position
@@ -80,10 +70,10 @@ export class InputHandler {
             }
 
             e.preventDefault();
-            // Use cached rect
-            const scaleX = canvas.width / this.rect.width;
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
             const touch = e.touches[0];
-            const touchX = (touch.clientX - this.rect.left) * scaleX;
+            const touchX = (touch.clientX - rect.left) * scaleX;
             const centerX = canvas.width / 2;
 
             this.isTouching = true;
@@ -114,10 +104,10 @@ export class InputHandler {
             }
 
             e.preventDefault();
-            // Use cached rect
-            const scaleX = canvas.width / this.rect.width;
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
             const touch = e.touches[0];
-            const touchX = (touch.clientX - this.rect.left) * scaleX;
+            const touchX = (touch.clientX - rect.left) * scaleX;
             const centerX = canvas.width / 2;
 
             // Update direction based on touch position
