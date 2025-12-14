@@ -2,8 +2,8 @@ export class Star {
     constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.width = 30;
-        this.height = 30;
+        this.width = 40;
+        this.height = 40;
         this.active = true;
         this.collected = false;
 
@@ -86,6 +86,10 @@ export class Star {
 
         ctx.save();
         ctx.translate(drawX, drawY);
+
+        // Scale up to match new size (40px) from original design (30px)
+        const scale = this.width / 30;
+        ctx.scale(scale, scale);
 
         // Draw Star
         ctx.fillStyle = '#FFD700'; // Gold

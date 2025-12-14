@@ -1,7 +1,7 @@
-import { Game, preloadImages } from './Game.js?v=1.8.8';
+import { Game, preloadImages } from './Game.js?v=1.8.9';
 
 window.onload = async function () {
-    console.log('%c Game Version: 1.8.8 (Feature: Full Screen Touch & Physics Tuning) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 1.8.9 (Visual: Larger Items) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements
