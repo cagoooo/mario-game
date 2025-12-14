@@ -117,26 +117,27 @@ export class ParticleSystem {
     }
 
     draw(ctx, camera) {
+        if (this.activeParticles.length === 0) return;
+
+        // Batch drawing state changes
+        ctx.save();
+
         this.activeParticles.forEach(p => {
             const screenX = p.x - camera.x;
-            // Fade out based on life. 
-            // If life starts at ~1.0, alpha is life.
-            // If life starts at 60, alpha is life / 60.
 
             let alpha = p.life;
-            if (p.life > 1) alpha = 1; // Clamp if we use large numbers
+            if (p.life > 1) alpha = 1;
 
-            // Game.js used: alpha = p.life / 90; (for normal?)
-            // Let's try to standardize to 0.0-1.0 life range for new system.
-
-            ctx.save();
+            // Set alpha and color directly without save/restore per particle
             ctx.globalAlpha = Math.max(0, alpha);
             ctx.fillStyle = p.color;
+
             ctx.beginPath();
             ctx.arc(screenX, p.y, p.size, 0, Math.PI * 2);
             ctx.fill();
-            ctx.restore();
         });
+
+        ctx.restore();
     }
 
     cleanup(minX) {

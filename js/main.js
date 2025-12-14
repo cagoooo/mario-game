@@ -1,7 +1,7 @@
-import { Game, preloadImages } from './Game.js?v=1.8.11';
+import { Game, preloadImages } from './Game.js?v=1.8.12';
 
 window.onload = async function () {
-    console.log('%c Game Version: 1.8.11 (Performance: Sprite Caching) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 1.8.12 (Performance: Deep Optimization) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements

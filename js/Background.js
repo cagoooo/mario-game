@@ -66,6 +66,7 @@ export class Background {
 
             // Regenerate canvases with new biome colors
             this.initLayerCanvases();
+            this.layerCanvases.ground = null; // Force ground regeneration
         }
     }
 
@@ -399,7 +400,26 @@ export class Background {
     // Removed drawBushes
 
     drawGround(ctx, canvasHeight, camera) {
-        const groundHeight = canvasHeight - this.groundY;
+        // Create ground cache if it doesn't exist or if biome changed
+        if (!this.layerCanvases.ground) {
+            const tileSize = 800;
+            const groundHeight = canvasHeight - this.groundY;
+
+            this.layerCanvases.ground = this.createLayerCanvas(tileSize, (cacheCtx) => {
+                // Top layer
+                cacheCtx.fillStyle = this.biomeData.ground.top;
+                cacheCtx.fillRect(0, this.groundY, tileSize, 10);
+
+                // Middle layer
+                cacheCtx.fillStyle = this.biomeData.ground.middle;
+                cacheCtx.fillRect(0, this.groundY + 10, tileSize, 25);
+
+                // Bottom layer
+                cacheCtx.fillStyle = this.biomeData.ground.bottom;
+                cacheCtx.fillRect(0, this.groundY + 35, tileSize, groundHeight - 35);
+            });
+        }
+
         const tileSize = 800;
         const scrollX = -camera.x % tileSize;
         const tilesNeeded = Math.ceil(this.canvasWidth / tileSize) + 1;
@@ -408,17 +428,7 @@ export class Background {
             const drawX = scrollX + (i * tileSize);
             if (drawX + tileSize < 0) continue;
 
-            // Top layer
-            ctx.fillStyle = this.biomeData.ground.top;
-            ctx.fillRect(drawX, this.groundY, tileSize, 10);
-
-            // Middle layer
-            ctx.fillStyle = this.biomeData.ground.middle;
-            ctx.fillRect(drawX, this.groundY + 10, tileSize, 25);
-
-            // Bottom layer
-            ctx.fillStyle = this.biomeData.ground.bottom;
-            ctx.fillRect(drawX, this.groundY + 35, tileSize, groundHeight - 35);
+            ctx.drawImage(this.layerCanvases.ground, drawX, 0);
         }
     }
 }
