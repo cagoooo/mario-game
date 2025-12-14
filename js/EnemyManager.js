@@ -21,4 +21,8 @@ export class EnemyManager {
     getEnemies() {
         return this.enemies;
     }
+
+    reset() {
+        this.enemies = [];
+    }
 }

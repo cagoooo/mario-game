@@ -113,6 +113,10 @@ export class Game {
         this.startBGM();
     }
 
+    get enemies() {
+        return this.enemyManager.enemies;
+    }
+
     start() {
         if (this.gameRunning) return;
         this.gameRunning = true;
@@ -325,7 +329,9 @@ export class Game {
         this.player.setGroundY(this.GROUND_Y);
 
         this.platforms = [];
-        this.enemies = [];
+        this.platforms = [];
+        this.enemyManager.reset();
+        this.coins = [];
         this.coins = [];
         this.questionBlocks = [];
         this.mushrooms = [];
