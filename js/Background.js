@@ -258,6 +258,71 @@ export class Background {
         }
     }
 
+    drawSky(ctx, canvasHeight) {
+        const cycle = (this.currentScore || 0) % 5000; // Slower cycle
+        let topColor, bottomColor;
+        const colors = this.biomeData.sky;
+
+        if (cycle < 2000) {
+            // Day
+            [topColor, bottomColor] = colors.day;
+        } else if (cycle < 3500) {
+            // Sunset
+            [topColor, bottomColor] = colors.sunset;
+        } else {
+            // Night
+            [topColor, bottomColor] = colors.night;
+        }
+
+        const gradient = ctx.createLinearGradient(0, 0, 0, this.groundY);
+        gradient.addColorStop(0, topColor);
+        gradient.addColorStop(1, bottomColor);
+
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, this.canvasWidth, this.groundY);
+
+        // Draw stars if night
+        if (cycle >= 3500 && this.weather !== 'RAIN') {
+            ctx.fillStyle = '#FFF';
+            for (let i = 0; i < 50; i++) {
+                const x = (i * 137) % this.canvasWidth;
+                const y = (i * 53) % (this.groundY * 0.8);
+                ctx.fillRect(x, y, 2, 2);
+            }
+        }
+    }
+
+    drawWeather(ctx) {
+        ctx.save();
+
+        this.particles.forEach(p => {
+            if (p.type === 'rain') {
+                ctx.strokeStyle = 'rgba(174, 194, 224, 0.6)';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y);
+                ctx.lineTo(p.x + p.vx, p.y + p.vy);
+                ctx.stroke();
+            } else if (p.type === 'snow') {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        });
+
+        // Overlay for atmosphere
+        if (this.weather === 'RAIN') {
+            ctx.fillStyle = 'rgba(0, 0, 20, 0.1)';
+            ctx.fillRect(0, 0, this.canvasWidth, this.groundY);
+        } else if (this.weather === 'SNOW') {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.fillRect(0, 0, this.canvasWidth, this.groundY);
+        }
+
+        ctx.restore();
+    }
+
     // Original draw methods modified to support prerendering (isPrerender flag)
     drawFarMountains(ctx, camera, isPrerender = false) {
         ctx.fillStyle = this.biomeData.mountains.far;
