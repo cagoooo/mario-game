@@ -1,18 +1,18 @@
-import { Player } from './Player.js?v=1.6.18';
-import { Background, Biomes } from './Background.js?v=1.6.18';
-import { InputHandler } from './InputHandler.js?v=1.6.18';
-import { generatePlatforms } from './Platform.js?v=1.6.18';
-import { createEnemies } from './Enemy.js?v=1.6.18';
-import { checkCollision } from './utils.js?v=1.6.18';
-import { Coin, generateCoins } from './Coin.js?v=1.6.18';
-import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.6.18';
-import { Mushroom } from './Mushroom.js?v=1.6.18';
-import { Star } from './Star.js?v=1.6.18';
-import { FireFlower } from './FireFlower.js?v=1.6.18';
-import { Fireball } from './Fireball.js?v=1.6.18';
-import { Pipe, generatePipes } from './Pipe.js?v=1.6.18';
-import { Lava } from './Lava.js?v=1.6.18';
-import { EnhancedAudioSystem } from './AudioSystem.js?v=1.6.18';
+import { Player } from './Player.js?v=1.6.19';
+import { Background, Biomes } from './Background.js?v=1.6.19';
+import { InputHandler } from './InputHandler.js?v=1.6.19';
+import { generatePlatforms } from './Platform.js?v=1.6.19';
+import { createEnemies } from './Enemy.js?v=1.6.19';
+import { checkCollision } from './utils.js?v=1.6.19';
+import { Coin, generateCoins } from './Coin.js?v=1.6.19';
+import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.6.19';
+import { Mushroom } from './Mushroom.js?v=1.6.19';
+import { Star } from './Star.js?v=1.6.19';
+import { FireFlower } from './FireFlower.js?v=1.6.19';
+import { Fireball } from './Fireball.js?v=1.6.19';
+import { Pipe, generatePipes } from './Pipe.js?v=1.6.19';
+import { Lava } from './Lava.js?v=1.6.19';
+import { EnhancedAudioSystem } from './AudioSystem.js?v=1.6.19';
 
 export class Game {
     constructor(canvas, uiElements, images) {
@@ -105,17 +105,8 @@ export class Game {
         this.handleAnyKeyRestart = this.handleAnyKeyRestart.bind(this);
 
         // Start immediately since images are preloaded
-        console.log('[Game] Calling start()...');
         this.start();
-        console.log('[Game] Calling startBGM()...');
-        console.log('[Game] Type of startBGM:', typeof this.startBGM);
-        console.log('[Game] startBGM source:', this.startBGM.toString());
-        try {
-            this.startBGM();
-        } catch (e) {
-            console.error('[Game] Error calling startBGM:', e);
-        }
-        console.log('[Game] Constructor finished.');
+        this.startBGM();
     }
 
     start() {
@@ -283,33 +274,6 @@ export class Game {
 
 
     playSound(type) {
-        if (this.audioSystem) {
-            this.audioSystem.playSound(type);
-        }
-    }
-
-    startBGM() {
-        console.log('[Game] startBGM method called');
-        if (this.audioSystem) {
-            // Use current biome for BGM, fallback to PLAINS
-            const bgmMode = this.currentBiome || 'PLAINS';
-            console.log(`[Game] Current BGM Mode: ${this.currentBGMMode}, Target: ${bgmMode}`);
-
-            if (this.currentBGMMode !== bgmMode) {
-                console.log(`[Game] Switching BGM to ${bgmMode}`);
-                this.audioSystem.startBGM(bgmMode);
-                this.currentBGMMode = bgmMode;
-            } else {
-                console.log('[Game] BGM mode unchanged, forcing restart check');
-                // Force restart if it's the first run or if audio context was suspended
-                this.audioSystem.startBGM(bgmMode);
-            }
-        } else {
-            console.warn('[Game] audioSystem is null in startBGM');
-        }
-    }
-
-    toggleMute() {
         if (this.audioSystem) {
             this.isMuted = this.audioSystem.toggleMute();
             return this.isMuted;
