@@ -1,16 +1,15 @@
 import { Player } from './Player.js?v=1.6.22';
 import { Background, Biomes } from './Background.js?v=1.6.22';
 import { InputHandler } from './InputHandler.js?v=1.6.22';
-import { generatePlatforms } from './Platform.js?v=1.6.22';
-import { createEnemies } from './Enemy.js?v=1.6.22';
 import { checkCollision } from './utils.js?v=1.6.22';
-import { Coin, generateCoins } from './Coin.js?v=1.6.22';
-import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.6.22';
+import { LevelGenerator } from './LevelGenerator.js?v=1.7.5';
+import { Coin } from './Coin.js?v=1.6.22';
+import { QuestionBlock } from './QuestionBlock.js?v=1.6.22';
 import { Mushroom } from './Mushroom.js?v=1.6.22';
 import { Star } from './Star.js?v=1.6.22';
 import { FireFlower } from './FireFlower.js?v=1.6.22';
 import { Fireball } from './Fireball.js?v=1.6.22';
-import { Pipe, generatePipes } from './Pipe.js?v=1.6.22';
+import { Pipe } from './Pipe.js?v=1.6.22';
 import { Lava } from './Lava.js?v=1.6.22';
 import { EnhancedAudioSystem } from './AudioSystem.js?v=1.6.22';
 
@@ -73,6 +72,7 @@ export class Game {
         this.input.attachControls(uiElements.leftBtn, uiElements.rightBtn, uiElements.jumpBtn);
 
         this.background = new Background(this.width, this.GROUND_Y);
+        this.levelGenerator = new LevelGenerator();
 
         // Biome Management
         this.currentBiome = 'PLAINS';
@@ -1111,23 +1111,21 @@ export class Game {
         }, 100);
     }
     generateChunk(startX, endX) {
-        const newPlatforms = generatePlatforms(startX, endX, this.height, this.images.tiles);
-        this.platforms.push(...newPlatforms);
-
         const difficulty = this.getDifficultyMultiplier();
-        const newEnemies = createEnemies(startX, endX, this.height, this.images.enemy, difficulty);
-        this.enemies.push(...newEnemies);
+        const context = {
+            height: this.height,
+            groundY: this.GROUND_Y,
+            images: this.images,
+            difficulty: difficulty
+        };
 
-        const newCoins = generateCoins(startX, endX, newPlatforms); // Pass only new platforms for optimization? Or all? 
-        // generateCoins currently iterates all platforms passed. Passing only new ones is safer for performance 
-        // but might miss coins bridging chunks. For now, passing newPlatforms is good.
-        this.coins.push(...newCoins);
+        const generated = this.levelGenerator.generateChunk(startX, endX, context);
 
-        const newBlocks = generateQuestionBlocks(startX, endX, this.GROUND_Y);
-        this.questionBlocks.push(...newBlocks);
-
-        const newPipes = generatePipes(startX, endX, this.GROUND_Y);
-        this.pipes.push(...newPipes);
+        this.platforms.push(...generated.platforms);
+        this.enemies.push(...generated.enemies);
+        this.coins.push(...generated.coins);
+        this.questionBlocks.push(...generated.questionBlocks);
+        this.pipes.push(...generated.pipes);
 
         this.lastGeneratedX = endX;
         this.levelWidth = endX; // Keep levelWidth updated for boundary checks if any remain
