@@ -560,15 +560,6 @@ export class Game {
                     }
                     // If 'invincible', do nothing (ignore collision)
                 }
-                this.addScorePopup(coin.x, coin.y, 10);
-                this.addParticles(coin.x + 10, coin.y + 12, 5, '#FFD700');
-                this.updateScore();
-                this.playSound('coin');
-
-                if (this.score > this.highScore && !this.isNewHighScore) {
-                    this.isNewHighScore = true;
-                    this.playSound('newHighScore');
-                }
             }
         }
 
@@ -653,6 +644,27 @@ export class Game {
                     fireball.active = false;
                     this.addParticles(fireball.x, fireball.y, 4, '#FF4500');
                     break; // One fireball kills one enemy
+                }
+            }
+        }
+
+        // Update coins
+        for (let i = this.coins.length - 1; i >= 0; i--) {
+            const coin = this.coins[i];
+            coin.update();
+
+            if (!coin.collected && checkCollision(this.player, coin)) {
+                coin.collected = true;
+                this.coins.splice(i, 1);
+                this.score += 10;
+                this.addScorePopup(coin.x, coin.y, 10);
+                this.addParticles(coin.x + 10, coin.y + 12, 5, '#FFD700', 'sparkle');
+                this.updateScore();
+                this.playSound('coin');
+
+                if (this.score > this.highScore && !this.isNewHighScore) {
+                    this.isNewHighScore = true;
+                    this.playSound('newHighScore');
                 }
             }
         }
