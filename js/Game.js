@@ -14,6 +14,7 @@ import { Fireball } from './Fireball.js?v=1.6.22';
 import { Pipe } from './Pipe.js?v=1.6.22';
 import { Lava } from './Lava.js?v=1.6.22';
 import { EnhancedAudioSystem } from './AudioSystem.js?v=1.6.22';
+import { ParticleSystem } from './ParticleSystem.js?v=1.8.0';
 
 export class Game {
     constructor(canvas, uiElements, images) {
@@ -53,8 +54,8 @@ export class Game {
         this.scorePopupPool = [];
 
         // Celebration particles
-        this.particles = [];
-        this.particlePool = [];
+        // Celebration particles
+        this.particleSystem = new ParticleSystem();
 
         // Screen shake
         this.screenShake = { x: 0, y: 0, intensity: 0 };
@@ -362,7 +363,7 @@ export class Game {
         this.camera = { x: 0, y: 0 };
         this.screenShake = { x: 0, y: 0, intensity: 0 };
         this.scorePopups = [];
-        this.particles = [];
+        this.particleSystem.activeParticles = []; // Or add a reset method to ParticleSystem
         this.updateScore();
 
         this.ui.pauseOverlay.style.display = 'none';
@@ -688,17 +689,7 @@ export class Game {
         this.fireballs.forEach(fb => fb.draw(this.ctx, this.camera));
 
         // Draw particles
-        this.particles.forEach(p => {
-            const screenX = p.x - this.camera.x;
-            const alpha = p.life / 90;
-            this.ctx.save();
-            this.ctx.globalAlpha = alpha;
-            this.ctx.fillStyle = p.color;
-            this.ctx.beginPath();
-            this.ctx.arc(screenX, p.y, p.size, 0, Math.PI * 2);
-            this.ctx.fill();
-            this.ctx.restore();
-        });
+        this.particleSystem.draw(this.ctx, this.camera);
 
         // Draw new high score indicator
         if (this.isNewHighScore && this.gameRunning) {
@@ -836,68 +827,15 @@ export class Game {
     }
 
     addParticles(x, y, count, color, type = 'normal') {
-        for (let i = 0; i < count; i++) {
-            const particle = {
-                x: x,
-                y: y,
-                vx: (Math.random() - 0.5) * 6,
-                vy: (Math.random() - 0.5) * 6,
-                life: 1.0,
-                color: color,
-                type: type
-            };
-
-            if (type === 'sparkle') {
-                particle.vx *= 1.5; // Explode faster
-                particle.vy *= 1.5;
-                particle.size = Math.random() * 3 + 2;
-            } else if (type === 'dust') {
-                particle.vx = (Math.random() - 0.5) * 2;
-                particle.vy = -Math.random() * 2; // Float up
-                particle.life = 0.6;
-                particle.size = Math.random() * 4 + 2;
-                particle.color = 'rgba(255, 255, 255, 0.5)';
-            }
-
-            this.particles.push(particle);
-        }
+        this.particleSystem.emit(x, y, count, color, type);
     }
 
     createDustParticle(x, y) {
-        if (Math.random() > 0.3) return; // Don't spawn every frame
-        this.particles.push({
-            x: x + (Math.random() - 0.5) * 20,
-            y: y,
-            vx: (Math.random() - 0.5) * 1,
-            vy: -Math.random() * 1.5,
-            life: 0.5,
-            color: 'rgba(240, 240, 240, 0.4)',
-            type: 'dust',
-            size: Math.random() * 3 + 2
-        });
+        this.particleSystem.createDust(x, y);
     }
 
     updateParticles() {
-        for (let i = this.particles.length - 1; i >= 0; i--) {
-            const p = this.particles[i];
-            p.x += p.vx;
-            p.y += p.vy;
-            p.life -= 0.02;
-
-            if (p.type === 'normal') {
-                p.vy += 0.2; // Gravity
-            } else if (p.type === 'sparkle') {
-                p.vy += 0.05; // Light gravity
-                p.size *= 0.95; // Shrink
-            } else if (p.type === 'dust') {
-                p.size *= 0.95; // Shrink
-                p.vx *= 0.9; // Slow down
-            }
-
-            if (p.life <= 0) {
-                this.particles.splice(i, 1);
-            }
-        }
+        this.particleSystem.update();
     }
 
     updateScore() {
@@ -940,7 +878,9 @@ export class Game {
         this.stars = this.stars.filter(s => s.x + s.width > minX);
         this.fireflowers = this.fireflowers.filter(f => f.x + f.width > minX);
         this.fireballs = this.fireballs.filter(f => f.x + f.width > minX);
-        this.particles = this.particles.filter(p => p.x > minX);
+        this.fireballs = this.fireballs.filter(f => f.x + f.width > minX);
+        this.particleSystem.cleanup(minX);
+        this.scorePopups = this.scorePopups.filter(p => p.x > minX);
         this.scorePopups = this.scorePopups.filter(p => p.x > minX);
     }
     getDifficultyMultiplier() {
