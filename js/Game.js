@@ -3,6 +3,7 @@ import { Background, Biomes } from './Background.js?v=1.6.22';
 import { InputHandler } from './InputHandler.js?v=1.6.22';
 import { checkCollision } from './utils.js?v=1.6.22';
 import { LevelGenerator } from './LevelGenerator.js?v=1.7.5';
+import { CollisionSystem } from './CollisionSystem.js?v=1.7.6';
 import { Coin } from './Coin.js?v=1.6.22';
 import { QuestionBlock } from './QuestionBlock.js?v=1.6.22';
 import { Mushroom } from './Mushroom.js?v=1.6.22';
@@ -73,6 +74,7 @@ export class Game {
 
         this.background = new Background(this.width, this.GROUND_Y);
         this.levelGenerator = new LevelGenerator();
+        this.collisionSystem = new CollisionSystem(this);
 
         // Biome Management
         this.currentBiome = 'PLAINS';
@@ -508,100 +510,11 @@ export class Game {
         for (let i = this.enemies.length - 1; i >= 0; i--) {
             const enemy = this.enemies[i];
             enemy.update(this.camera.x + this.width + 1000); // Active area
-
-            if (checkCollision(this.player, enemy)) {
-                // Relaxed stomp check: falling and player bottom is above enemy's bottom 20%
-                if (this.player.velY > 0 && this.player.y + this.player.height < enemy.y + enemy.height * 0.8) {
-                    // Add score popup at enemy position
-                    this.addScorePopup(enemy.x, enemy.y, 100);
-                    // Add particles
-                    this.addParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 8, '#FFD700');
-
-                    this.enemies.splice(i, 1);
-                    this.player.velY = -12 * 0.7;
-                    this.score += 100;
-                    this.updateScore();
-                    this.playSound('stomp');
-
-                    // Check for new high score during game
-                    if (this.score > this.highScore && !this.isNewHighScore) {
-                        this.isNewHighScore = true;
-                        this.addParticles(this.player.x, this.player.y, 20, '#FF0000');
-                        this.addParticles(this.player.x, this.player.y, 20, '#FFD700');
-                        this.playSound('newHighScore');
-                    }
-                } else {
-                    // Handle player hit
-                    const result = this.player.hit();
-
-                    if (result === 'kill') {
-                        // Star power instant kill
-                        this.addScorePopup(enemy.x, enemy.y, 100);
-                        this.addParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 8, '#FFD700');
-                        this.enemies.splice(i, 1);
-                        this.score += 100;
-                        this.updateScore();
-                        this.playSound('stomp'); // Use stomp sound for now
-
-                        // Check for new high score during game
-                        if (this.score > this.highScore && !this.isNewHighScore) {
-                            this.isNewHighScore = true;
-                            this.addParticles(this.player.x, this.player.y, 20, '#FF0000');
-                            this.addParticles(this.player.x, this.player.y, 20, '#FFD700');
-                            this.playSound('newHighScore');
-                        }
-                    } else if (result === 'dead') {
-                        this.triggerDeathEffect();
-                        this.gameOver();
-                    } else if (result === 'shrink') {
-                        this.triggerScreenShake(5);
-                        this.triggerFreeze(20); // Freeze on damage
-                        this.playSound('shrink');
-                    }
-                    // If 'invincible', do nothing (ignore collision)
-                }
-            }
         }
 
         // Update question blocks
         this.questionBlocks.forEach(block => {
             block.update();
-
-            // Check if player hits from below
-            if (this.player.velY < 0 &&
-                this.player.x + this.player.width > block.x &&
-                this.player.x < block.x + block.width &&
-                this.player.y < block.y + block.height &&
-                this.player.y + this.player.height > block.y + block.height - 10) {
-
-                const result = block.hit();
-                if (result) {
-                    this.playSound('bump'); // Physical hit sound
-                    if (result.type === 'coin') {
-                        this.score += result.value;
-                        this.addScorePopup(block.x + 16, block.y - 20, result.value);
-                        this.addParticles(block.x + 16, block.y - 20, 10, '#FFD700', 'sparkle'); // Sparkle burst
-                        this.updateScore();
-                        this.playSound('coin');
-                    } else if (result.type === 'mushroom') {
-                        const mushroom = new Mushroom(block.x, block.y);
-                        mushroom.spawn();
-                        this.mushrooms.push(mushroom);
-                        this.playSound('block');
-                    } else if (result.type === 'star') {
-                        const star = new Star(block.x, block.y);
-                        star.spawn();
-                        this.stars.push(star);
-                        this.playSound('block');
-                    } else if (result.type === 'fireflower') {
-                        const flower = new FireFlower(block.x, block.y);
-                        flower.spawn();
-                        this.fireflowers.push(flower);
-                        this.playSound('block');
-                    }
-                    this.triggerScreenShake(3);
-                }
-            }
         });
 
         // Update score popups
@@ -627,46 +540,12 @@ export class Game {
                 this.fireballs.splice(i, 1);
                 continue;
             }
-
-            // Check collision with enemies
-            for (let j = this.enemies.length - 1; j >= 0; j--) {
-                const enemy = this.enemies[j];
-                if (checkCollision(fireball, enemy)) {
-                    // Kill enemy
-                    this.addScorePopup(enemy.x, enemy.y, 100);
-                    this.addParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 8, '#FFD700');
-                    this.enemies.splice(j, 1);
-                    this.score += 100;
-                    this.updateScore();
-                    this.playSound('stomp'); // Or kick sound
-
-                    // Destroy fireball
-                    fireball.active = false;
-                    this.addParticles(fireball.x, fireball.y, 4, '#FF4500');
-                    break; // One fireball kills one enemy
-                }
-            }
         }
 
         // Update coins
         for (let i = this.coins.length - 1; i >= 0; i--) {
             const coin = this.coins[i];
             coin.update();
-
-            if (!coin.collected && checkCollision(this.player, coin)) {
-                coin.collected = true;
-                this.coins.splice(i, 1);
-                this.score += 10;
-                this.addScorePopup(coin.x, coin.y, 10);
-                this.addParticles(coin.x + 10, coin.y + 12, 5, '#FFD700', 'sparkle');
-                this.updateScore();
-                this.playSound('coin');
-
-                if (this.score > this.highScore && !this.isNewHighScore) {
-                    this.isNewHighScore = true;
-                    this.playSound('newHighScore');
-                }
-            }
         }
 
         // Update mushrooms
@@ -677,22 +556,6 @@ export class Game {
             if (mushroom.collected) {
                 this.mushrooms.splice(i, 1);
                 continue;
-            }
-
-            // Check collision with player
-            if (checkCollision(this.player, mushroom) && mushroom.active && !mushroom.spawning) {
-                if (this.player.powerUp()) {
-                    // Powered up!
-                    this.playSound('powerup_mushroom');
-                    this.triggerFreeze(20); // Freeze on powerup
-                } else {
-                    // Already big, just add points
-                    this.playSound('coin');
-                }
-                mushroom.collected = true;
-                this.score += 1000;
-                this.addScorePopup(mushroom.x, mushroom.y, 1000);
-                this.updateScore();
             }
         }
 
@@ -705,18 +568,6 @@ export class Game {
                 this.stars.splice(i, 1);
                 continue;
             }
-
-            if (checkCollision(this.player, star) && star.active && !star.spawning) {
-                star.collected = true;
-                this.score += 1000;
-                this.addScorePopup(star.x, star.y, 1000);
-                this.updateScore();
-                this.playSound('powerup_star');
-                this.triggerFreeze(20); // Freeze on star
-
-                // Always refresh star power
-                if (this.player.getStarPower) this.player.getStarPower();
-            }
         }
 
         // Update FireFlowers
@@ -728,24 +579,6 @@ export class Game {
                 this.fireflowers.splice(i, 1);
                 continue;
             }
-
-            if (checkCollision(this.player, flower) && flower.active && !flower.spawning) {
-                flower.collected = true;
-                this.score += 1000;
-                this.addScorePopup(flower.x, flower.y, 1000);
-                this.updateScore();
-
-                if (this.player.getFirePower) {
-                    const changed = !this.player.firePower;
-                    this.player.getFirePower();
-                    if (changed) {
-                        this.playSound('powerup_fire');
-                        this.triggerFreeze(20);
-                    } else {
-                        this.playSound('coin');
-                    }
-                }
-            }
         }
 
         // Update Pipes (Piranha Plants)
@@ -755,54 +588,15 @@ export class Game {
             } catch (e) {
                 console.error('Error updating pipe:', e);
             }
-
-            // Check collision with Piranha Plant
-            // Check collision with Piranha Plant
-            const hitbox = pipe.getPiranhaHitbox();
-            if (hitbox && checkCollision(this.player, hitbox)) {
-                // Check for stomp (falling and above the plant)
-                if (this.player.velY > 0 && this.player.y + this.player.height < hitbox.y + hitbox.height / 2) {
-                    // Stomp success
-                    pipe.killPiranha();
-                    this.player.velY = -12; // Bounce
-                    this.score += 200;
-                    this.addScorePopup(hitbox.x, hitbox.y, 200);
-                    this.addParticles(hitbox.x + hitbox.width / 2, hitbox.y + hitbox.height / 2, 8, '#228B22'); // Green particles
-                    this.updateScore();
-                    this.playSound('stomp');
-                } else {
-                    const result = this.player.hit();
-                    if (result === 'dead') {
-                        this.triggerDeathEffect();
-                        this.gameOver();
-                    } else if (result === 'shrink') {
-                        this.triggerScreenShake(5);
-                        this.triggerFreeze(20);
-                        this.playSound('shrink');
-                    } else if (result === 'kill') {
-                        // Star power kills piranha plant
-                        pipe.killPiranha();
-                        this.score += 200;
-                        this.addScorePopup(hitbox.x, hitbox.y, 200);
-                        this.updateScore();
-                        this.playSound('stomp');
-                    }
-                }
-            }
         });
 
         // Update Lava
         this.lava.forEach(lava => {
             lava.update();
-            if (checkCollision(this.player, lava)) {
-                // Instant death
-                if (!this.player.isDead) { // Check if already dead to avoid loop
-                    this.playSound('death');
-                    this.player.die();
-                    this.gameOver();
-                }
-            }
         });
+
+        // Handle Collisions
+        this.collisionSystem.update();
 
         // Update screen shake
         if (this.screenShake.intensity > 0) {
