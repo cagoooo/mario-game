@@ -79,6 +79,8 @@ export class InputHandler {
             // Update mouseX for player following
             this.mouseX = touchX;
 
+            // Simulate Space key for variable jump height
+            this.keys['Space'] = true;
             this.jumpCallback();
         }, { passive: false });
 
@@ -101,10 +103,11 @@ export class InputHandler {
             this.mouseX = touchX;
         }, { passive: false });
 
-        // Touch end - stop moving
+        // Touch end - stop moving and release jump
         canvas.addEventListener('touchend', (e) => {
             this.isTouching = false;
             this.touchDirection = 0;
+            this.keys['Space'] = false; // Release jump button
         });
 
         document.body.addEventListener('touchmove', (e) => {
@@ -150,11 +153,17 @@ export class InputHandler {
 
         // Jump button
         if (jumpBtn) {
-            // Touch
+            // Touch - Simulate Space key for variable jump height
             jumpBtn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
+                this.keys['Space'] = true; // Simulate holding jump button
                 this.jumpCallback();
             }, { passive: false });
+
+            jumpBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                this.keys['Space'] = false; // Release jump button
+            });
 
             // Mouse
             jumpBtn.addEventListener('mousedown', (e) => {
