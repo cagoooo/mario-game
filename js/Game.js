@@ -27,6 +27,10 @@ export class Game {
         this.width = 800; // Logical width
         this.height = 400; // Logical height
 
+        // Set internal resolution explicitly since we removed HTML attributes
+        this.canvas.width = this.width;
+        this.canvas.height = this.height;
+
         // High DPI Support
         this.dpr = window.devicePixelRatio || 1;
         canvas.width = this.width * this.dpr;
