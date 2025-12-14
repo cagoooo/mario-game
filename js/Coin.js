@@ -1,3 +1,4 @@
+
 export class Coin {
     constructor(x, y) {
         this.x = x;
@@ -14,6 +15,17 @@ export class Coin {
 
         // Sparkle particles
         this.sparkles = [];
+    }
+
+    reset(x, y) {
+        this.x = x;
+        this.y = y;
+        this.collected = false;
+        this.animationFrame = 0;
+        this.animationTick = 0;
+        this.bobOffset = 0;
+        this.bobDirection = 1;
+        this.sparkles = []; // Clear existing sparkles
     }
 
     update() {
@@ -106,28 +118,37 @@ export class Coin {
 }
 
 export function generateCoins(startX, endX, platforms) {
-    const coins = [];
+    const coinsData = [];
 
-    // Coins along the ground
-    let firstCoinX = Math.ceil(startX / 150) * 150;
-    if (firstCoinX < startX) firstCoinX += 150;
-
-    for (let x = firstCoinX; x < endX; x += 150) {
-        if (Math.random() > 0.3) {
-            coins.push(new Coin(x, 300)); // Adjust Y based on ground
-        }
-    }
-
-    // Coins above platforms
+    // 1. Coins on platforms
     platforms.forEach(platform => {
-        if (platform.x >= startX && platform.x < endX) {
-            if (Math.random() > 0.4) {
-                const coinX = platform.x + platform.width / 2 - 10;
-                const coinY = platform.y - 50;
-                coins.push(new Coin(coinX, coinY));
+        if (Math.random() < 0.3) { // 30% chance for coins on a platform
+            const count = 1 + Math.floor(Math.random() * 3); // 1-3 coins
+            const startX = platform.x + (platform.width - (count * 30)) / 2;
+
+            for (let i = 0; i < count; i++) {
+                coinsData.push({
+                    x: startX + i * 30,
+                    y: platform.y - 30
+                });
             }
         }
     });
 
-    return coins;
+    // 2. Coins in the air (arcs)
+    if (Math.random() < 0.2) {
+        const arcCenterX = startX + Math.random() * (endX - startX);
+        const arcCenterY = 250;
+        const radius = 60;
+
+        for (let i = 0; i < 5; i++) {
+            const angle = Math.PI + (Math.PI / 4) * i / 4; // Semi-circle arc
+            coinsData.push({
+                x: arcCenterX + Math.cos(angle) * radius,
+                y: arcCenterY + Math.sin(angle) * radius
+            });
+        }
+    }
+
+    return coinsData;
 }

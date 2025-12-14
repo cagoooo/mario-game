@@ -15,6 +15,7 @@ import { Pipe } from './Pipe.js?v=1.6.22';
 import { Lava } from './Lava.js?v=1.6.22';
 import { EnhancedAudioSystem } from './AudioSystem.js?v=1.6.22';
 import { ParticleSystem } from './ParticleSystem.js?v=1.8.0';
+import { ObjectPool } from './ObjectPool.js?v=1.8.0';
 
 export class Game {
     constructor(canvas, uiElements, images) {
@@ -51,7 +52,18 @@ export class Game {
 
         // Score popup system
         this.scorePopups = [];
-        this.scorePopupPool = [];
+        this.scorePopupPool = []; // Existing simple array pool, could upgrade later
+
+        // Object Pools
+        this.coinPool = new ObjectPool(
+            () => new Coin(0, 0),
+            (c, x, y) => c.reset(x, y)
+        );
+
+        this.fireballPool = new ObjectPool(
+            () => new Fireball(0, 0, 1),
+            (f, x, y, direction) => f.reset(x, y, direction)
+        );
 
         // Celebration particles
         // Celebration particles
@@ -330,15 +342,21 @@ export class Game {
         this.player.setGroundY(this.GROUND_Y);
 
         this.platforms = [];
-        this.platforms = [];
         this.enemyManager.reset();
+
+        // Reset Coins
+        if (this.coins) this.coins.forEach(c => this.coinPool.release(c));
         this.coins = [];
-        this.coins = [];
+
         this.questionBlocks = [];
         this.mushrooms = [];
         this.stars = [];
         this.fireflowers = [];
+
+        // Reset Fireballs
+        if (this.fireballs) this.fireballs.forEach(f => this.fireballPool.release(f));
         this.fireballs = [];
+
         this.pipes = [];
         this.lava = [];
 
@@ -377,42 +395,6 @@ export class Game {
         this.autoFireTimer = 0;
     }
 
-    generateChunk(startX, endX) {
-        // Generate platforms
-        const newPlatforms = generatePlatforms(startX, endX, this.GROUND_Y);
-        this.platforms.push(...newPlatforms);
-
-        // Generate enemies
-        const newEnemies = createEnemies(startX, endX, this.platforms, this.GROUND_Y);
-        this.enemies.push(...newEnemies);
-
-        // Generate coins
-        const newCoins = generateCoins(startX, endX, this.platforms);
-        this.coins.push(...newCoins);
-
-        // Generate question blocks
-        const newBlocks = generateQuestionBlocks(startX, endX, this.platforms, this.GROUND_Y);
-        this.questionBlocks.push(...newBlocks);
-
-        // Generate pipes
-        const newPipes = generatePipes(startX, endX, this.platforms, this.GROUND_Y);
-        this.pipes.push(...newPipes);
-
-        // Generate Lava (Dangerous Areas)
-        // 30% chance per chunk to have a lava pool
-        if (Math.random() < 0.3) {
-            const lavaWidth = 100 + Math.random() * 150;
-            const lavaX = startX + Math.random() * (this.CHUNK_SIZE - lavaWidth);
-
-            // Safe zone check: Don't spawn lava in the first 800 pixels
-            if (lavaX > 800) {
-                this.lava.push(new Lava(lavaX, this.GROUND_Y, lavaWidth, 40));
-            }
-        }
-
-        this.lastGeneratedX = endX;
-    }
-
     // ...
 
     gameLoop(timestamp = 0) {
@@ -448,14 +430,16 @@ export class Game {
     shootFireball() {
         if (!this.gameRunning || !this.player || !this.player.firePower) return;
 
-        // Limit fireballs on screen
-        if (this.fireballs.length >= 2) return;
+        const x = this.player.direction === 1 ? this.player.x + this.player.width : this.player.x;
+        const y = this.player.y + 10;
 
-        const x = this.player.direction === 1 ? this.player.x + this.player.width : this.player.x - 16;
-        const y = this.player.y + 20;
-        this.fireballs.push(new Fireball(x, y, this.player.direction));
-        this.playSound('fireball'); // Need to add sound
+        const fireball = this.fireballPool.get(x, y, this.player.direction);
+        this.fireballs.push(fireball);
+
+        this.playSound('fireball');
     }
+
+
 
     update() {
         if (!this.gameRunning || !this.player) return;
@@ -477,7 +461,6 @@ export class Game {
             this.autoFireTimer = 0;
         }
 
-        // Check for death animation completion
         // Check for death animation completion
         if (this.player.isDead) {
             this.player.update(this.input, this.platforms, this.width, this.camera);
@@ -543,6 +526,7 @@ export class Game {
             fireball.update(this.platforms, this.GROUND_Y);
 
             if (!fireball.active) {
+                this.fireballPool.release(fireball);
                 this.fireballs.splice(i, 1);
                 continue;
             }
@@ -715,6 +699,78 @@ export class Game {
         this.screenShake.intensity = intensity;
     }
 
+    cleanupObjects(minX) {
+        // Cleanup Platforms
+        for (let i = this.platforms.length - 1; i >= 0; i--) {
+            if (this.platforms[i].x + this.platforms[i].width < minX) {
+                this.platforms.splice(i, 1);
+            }
+        }
+
+        // Cleanup Enemies
+        this.enemyManager.cleanup(minX);
+
+        // Cleanup Coins
+        for (let i = this.coins.length - 1; i >= 0; i--) {
+            const c = this.coins[i];
+            if (c.x + c.width <= minX) {
+                this.coinPool.release(c);
+                this.coins.splice(i, 1);
+            }
+        }
+
+        // Cleanup Question Blocks
+        for (let i = this.questionBlocks.length - 1; i >= 0; i--) {
+            if (this.questionBlocks[i].x + this.questionBlocks[i].width < minX) {
+                this.questionBlocks.splice(i, 1);
+            }
+        }
+
+        // Cleanup Mushrooms
+        for (let i = this.mushrooms.length - 1; i >= 0; i--) {
+            if (this.mushrooms[i].x + this.mushrooms[i].width < minX) {
+                this.mushrooms.splice(i, 1);
+            }
+        }
+
+        // Cleanup Stars
+        for (let i = this.stars.length - 1; i >= 0; i--) {
+            if (this.stars[i].x + this.stars[i].width < minX) {
+                this.stars.splice(i, 1);
+            }
+        }
+
+        // Cleanup FireFlowers
+        for (let i = this.fireflowers.length - 1; i >= 0; i--) {
+            if (this.fireflowers[i].x + this.fireflowers[i].width < minX) {
+                this.fireflowers.splice(i, 1);
+            }
+        }
+
+        // Cleanup Pipes
+        for (let i = this.pipes.length - 1; i >= 0; i--) {
+            if (this.pipes[i].x + this.pipes[i].width < minX) {
+                this.pipes.splice(i, 1);
+            }
+        }
+
+        // Cleanup Lava
+        for (let i = this.lava.length - 1; i >= 0; i--) {
+            if (this.lava[i].x + this.lava[i].width < minX) {
+                this.lava.splice(i, 1);
+            }
+        }
+
+        // Cleanup Fireballs (off-screen or inactive)
+        for (let i = this.fireballs.length - 1; i >= 0; i--) {
+            const f = this.fireballs[i];
+            if (f.x + f.width <= minX || !f.active) {
+                this.fireballPool.release(f);
+                this.fireballs.splice(i, 1);
+            }
+        }
+    }
+
     gameLoop() {
         if (!this.gameRunning || this.isPaused) return;
 
@@ -847,6 +903,14 @@ export class Game {
             this.ui.score.style.transform = 'scale(1)';
         }, 100);
     }
+    getDifficultyMultiplier() {
+        // Base difficulty is 1.0
+        // Increases by 0.1 every 500 points
+        // Cap at 2.5x speed/density
+        const multiplier = 1 + (this.score / 500) * 0.1;
+        return Math.min(2.5, multiplier);
+    }
+
     generateChunk(startX, endX) {
         const difficulty = this.getDifficultyMultiplier();
         const context = {
@@ -860,32 +924,18 @@ export class Game {
 
         this.platforms.push(...generated.platforms);
         this.enemyManager.addEnemies(generated.enemies);
-        this.coins.push(...generated.coins);
+
+        // Instantiate coins from pool
+        generated.coins.forEach(data => {
+            const coin = this.coinPool.get(data.x, data.y);
+            this.coins.push(coin);
+        });
+
         this.questionBlocks.push(...generated.questionBlocks);
         this.pipes.push(...generated.pipes);
 
         this.lastGeneratedX = endX;
         this.levelWidth = endX; // Keep levelWidth updated for boundary checks if any remain
-    }
-
-    cleanupObjects(minX) {
-        this.platforms = this.platforms.filter(p => p.x + p.width > minX);
-        this.enemyManager.cleanup(minX);
-        this.coins = this.coins.filter(c => c.x + c.width > minX);
-        this.questionBlocks = this.questionBlocks.filter(b => b.x + b.width > minX);
-        this.pipes = this.pipes.filter(p => p.x + p.width > minX);
-        this.mushrooms = this.mushrooms.filter(m => m.x + m.width > minX);
-        this.stars = this.stars.filter(s => s.x + s.width > minX);
-        this.fireflowers = this.fireflowers.filter(f => f.x + f.width > minX);
-        this.fireballs = this.fireballs.filter(f => f.x + f.width > minX);
-        this.fireballs = this.fireballs.filter(f => f.x + f.width > minX);
-        this.particleSystem.cleanup(minX);
-        this.scorePopups = this.scorePopups.filter(p => p.x > minX);
-        this.scorePopups = this.scorePopups.filter(p => p.x > minX);
-    }
-    getDifficultyMultiplier() {
-        // Base difficulty is 1.0
-        // Increases by 0.1 every 500 points
         // Cap at 2.5x speed/density
         const multiplier = 1 + (this.score / 500) * 0.1;
         return Math.min(2.5, multiplier);

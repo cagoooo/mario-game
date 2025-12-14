@@ -99,7 +99,11 @@ export class CollisionSystem {
             const coin = this.game.coins[i];
             if (!coin.collected && checkCollision(this.game.player, coin)) {
                 coin.collected = true;
+
+                // Release to pool
+                this.game.coinPool.release(coin);
                 this.game.coins.splice(i, 1);
+
                 this.game.score += 10;
                 this.game.addScorePopup(coin.x, coin.y, 10);
                 this.game.addParticles(coin.x + 10, coin.y + 12, 5, '#FFD700', 'sparkle');

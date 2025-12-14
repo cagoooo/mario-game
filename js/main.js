@@ -1,7 +1,7 @@
-import { Game, preloadImages } from './Game.js?v=1.8.2';
+import { Game, preloadImages } from './Game.js?v=1.8.3';
 
 window.onload = async function () {
-    console.log('%c Game Version: 1.8.2 (Optimization: Enemy Pooling) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 1.8.3 (Hotfix: Crash & Recursion Fix) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements

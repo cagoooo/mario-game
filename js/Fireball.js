@@ -17,6 +17,18 @@ export class Fireball {
         this.rotation = 0;
     }
 
+    reset(x, y, direction) {
+        this.x = x;
+        this.y = y;
+        this.direction = direction;
+        this.speed = 8;
+        this.velX = this.speed * this.direction;
+        this.velY = 2;
+        this.active = true;
+        this.life = 120;
+        this.rotation = 0;
+    }
+
     update(platforms, groundY) {
         if (!this.active) return;
 
