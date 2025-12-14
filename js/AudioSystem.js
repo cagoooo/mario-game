@@ -301,58 +301,9 @@ export class EnhancedAudioSystem {
 
     // 8-bit背景音樂模式
     startBGM(mode = 'normal') {
-        console.log(`[AudioSystem] startBGM called with mode: ${mode}`);
-        this.stopBGM();
-
-        if (!this.audioCtx) {
-            console.warn('[AudioSystem] AudioContext is missing');
-            return;
-        }
-
-        console.log(`[AudioSystem] AudioContext state: ${this.audioCtx.state}`);
-
-        // Ensure context is running
-        if (this.audioCtx.state === 'suspended') {
-            console.log('[AudioSystem] Resuming suspended AudioContext...');
-            this.audioCtx.resume().then(() => {
-                console.log('[AudioSystem] AudioContext resumed successfully');
-            }).catch(e => console.warn('[AudioSystem] Audio resume failed:', e));
-        }
-
-        if (this.isMuted) {
-            console.log('[AudioSystem] System is muted, skipping BGM');
-            return;
-        }
-
-        try {
-            // 根據模式選擇音樂模式
-            const musicPattern = this.getMusicPattern(mode);
-            console.log(`[AudioSystem] Selected pattern:`, musicPattern);
-
-            this.currentBGMPattern = 0;
-
-            // 設定節拍間隔
-            const beatInterval = (60 / this.bgmTempo) * 1000; // 毫秒
-            console.log(`[AudioSystem] Starting BGM interval. Tempo: ${this.bgmTempo}, Interval: ${beatInterval}ms`);
-
-            this.bgmInterval = setInterval(() => {
-                if (!this.isMuted && this.audioCtx && this.audioCtx.state === 'running') {
-                    this.playBGMNote(musicPattern);
-                } else {
-                    // console.log('[AudioSystem] Skipping note. Muted:', this.isMuted, 'State:', this.audioCtx ? this.audioCtx.state : 'No Ctx');
-                }
-            }, beatInterval);
-
-        } catch (e) {
-            console.warn('[AudioSystem] BGM start failed:', e);
-        }
-    }
-
-    getMusicPattern(mode) {
-        const patterns = {
-            // 平原 (PLAINS) - 輕快明亮
-            PLAINS: {
-                tempo: 150,
+        // 平原 (PLAINS) - 輕快明亮
+        PLAINS: {
+            tempo: 150,
                 melody: [
                     { note: 523, duration: 0.15 }, // C5
                     { note: 659, duration: 0.15 }, // E5
@@ -365,19 +316,19 @@ export class EnhancedAudioSystem {
                     { note: 523, duration: 0.15 }, // C5
                     { note: 0, duration: 0.15 },   // Rest
                 ],
-                bass: [
-                    { note: 131, duration: 0.3 }, // C3
-                    { note: 196, duration: 0.3 }, // G3
-                    { note: 131, duration: 0.3 }, // C3
-                    { note: 196, duration: 0.3 }, // G3
-                    { note: 175, duration: 0.3 }, // F3
-                    { note: 196, duration: 0.3 }, // G3
-                ]
-            },
+                    bass: [
+                        { note: 131, duration: 0.3 }, // C3
+                        { note: 196, duration: 0.3 }, // G3
+                        { note: 131, duration: 0.3 }, // C3
+                        { note: 196, duration: 0.3 }, // G3
+                        { note: 175, duration: 0.3 }, // F3
+                        { note: 196, duration: 0.3 }, // G3
+                    ]
+        },
 
-            // 沙漠 (DESERT) - 神秘中東風
-            DESERT: {
-                tempo: 140,
+        // 沙漠 (DESERT) - 神秘中東風
+        DESERT: {
+            tempo: 140,
                 melody: [
                     { note: 523, duration: 0.2 }, // C5
                     { note: 554, duration: 0.2 }, // Db5
@@ -388,17 +339,17 @@ export class EnhancedAudioSystem {
                     { note: 523, duration: 0.4 }, // C5
                     { note: 0, duration: 0.2 },   // Rest
                 ],
-                bass: [
-                    { note: 131, duration: 0.4 }, // C3
-                    { note: 196, duration: 0.4 }, // G3
-                    { note: 123, duration: 0.4 }, // B2
-                    { note: 196, duration: 0.4 }, // G3
-                ]
-            },
+                    bass: [
+                        { note: 131, duration: 0.4 }, // C3
+                        { note: 196, duration: 0.4 }, // G3
+                        { note: 123, duration: 0.4 }, // B2
+                        { note: 196, duration: 0.4 }, // G3
+                    ]
+        },
 
-            // 雪地 (SNOW) - 晶瑩剔透
-            SNOW: {
-                tempo: 130,
+        // 雪地 (SNOW) - 晶瑩剔透
+        SNOW: {
+            tempo: 130,
                 melody: [
                     { note: 659, duration: 0.2 }, // E5
                     { note: 784, duration: 0.2 }, // G5
@@ -409,17 +360,17 @@ export class EnhancedAudioSystem {
                     { note: 1047, duration: 0.2 }, // C6
                     { note: 1319, duration: 0.4 }, // E6
                 ],
-                bass: [
-                    { note: 165, duration: 0.4 }, // E3
-                    { note: 247, duration: 0.4 }, // B3
-                    { note: 175, duration: 0.4 }, // F3
-                    { note: 262, duration: 0.4 }, // C4
-                ]
-            },
+                    bass: [
+                        { note: 165, duration: 0.4 }, // E3
+                        { note: 247, duration: 0.4 }, // B3
+                        { note: 175, duration: 0.4 }, // F3
+                        { note: 262, duration: 0.4 }, // C4
+                    ]
+        },
 
-            // 鬼屋 (SPOOKY) - 詭異沉重
-            SPOOKY: {
-                tempo: 110,
+        // 鬼屋 (SPOOKY) - 詭異沉重
+        SPOOKY: {
+            tempo: 110,
                 melody: [
                     { note: 392, duration: 0.3 }, // G4
                     { note: 370, duration: 0.3 }, // Gb4
@@ -430,17 +381,17 @@ export class EnhancedAudioSystem {
                     { note: 277, duration: 0.3 }, // Db4
                     { note: 262, duration: 0.6 }, // C4
                 ],
-                bass: [
-                    { note: 98, duration: 0.6 },  // G2
-                    { note: 92, duration: 0.6 },  // Gb2
-                    { note: 87, duration: 0.6 },  // F2
-                    { note: 82, duration: 0.6 },  // E2
-                ]
-            },
+                    bass: [
+                        { note: 98, duration: 0.6 },  // G2
+                        { note: 92, duration: 0.6 },  // Gb2
+                        { note: 87, duration: 0.6 },  // F2
+                        { note: 82, duration: 0.6 },  // E2
+                    ]
+        },
 
-            // 正常模式 (Fallback)
-            normal: {
-                tempo: 120,
+        // 正常模式 (Fallback)
+        normal: {
+            tempo: 120,
                 melody: [
                     { note: 659, duration: 0.15 }, // E5
                     { note: 659, duration: 0.15 }, // E5
@@ -455,21 +406,21 @@ export class EnhancedAudioSystem {
                     { note: 392, duration: 0.3 },  // G4
                     { note: 0, duration: 0.3 },    // 休止符
                 ],
-                bass: [
-                    { note: 196, duration: 0.3 }, // G3
-                    { note: 0, duration: 0.3 },   // 休止符
-                    { note: 196, duration: 0.3 }, // G3
-                    { note: 0, duration: 0.3 },   // 休止符
-                    { note: 196, duration: 0.3 }, // G3
-                    { note: 0, duration: 0.3 },   // 休止符
-                    { note: 196, duration: 0.3 }, // G3
-                    { note: 0, duration: 0.3 },   // 休止符
-                ]
-            },
+                    bass: [
+                        { note: 196, duration: 0.3 }, // G3
+                        { note: 0, duration: 0.3 },   // 休止符
+                        { note: 196, duration: 0.3 }, // G3
+                        { note: 0, duration: 0.3 },   // 休止符
+                        { note: 196, duration: 0.3 }, // G3
+                        { note: 0, duration: 0.3 },   // 休止符
+                        { note: 196, duration: 0.3 }, // G3
+                        { note: 0, duration: 0.3 },   // 休止符
+                    ]
+        },
 
-            // 星星模式 - 更快更興奮
-            star: {
-                tempo: 180,
+        // 星星模式 - 更快更興奮
+        star: {
+            tempo: 180,
                 melody: [
                     { note: 1047, duration: 0.1 }, // C6
                     { note: 1175, duration: 0.1 }, // D6
@@ -480,17 +431,17 @@ export class EnhancedAudioSystem {
                     { note: 1976, duration: 0.1 }, // B6
                     { note: 2093, duration: 0.2 }, // C7
                 ],
-                bass: [
-                    { note: 262, duration: 0.2 }, // C4
-                    { note: 330, duration: 0.2 }, // E4
-                    { note: 392, duration: 0.2 }, // G4
-                    { note: 523, duration: 0.2 }, // C5
-                ]
-            },
+                    bass: [
+                        { note: 262, duration: 0.2 }, // C4
+                        { note: 330, duration: 0.2 }, // E4
+                        { note: 392, duration: 0.2 }, // G4
+                        { note: 523, duration: 0.2 }, // C5
+                    ]
+        },
 
-            // 地下模式 - 較低沉的音調
-            underground: {
-                tempo: 100,
+        // 地下模式 - 較低沉的音調
+        underground: {
+            tempo: 100,
                 melody: [
                     { note: 392, duration: 0.2 }, // G4
                     { note: 370, duration: 0.2 }, // F#4
@@ -500,159 +451,144 @@ export class EnhancedAudioSystem {
                     { note: 294, duration: 0.2 }, // D4
                     { note: 262, duration: 0.4 }, // C4
                 ],
-                bass: [
-                    { note: 131, duration: 0.4 }, // C3
-                    { note: 147, duration: 0.4 }, // D3
-                    { note: 165, duration: 0.4 }, // E3
-                    { note: 175, duration: 0.4 }, // F3
-                ]
-            }
-        };
-
-        const selectedPattern = patterns[mode] || patterns.normal;
-
-        // Update tempo if defined
-        if (selectedPattern.tempo && this.bgmTempo !== selectedPattern.tempo) {
-            this.setBGMTempo(selectedPattern.tempo);
+                    bass: [
+                        { note: 131, duration: 0.4 }, // C3
+                        { note: 147, duration: 0.4 }, // D3
+                        { note: 165, duration: 0.4 }, // E3
+                        { note: 175, duration: 0.4 }, // F3
+                    ]
         }
+    };
 
-        return selectedPattern;
+    const selectedPattern = patterns[mode] || patterns.normal;
+
+    // Update tempo if defined
+    if(selectedPattern.tempo && this.bgmTempo !== selectedPattern.tempo) {
+    this.setBGMTempo(selectedPattern.tempo);
+    if (melodyNote && melodyNote.note > 0) {
+        this.createBGMOscillator(melodyNote.note, melodyNote.duration, 0.15, 'square');
+    }
+}
+
+// 播放低音
+if (pattern.bass && pattern.bass.length > 0) {
+    const bassNote = pattern.bass[Math.floor(this.currentBGMPattern / 2) % pattern.bass.length];
+    if (bassNote && bassNote.note > 0) {
+        this.createBGMOscillator(bassNote.note, bassNote.duration, 0.1, 'triangle');
+    }
+}
+
+this.currentBGMPattern++;
+}
+
+createBGMOscillator(frequency, duration, volume, type) {
+    try {
+        const oscillator = this.audioCtx.createOscillator();
+        const gainNode = this.audioCtx.createGain();
+
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, this.audioCtx.currentTime);
+
+        gainNode.gain.setValueAtTime(0, this.audioCtx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(volume, this.audioCtx.currentTime + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + duration);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(this.musicGain);
+
+        oscillator.start(this.audioCtx.currentTime);
+        oscillator.stop(this.audioCtx.currentTime + duration);
+
+        this.bgmNodes.push({ oscillator, gainNode });
+
+        // 清理過期節點
+        setTimeout(() => {
+            const index = this.bgmNodes.findIndex(node => node.oscillator === oscillator);
+            if (index > -1) {
+                this.bgmNodes.splice(index, 1);
+            }
+        }, duration * 1000 + 100);
+
+    } catch (e) {
+        console.warn('[AudioSystem] BGM oscillator creation failed:', e);
+    }
+}
+
+stopBGM() {
+    if (this.bgmInterval) {
+        clearInterval(this.bgmInterval);
+        this.bgmInterval = null;
     }
 
-    playBGMNote(pattern) {
-        if (!this.audioCtx) return;
-
-        console.log(`[AudioSystem] Playing note index: ${this.currentBGMPattern}`);
-
-        const currentTime = this.audioCtx.currentTime;
-
-        // 播放主旋律
-        if (pattern.melody && pattern.melody.length > 0) {
-            const melodyNote = pattern.melody[this.currentBGMPattern % pattern.melody.length];
-            if (melodyNote && melodyNote.note > 0) {
-                this.createBGMOscillator(melodyNote.note, melodyNote.duration, 0.15, 'square');
-            }
-        }
-
-        // 播放低音
-        if (pattern.bass && pattern.bass.length > 0) {
-            const bassNote = pattern.bass[Math.floor(this.currentBGMPattern / 2) % pattern.bass.length];
-            if (bassNote && bassNote.note > 0) {
-                this.createBGMOscillator(bassNote.note, bassNote.duration, 0.1, 'triangle');
-            }
-        }
-
-        this.currentBGMPattern++;
-    }
-
-    createBGMOscillator(frequency, duration, volume, type) {
+    // 停止所有BGM節點
+    this.bgmNodes.forEach(node => {
         try {
-            const oscillator = this.audioCtx.createOscillator();
-            const gainNode = this.audioCtx.createGain();
-
-            oscillator.type = type;
-            oscillator.frequency.setValueAtTime(frequency, this.audioCtx.currentTime);
-
-            gainNode.gain.setValueAtTime(0, this.audioCtx.currentTime);
-            gainNode.gain.linearRampToValueAtTime(volume, this.audioCtx.currentTime + 0.01);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + duration);
-
-            oscillator.connect(gainNode);
-            gainNode.connect(this.musicGain);
-
-            oscillator.start(this.audioCtx.currentTime);
-            oscillator.stop(this.audioCtx.currentTime + duration);
-
-            this.bgmNodes.push({ oscillator, gainNode });
-
-            // 清理過期節點
-            setTimeout(() => {
-                const index = this.bgmNodes.findIndex(node => node.oscillator === oscillator);
-                if (index > -1) {
-                    this.bgmNodes.splice(index, 1);
-                }
-            }, duration * 1000 + 100);
-
+            node.oscillator.stop();
+            node.gainNode.disconnect();
         } catch (e) {
-            console.warn('[AudioSystem] BGM oscillator creation failed:', e);
+            // 節點可能已經停止
         }
+    });
+    this.bgmNodes = [];
+}
+
+// 設定音量
+setMasterVolume(volume) {
+    if (this.masterGain) {
+        this.masterGain.gain.value = this.isMuted ? 0 : Math.max(0, Math.min(1, volume));
+    }
+}
+
+setSFXVolume(volume) {
+    if (this.sfxGain) {
+        this.sfxGain.gain.value = Math.max(0, Math.min(1, volume));
+    }
+}
+
+setMusicVolume(volume) {
+    if (this.musicGain) {
+        this.musicGain.gain.value = Math.max(0, Math.min(1, volume));
+    }
+}
+
+// 切換靜音
+toggleMute() {
+    this.isMuted = !this.isMuted;
+    localStorage.setItem('marioMuted', this.isMuted.toString());
+
+    if (this.masterGain) {
+        this.masterGain.gain.value = this.isMuted ? 0 : 0.3;
     }
 
-    stopBGM() {
-        if (this.bgmInterval) {
-            clearInterval(this.bgmInterval);
-            this.bgmInterval = null;
-        }
-
-        // 停止所有BGM節點
-        this.bgmNodes.forEach(node => {
-            try {
-                node.oscillator.stop();
-                node.gainNode.disconnect();
-            } catch (e) {
-                // 節點可能已經停止
-            }
-        });
-        this.bgmNodes = [];
-    }
-
-    // 設定音量
-    setMasterVolume(volume) {
-        if (this.masterGain) {
-            this.masterGain.gain.value = this.isMuted ? 0 : Math.max(0, Math.min(1, volume));
-        }
-    }
-
-    setSFXVolume(volume) {
-        if (this.sfxGain) {
-            this.sfxGain.gain.value = Math.max(0, Math.min(1, volume));
-        }
-    }
-
-    setMusicVolume(volume) {
-        if (this.musicGain) {
-            this.musicGain.gain.value = Math.max(0, Math.min(1, volume));
-        }
-    }
-
-    // 切換靜音
-    toggleMute() {
-        this.isMuted = !this.isMuted;
-        localStorage.setItem('marioMuted', this.isMuted.toString());
-
-        if (this.masterGain) {
-            this.masterGain.gain.value = this.isMuted ? 0 : 0.3;
-        }
-
-        if (this.isMuted) {
-            this.stopBGM();
-        } else {
-            this.startBGM(); // Resume BGM
-        }
-
-        return this.isMuted;
-    }
-
-    // 設定BGM節拍速度
-    setBGMTempo(bpm) {
-        this.bgmTempo = Math.max(60, Math.min(200, bpm));
-
-        // 如果BGM正在播放，重新啟動以應用新節拍
-        if (this.bgmInterval) {
-            const wasPlaying = true;
-            this.stopBGM();
-            if (wasPlaying) {
-                setTimeout(() => this.startBGM(), 100);
-            }
-        }
-    }
-
-    // 清理資源
-    destroy() {
+    if (this.isMuted) {
         this.stopBGM();
+    } else {
+        this.startBGM(); // Resume BGM
+    }
 
-        if (this.audioCtx) {
-            this.audioCtx.close();
+    return this.isMuted;
+}
+
+// 設定BGM節拍速度
+setBGMTempo(bpm) {
+    this.bgmTempo = Math.max(60, Math.min(200, bpm));
+
+    // 如果BGM正在播放，重新啟動以應用新節拍
+    if (this.bgmInterval) {
+        const wasPlaying = true;
+        this.stopBGM();
+        if (wasPlaying) {
+            setTimeout(() => this.startBGM(), 100);
         }
     }
+}
+
+// 清理資源
+destroy() {
+    this.stopBGM();
+
+    if (this.audioCtx) {
+        this.audioCtx.close();
+    }
+}
 }
