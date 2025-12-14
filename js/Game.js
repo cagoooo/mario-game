@@ -1,18 +1,18 @@
-import { Player } from './Player.js?v=1.6.17';
-import { Background, Biomes } from './Background.js?v=1.6.17';
-import { InputHandler } from './InputHandler.js?v=1.6.17';
-import { generatePlatforms } from './Platform.js?v=1.6.17';
-import { createEnemies } from './Enemy.js?v=1.6.17';
-import { checkCollision } from './utils.js?v=1.6.17';
-import { Coin, generateCoins } from './Coin.js?v=1.6.17';
-import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.6.17';
-import { Mushroom } from './Mushroom.js?v=1.6.17';
-import { Star } from './Star.js?v=1.6.17';
-import { FireFlower } from './FireFlower.js?v=1.6.17';
-import { Fireball } from './Fireball.js?v=1.6.17';
-import { Pipe, generatePipes } from './Pipe.js?v=1.6.17';
-import { Lava } from './Lava.js?v=1.6.17';
-import { EnhancedAudioSystem } from './AudioSystem.js?v=1.6.17';
+import { Player } from './Player.js?v=1.6.18';
+import { Background, Biomes } from './Background.js?v=1.6.18';
+import { InputHandler } from './InputHandler.js?v=1.6.18';
+import { generatePlatforms } from './Platform.js?v=1.6.18';
+import { createEnemies } from './Enemy.js?v=1.6.18';
+import { checkCollision } from './utils.js?v=1.6.18';
+import { Coin, generateCoins } from './Coin.js?v=1.6.18';
+import { QuestionBlock, generateQuestionBlocks } from './QuestionBlock.js?v=1.6.18';
+import { Mushroom } from './Mushroom.js?v=1.6.18';
+import { Star } from './Star.js?v=1.6.18';
+import { FireFlower } from './FireFlower.js?v=1.6.18';
+import { Fireball } from './Fireball.js?v=1.6.18';
+import { Pipe, generatePipes } from './Pipe.js?v=1.6.18';
+import { Lava } from './Lava.js?v=1.6.18';
+import { EnhancedAudioSystem } from './AudioSystem.js?v=1.6.18';
 
 export class Game {
     constructor(canvas, uiElements, images) {
@@ -108,7 +108,13 @@ export class Game {
         console.log('[Game] Calling start()...');
         this.start();
         console.log('[Game] Calling startBGM()...');
-        this.startBGM();
+        console.log('[Game] Type of startBGM:', typeof this.startBGM);
+        console.log('[Game] startBGM source:', this.startBGM.toString());
+        try {
+            this.startBGM();
+        } catch (e) {
+            console.error('[Game] Error calling startBGM:', e);
+        }
         console.log('[Game] Constructor finished.');
     }
 
