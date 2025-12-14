@@ -1,7 +1,9 @@
-import { checkCollision } from './utils.js';
+import { checkCollision } from './utils.js?v=1.6.22';
+import { Idle, Running, Jumping, Falling, Dead } from './PlayerStates.js?v=1.7.8';
 
 export class Player {
-    constructor(x, y, spriteSheet) {
+    constructor(game, x, y, spriteSheet) {
+        this.game = game; // Store reference to game
         this.x = x;
         this.y = y;
         this.baseWidth = 30;
@@ -30,15 +32,19 @@ export class Player {
         this.coyoteMaxTime = 6;
         this.wasGrounded = false;
 
-        // State
         this.grounded = false;
-        this.jumping = false;
-        this.isMoving = false;
-        this.direction = 1;
-        this.animationFrame = 0;
-        this.animationTick = 0;
-        this.isJumping = false;
-        this.isDead = false; // New death state
+        this.isDead = false;
+
+        // State Machine
+        this.states = [
+            new Idle(this),
+            new Running(this),
+            new Jumping(this),
+            new Falling(this),
+            new Dead(this)
+        ];
+        this.currentState = this.states[0];
+        this.currentState.enter();
 
         // Double Jump
         this.jumpCount = 0;
@@ -85,20 +91,25 @@ export class Player {
         this.GROUND_Y = y;
     }
 
+    setState(state) {
+        this.currentState = this.states[state];
+        this.currentState.enter();
+    }
+
     die() {
-        if (this.isDead) return;
-        this.isDead = true;
-        this.velY = -12; // Small hop
-        this.velX = 0;
-        // Optional: Change sprite to dead sprite if available
+        if (this.currentState instanceof Dead) return;
+        this.setState(4); // DEAD state
     }
 
     update(input, platforms, canvasWidth, camera) {
-        // Death Animation Logic
+        // Update State
+        this.currentState.handleInput(input);
+
+        // Death Animation Logic (Physics only)
         if (this.isDead) {
             this.velY += this.GRAVITY;
             this.y += this.velY;
-            return; // Skip all other updates (collision, input, etc.)
+            return; // Skip all other updates
         }
 
         // Update Star Power
@@ -178,13 +189,15 @@ export class Player {
         this.x += this.velX;
 
         // === ANIMATION ===
-        if (this.isMoving) {
+        // Animation logic is now partly handled by state (setting frames), 
+        // but ticking is still here or could be moved.
+        // For now, let's keep simple ticking if moving/active
+        if (this.currentState instanceof Running) {
             this.animationTick++;
             if (this.animationTick >= 5) {
                 this.animationFrame = (this.animationFrame + 1) % 3;
                 this.animationTick = 0;
             }
-
             // Spawn running dust
             if (this.grounded) {
                 this.runDustTimer++;
@@ -193,7 +206,7 @@ export class Player {
                     this.runDustTimer = 0;
                 }
             }
-        } else {
+        } else if (this.currentState instanceof Idle) {
             this.animationFrame = 0;
             this.animationTick = 0;
         }
@@ -240,7 +253,6 @@ export class Player {
             this.y = this.GROUND_Y - this.height;
             this.velY = 0;
             this.grounded = true;
-            this.jumping = false;
             this.jumpCount = 0;
         }
 
@@ -255,7 +267,6 @@ export class Player {
                     this.y = platform.y - this.height;
                     this.velY = 0;
                     this.grounded = true;
-                    this.jumping = false;
                     this.jumpCount = 0;
                 }
             }
@@ -266,7 +277,7 @@ export class Player {
         if (this.x + this.width > canvasWidth) this.x = canvasWidth - this.width;
 
         // Update jump animation state
-        this.isJumping = this.velY < 0 || !this.grounded;
+        this.isJumping = !this.grounded; // Simplified for drawing logic
 
         // Update dust particles
         for (let i = this.dustParticles.length - 1; i >= 0; i--) {
@@ -383,7 +394,7 @@ export class Player {
         // Can jump if grounded OR within coyote time window OR has jumps remaining (double jump)
         if (this.grounded || this.coyoteTime > 0 || this.jumpCount < this.maxJumps) {
             this.velY = this.JUMP_FORCE;
-            this.jumping = true;
+            // this.jumping = true; // Handled by state
             this.jumpHeld = true;
             this.jumpHoldTime = 0;
 

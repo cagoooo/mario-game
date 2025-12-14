@@ -321,7 +321,7 @@ export class Game {
     }
 
     initGame() {
-        this.player = new Player(50, this.GROUND_Y, this.images.player);
+        this.player = new Player(this, 50, this.GROUND_Y, this.images.player);
         this.player.setGroundY(this.GROUND_Y);
 
         this.platforms = [];
