@@ -3,7 +3,8 @@ const states = {
     RUNNING: 1,
     JUMPING: 2,
     FALLING: 3,
-    DEAD: 4
+    DEAD: 4,
+    PIPE: 5
 };
 
 class State {
@@ -13,6 +14,7 @@ class State {
     }
     enter() { }
     handleInput(input) { }
+    update() { } // Physics & Logic
 }
 
 export class Idle extends State {
@@ -24,6 +26,7 @@ export class Idle extends State {
         this.player.frameX = 0;
         this.player.maxFrame = 0;
         this.player.animationFrame = 0;
+        this.player.velX = 0; // Ensure stop
     }
 
     handleInput(input) {
@@ -41,6 +44,16 @@ export class Idle extends State {
         else if (!this.player.grounded) {
             this.player.setState(states.FALLING);
         }
+        // Pipe
+        else if (this.player.isEnteringPipe) {
+            this.player.setState(states.PIPE);
+        }
+    }
+
+    update() {
+        // Apply friction to ensure full stop
+        this.player.velX *= this.player.friction;
+        if (Math.abs(this.player.velX) < 0.1) this.player.velX = 0;
     }
 }
 
@@ -75,6 +88,22 @@ export class Running extends State {
         else if (!this.player.grounded) {
             this.player.setState(states.FALLING);
         }
+        // Pipe
+        else if (this.player.isEnteringPipe) {
+            this.player.setState(states.PIPE);
+        }
+    }
+
+    update() {
+        // Physics handled in Player.update for now (shared logic), 
+        // but state specific stuff like dust can go here
+        if (this.player.grounded) {
+            this.player.runDustTimer++;
+            if (this.player.runDustTimer > 10) {
+                this.player.spawnDust('run');
+                this.player.runDustTimer = 0;
+            }
+        }
     }
 }
 
@@ -100,9 +129,10 @@ export class Jumping extends State {
         if (this.player.velY > 0) {
             this.player.setState(states.FALLING);
         }
+    }
 
-        // Allow horizontal movement control in air
-        // (Logic remains in Player.update for physics, state just monitors transitions)
+    update() {
+        // Variable jump height logic could move here
     }
 }
 
@@ -127,6 +157,9 @@ export class Falling extends State {
             this.player.setState(states.IDLE); // Or Running if keys held, but Idle is safe default, it will switch next frame
         }
     }
+
+    update() {
+    }
 }
 
 export class Dead extends State {
@@ -143,5 +176,62 @@ export class Dead extends State {
 
     handleInput(input) {
         // No input handling, just wait for game over
+    }
+
+    update() {
+        // Physics for death hop
+        this.player.velY += this.player.GRAVITY;
+        this.player.y += this.player.velY;
+    }
+}
+
+export class PipeState extends State {
+    constructor(player) {
+        super(states.PIPE, player);
+    }
+
+    enter() {
+        this.player.velX = 0;
+        this.player.velY = 0;
+        this.player.pipeTimer = 0;
+        this.player.game.playSound('powerup_mushroom');
+    }
+
+    handleInput(input) {
+        // No input allowed
+    }
+
+    update() {
+        if (this.player.isEnteringPipe) {
+            this.player.y += 1; // Move down
+            this.player.pipeTimer++;
+            if (this.player.pipeTimer > 60) {
+                // Trigger level transition
+                if (this.player.game && typeof this.player.game.loadBonusLevel === 'function') {
+                    if (this.player.game.gameState === 'BONUS') {
+                        // Returning to Overworld
+                        this.player.game.unloadBonusLevel();
+                        this.player.isEnteringPipe = false;
+                        this.player.setState(states.IDLE);
+                    } else if (this.player.autoMovePipe) {
+                        // Entering Bonus Level
+                        this.player.game.loadBonusLevel();
+                        this.player.autoMovePipe = null;
+                        this.player.isEnteringPipe = false;
+
+                        // Force falling state so physics resume
+                        this.player.setState(states.FALLING);
+                    }
+                }
+            }
+        } else if (this.player.isExitingPipe) {
+            this.player.y -= 1; // Move up
+            this.player.pipeTimer++;
+            if (this.player.pipeTimer > 60) {
+                this.player.isExitingPipe = false;
+                this.player.grounded = true;
+                this.player.setState(states.IDLE);
+            }
+        }
     }
 }

@@ -1,7 +1,8 @@
-import { Game, preloadImages } from './Game.js?v=1.9.26';
+import { Game } from './Game.js?v=1.9.26';
+import { AssetLoader } from './AssetLoader.js?v=1.9.26';
 
 window.onload = async function () {
-    console.log('%c Game Version: 1.9.26 (Bonus Ceiling Fix) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 1.9.27 (Bonus Level Stuck Fix) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements
@@ -31,9 +32,16 @@ window.onload = async function () {
     uiElements.startBtn.style.opacity = '0.5';
     uiElements.startBtn.style.cursor = 'not-allowed';
 
+    const assetLoader = new AssetLoader();
+    const imagePaths = {
+        player: 'assets/player.png',
+        enemy: 'assets/enemy.png',
+        tiles: 'assets/tiles.png'
+    };
+
     let loadedImages = null;
     try {
-        const preloadPromise = preloadImages();
+        const preloadPromise = assetLoader.loadImages(imagePaths);
         const timeoutPromise = new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Loading timed out')), 5000)
         );
@@ -44,6 +52,20 @@ window.onload = async function () {
         uiElements.startBtn.textContent = '開始遊戲';
         uiElements.startBtn.style.opacity = '1';
         uiElements.startBtn.style.cursor = 'pointer';
+
+        // Define Sprites (Example/Placeholder)
+        // Assuming player.png is a 32x32 sprite sheet or single image for now
+        // We will define a default 'idle' sprite using the whole image or a part of it
+        // assetLoader.defineSprite('mario_idle', 'player', 0, 0, 32, 32);
+        // assetLoader.defineSprite('mario_run_1', 'player', 32, 0, 32, 32); // Assuming sprite sheet layout
+        // assetLoader.defineSprite('mario_run_2', 'player', 64, 0, 32, 32);
+        // assetLoader.defineSprite('mario_jump', 'player', 96, 0, 32, 32);
+
+        // Define Animations
+        // assetLoader.defineAnimation('idle', ['mario_idle'], 10);
+        // assetLoader.defineAnimation('run', ['mario_run_1', 'mario_run_2'], 8);
+        // assetLoader.defineAnimation('jump', ['mario_jump'], 1);
+
     } catch (e) {
         console.error('Failed to preload images or timed out', e);
         uiElements.startBtn.textContent = '載入逾時 - 點擊重新整理';
@@ -60,7 +82,7 @@ window.onload = async function () {
     uiElements.startBtn.addEventListener('click', () => {
         if (!loadedImages) return;
         uiElements.startScreen.style.display = 'none';
-        game = new Game(canvas, uiElements, loadedImages);
+        game = new Game(canvas, uiElements, assetLoader);
         window.game = game; // Expose for testing
     });
 

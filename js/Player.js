@@ -1,5 +1,5 @@
 import { checkCollision } from './utils.js?v=1.6.22';
-import { Idle, Running, Jumping, Falling, Dead } from './PlayerStates.js?v=1.7.8';
+import { Idle, Running, Jumping, Falling, Dead, PipeState } from './PlayerStates.js?v=1.9.26';
 
 export class Player {
     constructor(game, x, y, spriteSheet) {
@@ -41,7 +41,8 @@ export class Player {
             new Running(this),
             new Jumping(this),
             new Falling(this),
-            new Dead(this)
+            new Dead(this),
+            new PipeState(this)
         ];
         this.currentState = this.states[0];
         this.currentState.enter();
@@ -175,35 +176,18 @@ export class Player {
 
             return; // Skip normal update
         }
-        // Pipe Animation Logic
-        if (this.isEnteringPipe) {
-            this.y += 1; // Move down slowly
-            this.pipeTimer++;
-            if (this.pipeTimer > 60) {
-                // this.isEnteringPipe = false; // Handled by Game.js
-                // Callback to game to switch level is handled by Game loop checking this state or callback
-            }
-            return; // Skip normal update
+        // Pipe Animation Logic (Delegated to State)
+        if (this.currentState instanceof PipeState) {
+            this.currentState.update();
+            return;
         }
 
-        if (this.isExitingPipe) {
-            this.y -= 1; // Move up slowly
-            this.pipeTimer++;
-            if (this.pipeTimer > 60) {
-                this.isExitingPipe = false;
-                this.grounded = true;
-                this.velY = 0;
-            }
-            return; // Skip normal update
-        }
-
-        // Update State
+        // Update State Input
         this.currentState.handleInput(input);
+        this.currentState.update();
 
         // Death Animation Logic (Physics only)
-        if (this.isDead) {
-            this.velY += this.GRAVITY;
-            this.y += this.velY;
+        if (this.currentState instanceof Dead) {
             return; // Skip all other updates
         }
 
@@ -514,18 +498,12 @@ export class Player {
 
     enterPipe() {
         this.isEnteringPipe = true;
-        this.pipeTimer = 0;
-        this.velX = 0;
-        this.velY = 0;
-        this.game.playSound('powerup_mushroom'); // Placeholder sound, maybe add pipe sound later
+        this.setState(5); // PIPE state
     }
 
     exitPipe() {
         this.isExitingPipe = true;
-        this.pipeTimer = 0;
-        this.velX = 0;
-        this.velY = 0;
-        this.game.playSound('powerup_mushroom');
+        this.setState(5); // PIPE state
     }
 
     draw(ctx, camera) {
@@ -545,6 +523,43 @@ export class Player {
         ctx.translate(drawX, drawY);
         // Apply powerScale to visual drawing as well
         ctx.scale(this.direction * this.scaleX * this.powerScale, this.scaleY * this.powerScale);
+
+        // Sprite Sheet Drawing Logic
+        let animationName = 'idle';
+        if (this.isDead) animationName = 'dead';
+        else if (this.isJumping) animationName = 'jump';
+        else if (this.isMoving) animationName = 'run';
+
+        // Check if animation exists in AssetLoader
+        const animation = this.game.assetLoader.getAnimation(animationName);
+
+        if (animation) {
+            // Calculate current frame based on game time or internal tick
+            // Using this.animationTick which is updated in update()
+            // We need a continuous timer for smooth animation independent of state switches if needed
+            // For now, use a simple frame index derived from a global timer or internal counter
+            const totalFrames = animation.frames.length;
+            const frameIndex = Math.floor(Date.now() / (animation.frameDuration * 16)) % totalFrames;
+            // *16 to convert roughly frames to ms if frameDuration is in frames (60fps)
+            // Or if frameDuration is ms, remove *16. Let's assume frameDuration is frames (e.g. 10 frames)
+
+            const spriteName = animation.frames[frameIndex];
+            const sprite = this.game.assetLoader.getSprite(spriteName);
+
+            if (sprite) {
+                ctx.translate(0, -this.baseHeight); // Adjust for sprite origin (top-left vs bottom-center)
+                // Draw sprite centered horizontally
+                ctx.drawImage(
+                    sprite.image,
+                    sprite.x, sprite.y, sprite.width, sprite.height,
+                    -this.baseWidth / 2, 0, this.baseWidth, this.baseHeight
+                );
+                ctx.restore();
+                return; // Skip procedural drawing
+            }
+        }
+
+        // Fallback to Procedural Drawing
         ctx.translate(0, -this.baseHeight / 2); // Move back to center using BASE height since we scaled up
 
         // Define colors based on state

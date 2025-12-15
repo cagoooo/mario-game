@@ -18,11 +18,12 @@ import { ParticleSystem } from './ParticleSystem.js?v=1.8.9';
 import { ObjectPool } from './ObjectPool.js?v=1.8.9';
 
 export class Game {
-    constructor(canvas, uiElements, images) {
+    constructor(canvas, uiElements, assetLoader) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.ui = uiElements;
-        this.images = images;
+        this.assetLoader = assetLoader;
+        this.images = assetLoader.images; // Keep for backward compatibility if needed
 
         this.width = 800; // Logical width
         this.height = 400; // Logical height
@@ -542,22 +543,8 @@ export class Game {
             }
         }
 
-        // Handle Pipe Transition
-        if (this.player.isEnteringPipe && this.player.pipeTimer >= 60) {
-            if (this.gameState === 'OVERWORLD') {
-                this.loadBonusLevel();
-            } else {
-                this.unloadBonusLevel();
-            }
-            this.player.isEnteringPipe = false;
-
-            // Only play exit animation (rising up) if we are in Overworld
-            // In Bonus level, we fall from the ceiling
-            if (this.gameState === 'OVERWORLD') {
-                this.player.exitPipe();
-            }
-            return;
-        }
+        // Handle Pipe Transition - MOVED TO PlayerStates.js
+        // Legacy code removed to prevent conflicts
 
         // Freeze frame logic
         if (this.freezeFrames > 0) {
@@ -940,6 +927,7 @@ export class Game {
         // Mark pipe as used to prevent re-entry
         pipe.used = true;
 
+        this.player.autoMovePipe = pipe;
         this.player.enterPipe();
 
         // Save Overworld State
@@ -1469,41 +1457,4 @@ export class Game {
     }
 }
 
-export async function preloadImages() {
-    console.log('Starting to preload images...');
-    const imagePaths = {
-        player: 'assets/player.png',
-        enemy: 'assets/enemy.png',
-        tiles: 'assets/tiles.png'
-    };
 
-    const promises = Object.entries(imagePaths).map(([key, src]) => {
-        return new Promise((resolve) => {
-            const img = new Image();
-            img.src = src;
-            img.onload = () => {
-                console.log(`Loaded image: ${key}`);
-                resolve([key, img]);
-            };
-            img.onerror = (e) => {
-                console.error(`Failed to load image: ${key}`, e);
-                resolve([key, null]);
-            };
-        });
-    });
-
-    const images = {};
-    try {
-        const results = await Promise.all(promises);
-        results.forEach(([key, img]) => {
-            if (img) {
-                images[key] = img;
-            }
-        });
-        console.log('All images preloaded.');
-        return images;
-    } catch (error) {
-        console.error('Error preloading images:', error);
-        return images;
-    }
-}
