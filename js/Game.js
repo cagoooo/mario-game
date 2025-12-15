@@ -126,6 +126,9 @@ export class Game {
         this.ui.score.textContent = `⭐ 0`;
 
         this.handleAnyKeyRestart = this.handleAnyKeyRestart.bind(this);
+        this.handleCanvasClick = this.handleCanvasClick.bind(this);
+        this.canvas.addEventListener('click', this.handleCanvasClick);
+        this.canvas.addEventListener('touchstart', this.handleCanvasClick, { passive: false });
 
         // Start immediately since images are preloaded
         this.start();
@@ -1139,6 +1142,54 @@ export class Game {
         if (!this.gameRunning) {
             // Prevent default behavior for some keys if needed, but generally let it pass
             this.restart();
+        }
+    }
+
+    handleCanvasClick(e) {
+        if (!this.gameRunning || this.isPaused || this.gameState !== 'OVERWORLD') return;
+
+        // Get coordinates
+        const rect = this.canvas.getBoundingClientRect();
+        let clientX, clientY;
+
+        if (e.type === 'touchstart') {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+            // Prevent default to avoid double firing with click, but be careful with UI buttons
+            // Actually, UI buttons are HTML elements on top, so they handle their own events.
+            // But if we preventDefault here on canvas, it might be fine.
+            // However, InputHandler might already be handling touchstart.
+            // Let's just use the coordinates.
+        } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+
+        const canvasX = (clientX - rect.left) * scaleX;
+        const canvasY = (clientY - rect.top) * scaleY;
+
+        const worldX = canvasX + this.camera.x;
+        const worldY = canvasY + this.camera.y;
+
+        // Check if clicked on an ENTRANCE pipe
+        const clickedPipe = this.pipes.find(p =>
+            p.type === 'ENTRANCE' &&
+            worldX >= p.x && worldX <= p.x + p.width &&
+            worldY >= p.y && worldY <= p.y + p.height
+        );
+
+        if (clickedPipe) {
+            // Check if player is on top of THIS pipe
+            // We can be lenient: if player is on top of *any* pipe, and we click *this* pipe?
+            // Or strictly: player must be on top of the clicked pipe.
+            // The requirement says "click the pipe to enter".
+            // Let's enforce playerOnTop for safety.
+            if (clickedPipe.playerOnTop) {
+                this.enterBonusLevel(clickedPipe);
+            }
         }
     }
 

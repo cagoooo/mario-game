@@ -179,6 +179,30 @@ export class Pipe {
         ctx.fillStyle = '#006400';
         ctx.fillRect(screenX + 36, this.y + 4, 8, 16);
         ctx.fillRect(screenX + 38, this.y + 24, 6, this.height - 30);
+
+        // === VISUAL INDICATOR (Arrow) ===
+        if (this.type === 'ENTRANCE') {
+            const arrowX = screenX + this.width / 2;
+            const bounce = Math.sin(Date.now() / 200) * 5; // Bouncing animation
+            const arrowY = this.y - 40 + bounce;
+
+            ctx.fillStyle = '#FFD700'; // Gold color
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2;
+
+            ctx.beginPath();
+            ctx.moveTo(arrowX - 10, arrowY);
+            ctx.lineTo(arrowX + 10, arrowY);
+            ctx.lineTo(arrowX, arrowY + 15);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.rect(arrowX - 4, arrowY - 15, 8, 15);
+            ctx.fill();
+            ctx.stroke();
+        }
     }
 }
 
@@ -198,11 +222,9 @@ export function generatePipes(startX, endX, groundY) {
 
             const pipe = new Pipe(x + Math.random() * 100, groundY - height, height, hasPiranha);
 
-            // 10% chance to be an entrance pipe (if it doesn't have a piranha)
-            if (!hasPiranha && Math.random() < 0.1) {
+            // 20% chance to be an entrance pipe (if it doesn't have a piranha)
+            if (!hasPiranha && Math.random() < 0.2) {
                 pipe.type = 'ENTRANCE';
-                // Visual indicator? Maybe a different color or just knowledge?
-                // For now, let's keep it hidden/secret.
             }
 
             pipes.push(pipe);

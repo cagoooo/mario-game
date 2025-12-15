@@ -1,7 +1,7 @@
-import { Game, preloadImages } from './Game.js?v=1.9.8';
+import { Game, preloadImages } from './Game.js?v=1.9.9';
 
 window.onload = async function () {
-    console.log('%c Game Version: 1.9.8 (Secret Pipe & Bonus Level) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 1.9.9 (Touch Optimized Secret Pipes) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements
