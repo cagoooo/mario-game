@@ -215,6 +215,9 @@ export class CollisionSystem {
     handleEnvironmentCollisions() {
         // Pipes (Piranha Plants)
         this.game.pipes.forEach(pipe => {
+            // Skip collision if entering/exiting pipe
+            if (this.game.player.isEnteringPipe || this.game.player.isExitingPipe) return;
+
             // Reset playerOnTop flag each frame
             pipe.playerOnTop = false;
 

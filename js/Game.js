@@ -453,36 +453,97 @@ export class Game {
     update() {
         if (!this.gameRunning || !this.player) return;
 
-        // Check for Pipe Entry
-        if (this.gameState === 'OVERWORLD' && this.player.grounded && !this.player.isEnteringPipe && !this.player.isExitingPipe) {
-            // Check if pressing Down
-            if (this.input.keys['ArrowDown'] || this.input.keys['KeyS']) {
-                // Check if on an entrance pipe
-                const pipe = this.pipes.find(p => p.playerOnTop && p.type === 'ENTRANCE');
+        // Check for Pipe Entry (Manual or Forced)
+        if (this.gameState === 'OVERWORLD' && !this.player.isEnteringPipe && !this.player.isExitingPipe) {
+            // Manual Entry
+            if (this.player.grounded && (this.input.keys['ArrowDown'] || this.input.keys['KeyS'])) {
+                const pipe = this.pipes.find(p => p.playerOnTop && p.type === 'ENTRANCE' && !p.used);
                 if (pipe) {
                     this.enterBonusLevel(pipe);
                     return;
                 }
             }
+
+            // Forced Entry (Suction)
+            const suctionPipe = this.pipes.find(p => {
+                if (p.type !== 'ENTRANCE' || p.used) return false;
+
+                // Define suction zone:
+                // Horizontal: within pipe width (slightly forgiving)
+                // Vertical: just above the pipe (e.g., 0 to 50px above)
+                const pipeCenter = p.x + p.width / 2;
+                const playerCenter = this.player.x + this.player.width / 2;
+                const horizontalDist = Math.abs(pipeCenter - playerCenter);
+
+                const playerBottom = this.player.y + this.player.height;
+                const pipeTop = p.y;
+                const verticalDist = pipeTop - playerBottom;
+
+                // Suction conditions:
+                // 1. Horizontally aligned (within pipe width)
+                // 2. Vertically close (touching or slightly above, e.g. jumping over)
+                // 3. Moving downwards or standing (velY >= 0) to avoid catching while jumping UP
+                const isHorizontallyAligned = horizontalDist < (p.width / 2 - 5); // Must be mostly inside
+                const isVerticallyClose = verticalDist >= -10 && verticalDist < 40; // Allow slight overlap or just above
+                const isFallingOrStanding = this.player.velY >= 0;
+
+                return isHorizontallyAligned && isVerticallyClose && isFallingOrStanding;
+            });
+
+            if (suctionPipe) {
+                // Snap to center and top
+                this.player.x = suctionPipe.x + suctionPipe.width / 2 - this.player.width / 2;
+                this.player.y = suctionPipe.y - this.player.height;
+                this.player.velX = 0;
+                this.player.velY = 0;
+                this.enterBonusLevel(suctionPipe);
+                return;
+            }
         }
 
         // Check for Pipe Exit (in Bonus Level)
-        if (this.gameState === 'BONUS' && this.player.grounded && !this.player.isEnteringPipe && !this.player.isExitingPipe) {
-            // Check if pressing Down (or maybe just walk into it? Let's use Down for consistency or Up?)
-            // Classic is side pipe or up pipe. Let's assume exit pipe is on ground and we press Down or it's an Up pipe.
-            // For simplicity, let's make the exit pipe an "UP" pipe that we jump into? 
-            // Or just a pipe on the ground we press Down to leave.
-            if (this.input.keys['ArrowDown'] || this.input.keys['KeyS']) {
+        if (this.gameState === 'BONUS' && !this.player.isEnteringPipe && !this.player.isExitingPipe) {
+            // Manual Exit
+            if (this.player.grounded && (this.input.keys['ArrowDown'] || this.input.keys['KeyS'])) {
                 const pipe = this.pipes.find(p => p.playerOnTop && p.type === 'EXIT');
                 if (pipe) {
                     this.returnToOverworld();
                     return;
                 }
             }
+
+            // Forced Exit (Suction)
+            const suctionPipe = this.pipes.find(p => {
+                if (p.type !== 'EXIT') return false;
+
+                const pipeCenter = p.x + p.width / 2;
+                const playerCenter = this.player.x + this.player.width / 2;
+                const horizontalDist = Math.abs(pipeCenter - playerCenter);
+
+                const playerBottom = this.player.y + this.player.height;
+                const pipeTop = p.y;
+                const verticalDist = pipeTop - playerBottom;
+
+                const isHorizontallyAligned = horizontalDist < (p.width / 2 - 5);
+                const isVerticallyClose = verticalDist >= -10 && verticalDist < 40;
+                const isFallingOrStanding = this.player.velY >= 0;
+
+                return isHorizontallyAligned && isVerticallyClose && isFallingOrStanding;
+            });
+
+            if (suctionPipe) {
+                // Snap to center and top
+                this.player.x = suctionPipe.x + suctionPipe.width / 2 - this.player.width / 2;
+                this.player.y = suctionPipe.y - this.player.height;
+                this.player.velX = 0;
+                this.player.velY = 0;
+                this.returnToOverworld();
+                return;
+            }
         }
 
         // Handle Pipe Transition
-        if (this.player.isEnteringPipe && this.player.pipeTimer > 60) {
+        if (this.player.isEnteringPipe && this.player.pipeTimer >= 60) {
             if (this.gameState === 'OVERWORLD') {
                 this.loadBonusLevel();
             } else {
@@ -876,8 +937,8 @@ export class Game {
 
         this.playSound('pipe');
 
-        // Center player on pipe
-        this.player.x = pipe.x + pipe.width / 2 - this.player.width / 2;
+        // Mark pipe as used to prevent re-entry
+        pipe.used = true;
 
         this.player.enterPipe();
 
@@ -886,14 +947,12 @@ export class Game {
             cameraX: this.camera.x,
             playerX: this.player.x,
             playerY: this.player.y,
-            score: this.score, // Score is global but good to track
-            // We don't need to save entities as they are preserved in the arrays
-            // But we need to clear them temporarily or just swap arrays?
-            // Swapping arrays is cleaner.
+            score: this.score,
+            levelWidth: this.levelWidth, // Save level width
             entities: {
                 platforms: [...this.platforms],
                 coins: [...this.coins],
-                enemies: [...this.enemies], // This is tricky with EnemyManager
+                enemies: [...this.enemies],
                 pipes: [...this.pipes],
                 blocks: [...this.questionBlocks]
             }
@@ -916,10 +975,13 @@ export class Game {
         this.lava = [];
 
         // Setup Bonus Room
-        // Underground theme colors
         const roomWidth = 1000;
+        // Update levelWidth to enforce bounds in Player.js
+        this.levelWidth = roomWidth;
+
         const groundY = this.height - 50;
         const ceilingY = 50;
+
 
         // Background override (handled in draw, but we can set a flag or biome if needed)
         // For now, Game.draw handles black background for BONUS state.
@@ -949,9 +1011,17 @@ export class Game {
             }
         });
 
-        // Walls
-        this.platforms.push({ x: -50, y: 0, width: 50, height: this.height, draw: () => { } });
-        this.platforms.push({ x: roomWidth, y: 0, width: 50, height: this.height, draw: () => { } });
+        // Walls (Invisible barriers)
+        // Left Wall
+        this.platforms.push({
+            x: -50, y: -1000, width: 50, height: this.height + 2000,
+            draw: () => { } // Invisible
+        });
+        // Right Wall
+        this.platforms.push({
+            x: roomWidth, y: -1000, width: 50, height: this.height + 2000,
+            draw: () => { } // Invisible
+        });
 
         // Platforms
         // A few steps leading to coins
@@ -1020,10 +1090,13 @@ export class Game {
         // Restore State
         if (this.savedState) {
             this.camera.x = this.savedState.cameraX;
-            this.player.x = this.savedState.playerX + 100; // Exit a bit further or same pipe?
-            // Ideally exit from the same pipe or a nearby one. 
-            // Let's just pop out of the same pipe for simplicity, or slightly to the right.
-            this.player.y = this.savedState.playerY - 50; // Pop out
+            this.player.x = this.savedState.playerX + 100;
+            this.player.y = this.savedState.playerY - 50;
+
+            // Restore level width
+            if (this.savedState.levelWidth) {
+                this.levelWidth = this.savedState.levelWidth;
+            }
 
             // Restore entities
             this.platforms = this.savedState.entities.platforms;
@@ -1200,23 +1273,28 @@ export class Game {
         );
 
         if (clickedPipe) {
-            // Check if player is roughly on top of the pipe
-            // We calculate this directly instead of relying on the transient playerOnTop flag
+            // Calculate target X (center of pipe)
+            // Player x is top-left, so center is pipe.x + pipe.width/2 - player.width/2
+            const targetX = clickedPipe.x + clickedPipe.width / 2 - this.player.width / 2;
+
+            // Check if player is already on the pipe (vertical and horizontal check)
             const playerBottom = this.player.y + this.player.height;
             const pipeTop = clickedPipe.y;
-
-            // Allow some margin (e.g., player is within 20px vertically of pipe top)
-            // Also check if player is grounded to ensure they aren't jumping over it
             const verticalCheck = Math.abs(playerBottom - pipeTop) < 20 && this.player.grounded;
-
-            // Horizontal overlap: Check if player center is close to pipe center
             const playerCenter = this.player.x + this.player.width / 2;
             const pipeCenter = clickedPipe.x + clickedPipe.width / 2;
-            // Allow being slightly off-center but mostly on the pipe
-            const horizontalCheck = Math.abs(playerCenter - pipeCenter) < (clickedPipe.width / 2 + 20);
+            const horizontalCheck = Math.abs(playerCenter - pipeCenter) < (clickedPipe.width / 2 + 10);
 
             if (verticalCheck && horizontalCheck) {
+                // Already on top, enter immediately
                 this.enterBonusLevel(clickedPipe);
+            } else {
+                // Not on top, trigger auto-walk
+                // Only if grounded (or maybe allow if falling? let's stick to grounded for now to avoid weird air-walking)
+                if (this.player.grounded) {
+                    this.player.autoMoveTargetX = targetX;
+                    this.player.autoMovePipe = clickedPipe;
+                }
             }
         }
     }

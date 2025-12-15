@@ -1,7 +1,7 @@
-import { Game, preloadImages } from './Game.js?v=1.9.12';
+import { Game, preloadImages } from './Game.js?v=1.9.22';
 
 window.onload = async function () {
-    console.log('%c Game Version: 1.9.12 (Pipe Animation Fix) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 1.9.22 (Bonus Level Bug Fixes) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements

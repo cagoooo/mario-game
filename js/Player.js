@@ -90,6 +90,10 @@ export class Player {
         this.isEnteringPipe = false;
         this.isExitingPipe = false;
         this.pipeTimer = 0;
+
+        // Auto-walk properties
+        this.autoMoveTargetX = null;
+        this.autoMovePipe = null;
     }
 
     setGroundY(y) {
@@ -107,12 +111,76 @@ export class Player {
     }
 
     update(input, platforms, canvasWidth, camera) {
+        // Auto-walk Logic
+        if (this.autoMoveTargetX !== null) {
+            const diff = this.autoMoveTargetX - this.x;
+
+            // If close enough, snap and enter
+            if (Math.abs(diff) < 4) {
+                this.x = this.autoMoveTargetX;
+                this.velX = 0;
+                this.autoMoveTargetX = null;
+
+                if (this.autoMovePipe) {
+                    // Snap to top of pipe to ensure entry animation plays correctly
+                    // This handles cases where player walked from ground to the pipe base
+                    this.y = this.autoMovePipe.y - this.height;
+
+                    // Ensure game reference exists and method is callable
+                    if (this.game && typeof this.game.enterBonusLevel === 'function') {
+                        this.game.enterBonusLevel(this.autoMovePipe);
+                    } else {
+                        console.error('Game reference or enterBonusLevel missing in Player auto-walk');
+                    }
+                    this.autoMovePipe = null;
+                }
+                return;
+            }
+
+            // Otherwise move towards target
+            // Simulate input
+            const direction = Math.sign(diff);
+            this.direction = direction;
+
+            // Manually apply movement logic for smoothness
+            this.velX += direction * this.acceleration;
+            if (Math.abs(this.velX) > this.maxSpeed) {
+                this.velX = Math.sign(this.velX) * this.maxSpeed;
+            }
+            this.isMoving = true;
+
+            // Update animation
+            this.animationTick++;
+            if (this.animationTick >= 5) {
+                this.animationFrame = (this.animationFrame + 1) % 3;
+                this.animationTick = 0;
+            }
+
+            // Apply physics
+            this.x += this.velX;
+            this.velY += this.GRAVITY;
+            this.y += this.velY;
+
+            // Ground collision (simplified for auto-walk)
+            if (this.y + this.height > this.GROUND_Y) {
+                this.y = this.GROUND_Y - this.height;
+                this.velY = 0;
+                this.grounded = true;
+            }
+
+            // Check if we walked off a ledge or hit a wall?
+            // For now, assume simple path to pipe.
+            // If we hit a wall, we might get stuck.
+            // Let's add a timeout or stuck check if needed, but for now simple is fine.
+
+            return; // Skip normal update
+        }
         // Pipe Animation Logic
         if (this.isEnteringPipe) {
             this.y += 1; // Move down slowly
             this.pipeTimer++;
             if (this.pipeTimer > 60) {
-                this.isEnteringPipe = false;
+                // this.isEnteringPipe = false; // Handled by Game.js
                 // Callback to game to switch level is handled by Game loop checking this state or callback
             }
             return; // Skip normal update

@@ -181,7 +181,7 @@ export class Pipe {
         ctx.fillRect(screenX + 38, this.y + 24, 6, this.height - 30);
 
         // === VISUAL INDICATOR (Arrow) ===
-        if (this.type === 'ENTRANCE') {
+        if ((this.type === 'ENTRANCE' || this.type === 'EXIT') && !this.used) {
             const arrowX = screenX + this.width / 2;
             const bounce = Math.sin(Date.now() / 200) * 5; // Bouncing animation
             const arrowY = this.y - 40 + bounce;
@@ -218,14 +218,22 @@ export function generatePipes(startX, endX, groundY) {
         if (Math.random() > 0.3) { // 70% chance for a pipe
             // Variable height: 40 to 120 (Player jump max is ~144, so 120 is safe)
             const height = 40 + Math.random() * 80;
-            const hasPiranha = Math.random() > 0.3; // 70% chance for a piranha plant
+
+            // Determine type FIRST
+            let type = 'NORMAL';
+            let hasPiranha = false;
+
+            // 20% chance to be an ENTRANCE pipe
+            if (Math.random() < 0.2) {
+                type = 'ENTRANCE';
+                hasPiranha = false; // Entrance pipes cannot have piranhas
+            } else {
+                // If not entrance, 70% chance for piranha
+                hasPiranha = Math.random() > 0.3;
+            }
 
             const pipe = new Pipe(x + Math.random() * 100, groundY - height, height, hasPiranha);
-
-            // 20% chance to be an entrance pipe (if it doesn't have a piranha)
-            if (!hasPiranha && Math.random() < 0.2) {
-                pipe.type = 'ENTRANCE';
-            }
+            pipe.type = type;
 
             pipes.push(pipe);
         }
