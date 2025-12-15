@@ -15,6 +15,10 @@ export class Pipe {
 
         // Interaction
         this.playerOnTop = false;
+
+        // Portal properties
+        this.type = 'NORMAL'; // NORMAL, ENTRANCE, EXIT
+        this.destination = null; // { x, y, map }
     }
 
     killPiranha() {
@@ -191,7 +195,17 @@ export function generatePipes(startX, endX, groundY) {
             // Variable height: 40 to 120 (Player jump max is ~144, so 120 is safe)
             const height = 40 + Math.random() * 80;
             const hasPiranha = Math.random() > 0.3; // 70% chance for a piranha plant
-            pipes.push(new Pipe(x + Math.random() * 100, groundY - height, height, hasPiranha));
+
+            const pipe = new Pipe(x + Math.random() * 100, groundY - height, height, hasPiranha);
+
+            // 10% chance to be an entrance pipe (if it doesn't have a piranha)
+            if (!hasPiranha && Math.random() < 0.1) {
+                pipe.type = 'ENTRANCE';
+                // Visual indicator? Maybe a different color or just knowledge?
+                // For now, let's keep it hidden/secret.
+            }
+
+            pipes.push(pipe);
         }
     }
 

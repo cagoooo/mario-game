@@ -85,6 +85,11 @@ export class Player {
         // Squash and stretch
         this.scaleX = 1.0;
         this.scaleY = 1.0;
+
+        // Pipe Animation
+        this.isEnteringPipe = false;
+        this.isExitingPipe = false;
+        this.pipeTimer = 0;
     }
 
     setGroundY(y) {
@@ -102,6 +107,28 @@ export class Player {
     }
 
     update(input, platforms, canvasWidth, camera) {
+        // Pipe Animation Logic
+        if (this.isEnteringPipe) {
+            this.y += 1; // Move down slowly
+            this.pipeTimer++;
+            if (this.pipeTimer > 60) {
+                this.isEnteringPipe = false;
+                // Callback to game to switch level is handled by Game loop checking this state or callback
+            }
+            return; // Skip normal update
+        }
+
+        if (this.isExitingPipe) {
+            this.y -= 1; // Move up slowly
+            this.pipeTimer++;
+            if (this.pipeTimer > 60) {
+                this.isExitingPipe = false;
+                this.grounded = true;
+                this.velY = 0;
+            }
+            return; // Skip normal update
+        }
+
         // Update State
         this.currentState.handleInput(input);
 
@@ -415,6 +442,22 @@ export class Player {
             return true;
         }
         return false;
+    }
+
+    enterPipe() {
+        this.isEnteringPipe = true;
+        this.pipeTimer = 0;
+        this.velX = 0;
+        this.velY = 0;
+        this.game.playSound('powerup_mushroom'); // Placeholder sound, maybe add pipe sound later
+    }
+
+    exitPipe() {
+        this.isExitingPipe = true;
+        this.pipeTimer = 0;
+        this.velX = 0;
+        this.velY = 0;
+        this.game.playSound('powerup_mushroom');
     }
 
     draw(ctx, camera) {

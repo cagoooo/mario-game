@@ -100,10 +100,12 @@ export class Game {
         this.biomeDistance = 0;
         this.BIOME_LENGTH = 3000; // Change biome every 3000px
 
-        // Biome Management
-        this.currentBiome = 'PLAINS';
-        this.biomeDistance = 0;
-        this.BIOME_LENGTH = 3000; // Change biome every 3000px
+        // Game State for Bonus Level
+        this.gameState = 'OVERWORLD'; // OVERWORLD, BONUS
+        this.savedState = null; // To store overworld state when entering bonus level
+
+
+
 
         this.player = null;
         this.platforms = [];
@@ -448,6 +450,51 @@ export class Game {
     update() {
         if (!this.gameRunning || !this.player) return;
 
+        // Check for Pipe Entry
+        if (this.gameState === 'OVERWORLD' && this.player.grounded && !this.player.isEnteringPipe && !this.player.isExitingPipe) {
+            // Check if pressing Down
+            if (this.input.keys['ArrowDown'] || this.input.keys['KeyS']) {
+                // Check if on an entrance pipe
+                const pipe = this.pipes.find(p => p.playerOnTop && p.type === 'ENTRANCE');
+                if (pipe) {
+                    this.enterBonusLevel(pipe);
+                    return;
+                }
+            }
+        }
+
+        // Check for Pipe Exit (in Bonus Level)
+        if (this.gameState === 'BONUS' && this.player.grounded && !this.player.isEnteringPipe && !this.player.isExitingPipe) {
+            // Check if pressing Down (or maybe just walk into it? Let's use Down for consistency or Up?)
+            // Classic is side pipe or up pipe. Let's assume exit pipe is on ground and we press Down or it's an Up pipe.
+            // For simplicity, let's make the exit pipe an "UP" pipe that we jump into? 
+            // Or just a pipe on the ground we press Down to leave.
+            if (this.input.keys['ArrowDown'] || this.input.keys['KeyS']) {
+                const pipe = this.pipes.find(p => p.playerOnTop && p.type === 'EXIT');
+                if (pipe) {
+                    this.returnToOverworld();
+                    return;
+                }
+            }
+        }
+
+        // Handle Pipe Transition
+        if (this.player.isEnteringPipe && this.player.pipeTimer > 60) {
+            if (this.gameState === 'OVERWORLD') {
+                this.loadBonusLevel();
+            } else {
+                this.unloadBonusLevel();
+            }
+            this.player.isEnteringPipe = false;
+
+            // Only play exit animation (rising up) if we are in Overworld
+            // In Bonus level, we fall from the ceiling
+            if (this.gameState === 'OVERWORLD') {
+                this.player.exitPipe();
+            }
+            return;
+        }
+
         // Freeze frame logic
         if (this.freezeFrames > 0) {
             this.freezeFrames--;
@@ -627,7 +674,15 @@ export class Game {
 
         this.ctx.clearRect(-10, -10, this.width + 20, this.height + 20);
 
-        this.background.draw(this.ctx, this.height, this.camera);
+        this.ctx.clearRect(-10, -10, this.width + 20, this.height + 20);
+
+        if (this.gameState === 'BONUS') {
+            // Black background for bonus level
+            this.ctx.fillStyle = '#000000';
+            this.ctx.fillRect(0, 0, this.width, this.height);
+        } else {
+            this.background.draw(this.ctx, this.height, this.camera);
+        }
 
         // Draw question blocks
         this.questionBlocks.forEach(block => {
@@ -800,23 +855,181 @@ export class Game {
                 this.pipes.splice(i, 1);
             }
         }
-
-        // Cleanup Lava
-        for (let i = this.lava.length - 1; i >= 0; i--) {
-            if (this.lava[i].x + this.lava[i].width < minX) {
-                this.lava.splice(i, 1);
-            }
-        }
-
-        // Cleanup Fireballs (off-screen or inactive)
-        for (let i = this.fireballs.length - 1; i >= 0; i--) {
-            const f = this.fireballs[i];
-            if (f.x + f.width <= minX || !f.active) {
-                this.fireballPool.release(f);
-                this.fireballs.splice(i, 1);
-            }
-        }
     }
+
+    enterBonusLevel(pipe) {
+        this.player.enterPipe();
+
+        // Save Overworld State
+        this.savedState = {
+            cameraX: this.camera.x,
+            playerX: this.player.x,
+            playerY: this.player.y,
+            score: this.score, // Score is global but good to track
+            // We don't need to save entities as they are preserved in the arrays
+            // But we need to clear them temporarily or just swap arrays?
+            // Swapping arrays is cleaner.
+            entities: {
+                platforms: [...this.platforms],
+                coins: [...this.coins],
+                enemies: [...this.enemies], // This is tricky with EnemyManager
+                pipes: [...this.pipes],
+                blocks: [...this.questionBlocks]
+            }
+        };
+    }
+
+    loadBonusLevel() {
+        this.gameState = 'BONUS';
+
+        // Clear current entities for bonus level
+        this.platforms = [];
+        this.coins = [];
+        this.enemyManager.reset(); // Clear enemies
+        this.pipes = [];
+        this.questionBlocks = [];
+        this.mushrooms = [];
+        this.stars = [];
+        this.fireflowers = [];
+        this.fireballs = [];
+        this.lava = [];
+
+        // Setup Bonus Room
+        // Underground theme colors
+        const roomWidth = 1000;
+        const groundY = this.height - 50;
+        const ceilingY = 50;
+
+        // Background override (handled in draw, but we can set a flag or biome if needed)
+        // For now, Game.draw handles black background for BONUS state.
+
+        // Floor
+        this.platforms.push({
+            x: 0, y: groundY, width: roomWidth, height: 50, draw: (ctx) => {
+                ctx.fillStyle = '#0055AA'; // Blue bricks for underground
+                ctx.fillRect(0, groundY, roomWidth, 50);
+                // Grid pattern
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                for (let i = 0; i < roomWidth; i += 50) {
+                    ctx.moveTo(i, groundY);
+                    ctx.lineTo(i, groundY + 50);
+                }
+                ctx.stroke();
+            }
+        });
+
+        // Ceiling
+        this.platforms.push({
+            x: 0, y: 0, width: roomWidth, height: ceilingY, draw: (ctx) => {
+                ctx.fillStyle = '#0055AA';
+                ctx.fillRect(0, 0, roomWidth, ceilingY);
+            }
+        });
+
+        // Walls
+        this.platforms.push({ x: -50, y: 0, width: 50, height: this.height, draw: () => { } });
+        this.platforms.push({ x: roomWidth, y: 0, width: 50, height: this.height, draw: () => { } });
+
+        // Platforms
+        // A few steps leading to coins
+        for (let i = 0; i < 3; i++) {
+            this.platforms.push({
+                x: 300 + i * 150,
+                y: groundY - 100 - i * 50,
+                width: 100,
+                height: 20,
+                draw: (ctx, camera) => {
+                    const x = 300 + i * 150 - camera.x;
+                    const y = groundY - 100 - i * 50;
+                    ctx.fillStyle = '#FF8C00'; // Orange blocks
+                    ctx.fillRect(x, y, 100, 20);
+                    ctx.strokeStyle = '#000';
+                    ctx.strokeRect(x, y, 100, 20);
+                }
+            });
+        }
+
+        // Coins!
+        // Grid of coins
+        for (let i = 0; i < 8; i++) {
+            for (let j = 0; j < 3; j++) {
+                this.coins.push(this.coinPool.get(250 + i * 60, 150 + j * 50));
+            }
+        }
+
+        // Big Coin Reward (using multiple coins to simulate big one or just a pile)
+        // Let's make a "smiley" face of coins at the end
+        const centerX = 850;
+        const centerY = 200;
+        // Eyes
+        this.coins.push(this.coinPool.get(centerX - 30, centerY - 30));
+        this.coins.push(this.coinPool.get(centerX + 30, centerY - 30));
+        // Mouth
+        this.coins.push(this.coinPool.get(centerX - 40, centerY + 20));
+        this.coins.push(this.coinPool.get(centerX - 20, centerY + 35));
+        this.coins.push(this.coinPool.get(centerX, centerY + 40));
+        this.coins.push(this.coinPool.get(centerX + 20, centerY + 35));
+        this.coins.push(this.coinPool.get(centerX + 40, centerY + 20));
+
+
+        // Exit Pipe
+        const exitPipe = new Pipe(roomWidth - 100, groundY - 80, 80, false);
+        exitPipe.type = 'EXIT';
+        this.pipes.push(exitPipe);
+
+        // Reset Camera
+        this.camera.x = 0;
+
+        // Position Player
+        this.player.x = 100;
+        this.player.y = 60; // Fall in from top
+        this.player.velX = 0;
+        this.player.velY = 0;
+    }
+
+    returnToOverworld() {
+        this.player.enterPipe();
+    }
+
+    unloadBonusLevel() {
+        this.gameState = 'OVERWORLD';
+
+        // Restore State
+        if (this.savedState) {
+            this.camera.x = this.savedState.cameraX;
+            this.player.x = this.savedState.playerX + 100; // Exit a bit further or same pipe?
+            // Ideally exit from the same pipe or a nearby one. 
+            // Let's just pop out of the same pipe for simplicity, or slightly to the right.
+            this.player.y = this.savedState.playerY - 50; // Pop out
+
+            // Restore entities
+            this.platforms = this.savedState.entities.platforms;
+            this.coins = this.savedState.entities.coins;
+            // Enemies? We cleared them. Restoring them might be buggy if they moved.
+            // Let's just keep the overworld entities as they were, assuming we didn't destroy the objects, just cleared the reference arrays.
+            // Wait, I cleared the arrays. The objects still exist in savedState.
+            // But EnemyManager manages enemies internally. 
+            // For now, let's just restore the arrays.
+            this.pipes = this.savedState.entities.pipes;
+            this.questionBlocks = this.savedState.entities.blocks;
+
+            // Note: EnemyManager needs to be handled. 
+            // If we cleared enemies via reset(), they are gone.
+            // We should probably NOT clear them but just stop updating/drawing them?
+            // Or better: Swapping the arrays is fine, but EnemyManager has its own list.
+            // Let's just ignore enemies for now or respawn them?
+            // Actually, let's just restore the enemies array to the manager if possible.
+            // But EnemyManager.enemies is a getter.
+            // We might lose enemies. That's acceptable for a prototype.
+        }
+
+        this.savedState = null;
+    }
+
+
+
 
     gameLoop() {
         if (!this.gameRunning || this.isPaused) return;

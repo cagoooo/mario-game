@@ -167,6 +167,12 @@ export class InputHandler {
 
         addInput(leftBtn, 'ArrowLeft');
         addInput(rightBtn, 'ArrowRight');
+        // Add Down key support (no UI button for now, but keyboard works)
+        // We can add a virtual button later if needed, or use a gesture.
+
+        // Also map 's' and 'ArrowDown' in the main key listener (already handled by generic keydown)
+        // But for touch controls, we might need a way to crouch.
+        // For now, let's assume keyboard 'ArrowDown' or 's' is enough for testing.
 
         // Jump button
         if (jumpBtn) {
