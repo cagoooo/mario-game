@@ -13,7 +13,7 @@ export class LevelGenerator {
 
         const platforms = generatePlatforms(startX, endX, height, images.tiles);
 
-        const enemies = createEnemies(startX, endX, height, images.enemy, difficulty);
+        const enemies = createEnemies(startX, endX, height, images.enemy, difficulty, context.biome);
 
         // Pass only new platforms for optimization
         const coins = generateCoins(startX, endX, platforms);

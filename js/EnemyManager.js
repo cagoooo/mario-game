@@ -1,5 +1,5 @@
 import { ObjectPool } from './ObjectPool.js?v=1.8.0';
-import { Enemy, Koopa, FlyingEnemy } from './Enemy.js?v=1.8.2';
+import { Enemy, Koopa, FlyingEnemy, Cactus, Yeti, Ghost } from './Enemy.js?v=1.9.24';
 
 export class EnemyManager {
     constructor() {
@@ -22,6 +22,21 @@ export class EnemyManager {
             () => new FlyingEnemy(0, 0, 0, 0),
             (e, x, y, speed, direction) => e.reset(x, y, speed, direction)
         );
+
+        this.cactusPool = new ObjectPool(
+            () => new Cactus(0, 0, 0, 0),
+            (e, x, y, speed, direction) => e.reset(x, y, speed, direction)
+        );
+
+        this.yetiPool = new ObjectPool(
+            () => new Yeti(0, 0, 0, 0),
+            (e, x, y, speed, direction) => e.reset(x, y, speed, direction)
+        );
+
+        this.ghostPool = new ObjectPool(
+            () => new Ghost(0, 0, 0, 0),
+            (e, x, y, speed, direction) => e.reset(x, y, speed, direction)
+        );
     }
 
     spawn(data) {
@@ -32,6 +47,12 @@ export class EnemyManager {
             enemy = this.koopaPool.get(data.x, data.y, data.speed, data.direction);
         } else if (data.type === 'flying') {
             enemy = this.flyingPool.get(data.x, data.y, data.speed, data.direction);
+        } else if (data.type === 'cactus') {
+            enemy = this.cactusPool.get(data.x, data.y, data.speed, data.direction);
+        } else if (data.type === 'yeti') {
+            enemy = this.yetiPool.get(data.x, data.y, data.speed, data.direction);
+        } else if (data.type === 'ghost') {
+            enemy = this.ghostPool.get(data.x, data.y, data.speed, data.direction);
         }
 
         if (enemy) {
@@ -43,10 +64,10 @@ export class EnemyManager {
         spawnDataList.forEach(data => this.spawn(data));
     }
 
-    update(activeAreaX) {
+    update(activeAreaX, player) {
         for (let i = this.enemies.length - 1; i >= 0; i--) {
             const enemy = this.enemies[i];
-            enemy.update(activeAreaX);
+            enemy.update(activeAreaX, player); // Pass player for Ghost tracking
         }
     }
 
@@ -64,6 +85,9 @@ export class EnemyManager {
         if (enemy.type === 'goomba') this.goombaPool.release(enemy);
         else if (enemy.type === 'koopa') this.koopaPool.release(enemy);
         else if (enemy.type === 'flying') this.flyingPool.release(enemy);
+        else if (enemy.type === 'cactus') this.cactusPool.release(enemy);
+        else if (enemy.type === 'yeti') this.yetiPool.release(enemy);
+        else if (enemy.type === 'ghost') this.ghostPool.release(enemy);
     }
 
     getEnemies() {

@@ -1426,6 +1426,7 @@ export class Game {
             this.ui.score.style.transform = 'scale(1)';
         }, 100);
     }
+
     getDifficultyMultiplier() {
         // Base difficulty is 1.0
         // Increases by 0.1 every 500 points
@@ -1440,7 +1441,8 @@ export class Game {
             height: this.height,
             groundY: this.GROUND_Y,
             images: this.images,
-            difficulty: difficulty
+            difficulty: difficulty,
+            biome: this.currentBiome // Pass current biome
         };
 
         const generated = this.levelGenerator.generateChunk(startX, endX, context);
@@ -1459,9 +1461,6 @@ export class Game {
 
         this.lastGeneratedX = endX;
         this.levelWidth = endX; // Keep levelWidth updated for boundary checks if any remain
-        // Cap at 2.5x speed/density
-        const multiplier = 1 + (this.score / 500) * 0.1;
-        return Math.min(2.5, multiplier);
     }
 }
 

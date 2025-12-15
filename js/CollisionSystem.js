@@ -22,7 +22,10 @@ export class CollisionSystem {
 
             if (checkCollision(this.game.player, enemy)) {
                 // Relaxed stomp check
-                if (this.game.player.velY > 0 && this.game.player.y + this.game.player.height < enemy.y + enemy.height * 0.8) {
+                if (this.game.player.velY > 0 &&
+                    this.game.player.y + this.game.player.height < enemy.y + enemy.height * 0.8 &&
+                    !enemy.spiky) { // Check if enemy is spiky (cannot be stomped)
+
                     this.game.addScorePopup(enemy.x, enemy.y, 100);
                     this.game.addParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 8, '#FFD700');
                     this.game.enemies.splice(i, 1);

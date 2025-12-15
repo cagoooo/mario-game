@@ -240,53 +240,269 @@ export class FlyingEnemy extends Enemy {
     }
 }
 
-export function createEnemies(startX, endX, canvasHeight, spriteSheet, difficultyMultiplier = 1) {
+// Cactus (Desert) - Spiky, cannot be stomped
+export class Cactus extends Enemy {
+    constructor(x, y, speed, direction) {
+        super(x, y, speed, direction, null);
+        this.type = 'cactus';
+        this.spiky = true; // Custom property for collision handling
+        this.height = 40;
+    }
+
+    reset(x, y, speed, direction) {
+        super.reset(x, y, speed, direction);
+        this.type = 'cactus';
+        this.spiky = true;
+        this.height = 40;
+    }
+
+    draw(ctx, camera) {
+        ctx.save();
+        const drawX = this.x - camera.x + this.width / 2;
+        const drawY = this.y + this.height / 2;
+
+        ctx.translate(drawX, drawY);
+
+        // Main body (Green)
+        ctx.fillStyle = '#2E7D32';
+        ctx.beginPath();
+        ctx.roundRect(-10, -20, 20, 40, 5);
+        ctx.fill();
+
+        // Arms
+        ctx.beginPath();
+        ctx.roundRect(-18, -10, 8, 8, 2); // Left arm
+        ctx.roundRect(10, -15, 8, 8, 2);  // Right arm
+        ctx.fill();
+
+        // Spikes
+        ctx.fillStyle = '#FFF';
+        const spikes = [[-10, -15], [10, -5], [0, -20], [-10, 5], [10, 10]];
+        spikes.forEach(([sx, sy]) => {
+            ctx.beginPath();
+            ctx.arc(sx, sy, 1, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // Eyes (Angry)
+        ctx.fillStyle = 'black';
+        ctx.beginPath();
+        ctx.arc(-5, -5, 2, 0, Math.PI * 2);
+        ctx.arc(5, -5, 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+    }
+}
+
+// Yeti (Snow) - Jumps randomly
+export class Yeti extends Enemy {
+    constructor(x, y, speed, direction) {
+        super(x, y, speed, direction, null);
+        this.type = 'yeti';
+        this.height = 35;
+        this.jumpTimer = 0;
+        this.groundY = y;
+        this.velY = 0;
+        this.isJumping = false;
+    }
+
+    reset(x, y, speed, direction) {
+        super.reset(x, y, speed, direction);
+        this.type = 'yeti';
+        this.height = 35;
+        this.groundY = y;
+        this.velY = 0;
+        this.isJumping = false;
+        this.jumpTimer = Math.random() * 100;
+    }
+
+    update(canvasWidth) {
+        super.update(canvasWidth);
+
+        // Jump logic
+        if (!this.isJumping) {
+            this.jumpTimer++;
+            if (this.jumpTimer > 150) { // Jump every ~2.5 seconds
+                this.velY = -8;
+                this.isJumping = true;
+                this.jumpTimer = 0;
+            }
+        } else {
+            this.velY += 0.4; // Gravity
+            this.y += this.velY;
+
+            if (this.y >= this.groundY) {
+                this.y = this.groundY;
+                this.velY = 0;
+                this.isJumping = false;
+                this.jumpTimer = Math.random() * 50; // Random delay
+            }
+        }
+    }
+
+    draw(ctx, camera) {
+        ctx.save();
+        const drawX = this.x - camera.x + this.width / 2;
+        const drawY = this.y + this.height / 2;
+
+        ctx.translate(drawX, drawY);
+        ctx.scale(this.direction, 1);
+
+        // Body (White/Blue fur)
+        ctx.fillStyle = '#E0F7FA';
+        ctx.beginPath();
+        ctx.arc(0, 0, 18, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Face
+        ctx.fillStyle = '#B3E5FC';
+        ctx.beginPath();
+        ctx.arc(0, -2, 12, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eyes
+        ctx.fillStyle = 'black';
+        ctx.beginPath();
+        ctx.arc(-4, -2, 2, 0, Math.PI * 2);
+        ctx.arc(4, -2, 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Mouth (Teeth)
+        ctx.fillStyle = 'white';
+        ctx.fillRect(-6, 4, 4, 3);
+        ctx.fillRect(2, 4, 4, 3);
+
+        ctx.restore();
+    }
+}
+
+// Ghost (Spooky) - Floats and follows player slowly
+export class Ghost extends Enemy {
+    constructor(x, y, speed, direction) {
+        super(x, y, speed, direction, null);
+        this.type = 'ghost';
+        this.floatOffset = 0;
+        this.baseY = y;
+    }
+
+    reset(x, y, speed, direction) {
+        super.reset(x, y, speed, direction);
+        this.type = 'ghost';
+        this.baseY = y;
+        this.floatOffset = Math.random() * Math.PI * 2;
+    }
+
+    update(canvasWidth, player) {
+        // Ghost ignores normal movement and follows player if close
+        this.floatOffset += 0.05;
+        this.y = this.baseY + Math.sin(this.floatOffset) * 10;
+
+        if (player) {
+            const dx = player.x - this.x;
+            const dist = Math.abs(dx);
+
+            // Only chase if within range
+            if (dist < 400) {
+                this.x += Math.sign(dx) * 0.5; // Very slow chase
+                this.direction = Math.sign(dx);
+            } else {
+                // Idle wander
+                this.x += this.direction * 0.2;
+            }
+        } else {
+            this.x += this.direction * 0.5;
+        }
+
+        // Bounds check
+        if (this.x <= 0 || this.x + this.width >= canvasWidth) {
+            this.direction *= -1;
+        }
+    }
+
+    draw(ctx, camera) {
+        ctx.save();
+        const drawX = this.x - camera.x + this.width / 2;
+        const drawY = this.y + this.height / 2;
+
+        ctx.translate(drawX, drawY);
+        if (this.direction !== 0) ctx.scale(this.direction, 1);
+
+        // Ghost Body
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.beginPath();
+        ctx.arc(0, -5, 15, Math.PI, 0); // Head
+        ctx.lineTo(15, 15);
+        ctx.lineTo(10, 10);
+        ctx.lineTo(5, 15);
+        ctx.lineTo(0, 10);
+        ctx.lineTo(-5, 15);
+        ctx.lineTo(-10, 10);
+        ctx.lineTo(-15, 15);
+        ctx.closePath();
+        ctx.fill();
+
+        // Eyes
+        ctx.fillStyle = 'black';
+        ctx.beginPath();
+        ctx.arc(-5, -5, 3, 0, Math.PI * 2);
+        ctx.arc(5, -5, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Tongue (Boo!)
+        ctx.fillStyle = '#FF5252';
+        ctx.beginPath();
+        ctx.arc(0, 2, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+    }
+}
+
+export function createEnemies(startX, endX, canvasHeight, spriteSheet, difficultyMultiplier = 1, biome = 'PLAINS') {
     const enemiesData = [];
     const groundY = canvasHeight - 50;
     const width = endX - startX;
 
-    // Density increases with difficulty (lower divisor = more enemies)
-    // Base: 400px per enemy. Cap density at 200px per enemy.
+    // Density increases with difficulty
     const densityDivisor = Math.max(200, 400 / difficultyMultiplier);
     const count = Math.floor(width / densityDivisor);
 
     for (let i = 0; i < count; i++) {
         const x = startX + Math.random() * width;
-        // Speed increases with difficulty
-        const baseSpeed = 0.5 + Math.random() * 1.0; // Reduced from 1.0 + random*1.5
+        const baseSpeed = 0.5 + Math.random() * 1.0;
         const speed = baseSpeed * difficultyMultiplier;
-
         const direction = Math.random() < 0.5 ? -1 : 1;
-        const type = Math.random();
+        const rand = Math.random();
 
-        if (type < 0.4) {
-            // Regular Goomba (40%)
-            enemiesData.push({
-                type: 'goomba',
-                x: x,
-                y: groundY - 30,
-                speed: speed,
-                direction: direction,
-                spriteSheet: spriteSheet
-            });
-        } else if (type < 0.6) {
-            // Koopa (20%)
-            enemiesData.push({
-                type: 'koopa',
-                x: x,
-                y: groundY - 40,
-                speed: speed,
-                direction: direction
-            });
+        // Biome-specific enemy generation
+        if (biome === 'DESERT') {
+            if (rand < 0.5) {
+                enemiesData.push({ type: 'cactus', x, y: groundY - 40, speed: speed * 0.5, direction });
+            } else {
+                enemiesData.push({ type: 'goomba', x, y: groundY - 30, speed, direction, spriteSheet });
+            }
+        } else if (biome === 'SNOW') {
+            if (rand < 0.5) {
+                enemiesData.push({ type: 'yeti', x, y: groundY - 35, speed, direction });
+            } else {
+                enemiesData.push({ type: 'koopa', x, y: groundY - 40, speed, direction });
+            }
+        } else if (biome === 'SPOOKY') {
+            if (rand < 0.6) {
+                enemiesData.push({ type: 'ghost', x, y: groundY - 100 - Math.random() * 50, speed, direction });
+            } else {
+                enemiesData.push({ type: 'goomba', x, y: groundY - 30, speed, direction, spriteSheet });
+            }
         } else {
-            // Flying enemy (40%)
-            enemiesData.push({
-                type: 'flying',
-                x: x,
-                y: groundY - 100 - Math.random() * 80,
-                speed: speed,
-                direction: direction
-            });
+            // PLAINS (Default)
+            if (rand < 0.4) {
+                enemiesData.push({ type: 'goomba', x, y: groundY - 30, speed, direction, spriteSheet });
+            } else if (rand < 0.6) {
+                enemiesData.push({ type: 'koopa', x, y: groundY - 40, speed, direction });
+            } else {
+                enemiesData.push({ type: 'flying', x, y: groundY - 100 - Math.random() * 80, speed, direction });
+            }
         }
     }
     return enemiesData;
