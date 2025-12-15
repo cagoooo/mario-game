@@ -249,6 +249,16 @@ export class EnhancedAudioSystem {
                 volumes: [0.2, 0.2, 0.2, 0.15],
                 attack: 0.01,
                 decay: 0.05
+            },
+
+            // 水管音效 (Pipe)
+            pipe: {
+                type: 'square',
+                frequencies: [440, 392, 349, 330, 294, 262],
+                durations: [0.05, 0.05, 0.05, 0.05, 0.05, 0.1],
+                volumes: [0.2, 0.2, 0.2, 0.2, 0.2, 0.1],
+                attack: 0.01,
+                decay: 0.05
             }
         };
     }

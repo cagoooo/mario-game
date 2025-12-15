@@ -694,6 +694,14 @@ export class Game {
             }
         });
 
+        // Check if player is animating pipe (entering or exiting)
+        const isAnimatingPipe = this.player && (this.player.isEnteringPipe || this.player.isExitingPipe);
+
+        // If animating pipe, draw player BEFORE pipes so they appear behind/inside
+        if (isAnimatingPipe) {
+            this.player.draw(this.ctx, this.camera);
+        }
+
         // Draw pipes
         this.pipes.forEach(pipe => {
             if (isEntityVisible(pipe, this.camera, this.width, this.height)) {
@@ -731,7 +739,10 @@ export class Game {
             }
         });
 
-        if (this.player) this.player.draw(this.ctx, this.camera);
+        // If NOT animating pipe, draw player normally (on top)
+        if (this.player && !isAnimatingPipe) {
+            this.player.draw(this.ctx, this.camera);
+        }
 
         // Draw score popups
         this.scorePopups.forEach(popup => {
@@ -861,6 +872,13 @@ export class Game {
     }
 
     enterBonusLevel(pipe) {
+        if (this.gameState !== 'OVERWORLD') return;
+
+        this.playSound('pipe');
+
+        // Center player on pipe
+        this.player.x = pipe.x + pipe.width / 2 - this.player.width / 2;
+
         this.player.enterPipe();
 
         // Save Overworld State
@@ -1178,16 +1196,26 @@ export class Game {
         const clickedPipe = this.pipes.find(p =>
             p.type === 'ENTRANCE' &&
             worldX >= p.x && worldX <= p.x + p.width &&
-            worldY >= p.y && worldY <= p.y + p.height
+            worldY >= p.y - 60 && worldY <= p.y + p.height
         );
 
         if (clickedPipe) {
-            // Check if player is on top of THIS pipe
-            // We can be lenient: if player is on top of *any* pipe, and we click *this* pipe?
-            // Or strictly: player must be on top of the clicked pipe.
-            // The requirement says "click the pipe to enter".
-            // Let's enforce playerOnTop for safety.
-            if (clickedPipe.playerOnTop) {
+            // Check if player is roughly on top of the pipe
+            // We calculate this directly instead of relying on the transient playerOnTop flag
+            const playerBottom = this.player.y + this.player.height;
+            const pipeTop = clickedPipe.y;
+
+            // Allow some margin (e.g., player is within 20px vertically of pipe top)
+            // Also check if player is grounded to ensure they aren't jumping over it
+            const verticalCheck = Math.abs(playerBottom - pipeTop) < 20 && this.player.grounded;
+
+            // Horizontal overlap: Check if player center is close to pipe center
+            const playerCenter = this.player.x + this.player.width / 2;
+            const pipeCenter = clickedPipe.x + clickedPipe.width / 2;
+            // Allow being slightly off-center but mostly on the pipe
+            const horizontalCheck = Math.abs(playerCenter - pipeCenter) < (clickedPipe.width / 2 + 20);
+
+            if (verticalCheck && horizontalCheck) {
                 this.enterBonusLevel(clickedPipe);
             }
         }
