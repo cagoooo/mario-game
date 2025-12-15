@@ -1,7 +1,7 @@
-import { Game, preloadImages } from './Game.js?v=1.9.24';
+import { Game, preloadImages } from './Game.js?v=1.9.25';
 
 window.onload = async function () {
-    console.log('%c Game Version: 1.9.24 (Biome Enemies) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 1.9.25 (Bonus Ceiling Fix) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements

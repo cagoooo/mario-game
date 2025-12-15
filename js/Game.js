@@ -1008,10 +1008,15 @@ export class Game {
             }
         });
 
-        // Common: Ceiling
+        // Common: Ceiling (Extended upwards to prevent landing on top)
         this.platforms.push({
-            x: 0, y: 0, width: roomWidth, height: ceilingY, draw: (ctx) => {
+            x: 0,
+            y: -1000,
+            width: roomWidth,
+            height: 1000 + ceilingY,
+            draw: (ctx) => {
                 ctx.fillStyle = '#0055AA';
+                // Only draw the visible part (0 to ceilingY)
                 ctx.fillRect(0, 0, roomWidth, ceilingY);
             }
         });
