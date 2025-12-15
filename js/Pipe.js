@@ -10,7 +10,11 @@ export class Pipe {
         this.piranhaOffset = 0;
         this.piranhaState = 'WAITING'; // WAITING, EMERGING, ATTACKING, RETREATING
         this.piranhaTimer = 0;
+        this.piranhaTimer = 0;
         this.piranhaWaitTime = 60 + Math.random() * 60;
+
+        // Interaction
+        this.playerOnTop = false;
     }
 
     killPiranha() {
@@ -26,6 +30,12 @@ export class Pipe {
 
         switch (this.piranhaState) {
             case 'WAITING':
+                // Don't emerge if player is standing on the pipe
+                if (this.playerOnTop) {
+                    this.piranhaTimer = 0;
+                    return;
+                }
+
                 this.piranhaTimer++;
                 if (this.piranhaTimer > this.piranhaWaitTime) {
                     this.piranhaState = 'EMERGING';
@@ -178,7 +188,8 @@ export function generatePipes(startX, endX, groundY) {
 
     for (let x = firstPipeX; x < endX; x += 500) {
         if (Math.random() > 0.3) { // 70% chance for a pipe
-            const height = 60 + Math.random() * 40;
+            // Variable height: 40 to 120 (Player jump max is ~144, so 120 is safe)
+            const height = 40 + Math.random() * 80;
             const hasPiranha = Math.random() > 0.3; // 70% chance for a piranha plant
             pipes.push(new Pipe(x + Math.random() * 100, groundY - height, height, hasPiranha));
         }

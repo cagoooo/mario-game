@@ -56,6 +56,21 @@ export class CollisionSystem {
 
     handleBlockCollisions() {
         this.game.questionBlocks.forEach(block => {
+            // Check for landing on top (Solid Platform)
+            if (this.game.player.velY >= 0 && // Falling or flat
+                this.game.player.x + this.game.player.width > block.x &&
+                this.game.player.x < block.x + block.width &&
+                this.game.player.y + this.game.player.height <= block.y + 10 && // Was above or just inside top
+                this.game.player.y + this.game.player.height + this.game.player.velY >= block.y) { // Will be inside/below next frame
+
+                this.game.player.y = block.y - this.game.player.height;
+                this.game.player.velY = 0;
+                this.game.player.grounded = true;
+                this.game.player.isJumping = false;
+                return; // Handled platform collision, skip bottom collision
+            }
+
+            // Check for hitting from bottom (Question Block activation)
             if (this.game.player.velY < 0 &&
                 this.game.player.x + this.game.player.width > block.x &&
                 this.game.player.x < block.x + block.width &&
@@ -88,6 +103,10 @@ export class CollisionSystem {
                         this.game.playSound('block');
                     }
                     this.game.triggerScreenShake(3);
+
+                    // Stop upward velocity
+                    this.game.player.velY = 0;
+                    this.game.player.y = block.y + block.height;
                 }
             }
         });
@@ -196,6 +215,25 @@ export class CollisionSystem {
     handleEnvironmentCollisions() {
         // Pipes (Piranha Plants)
         this.game.pipes.forEach(pipe => {
+            // Reset playerOnTop flag each frame
+            pipe.playerOnTop = false;
+
+            // Check for landing on top (Solid Platform)
+            // Pipe width is 48, but let's make the standing area slightly smaller to avoid edge clipping
+            if (this.game.player.velY >= 0 &&
+                this.game.player.x + this.game.player.width > pipe.x + 4 &&
+                this.game.player.x < pipe.x + pipe.width - 4 &&
+                this.game.player.y + this.game.player.height <= pipe.y + 10 &&
+                this.game.player.y + this.game.player.height + this.game.player.velY >= pipe.y) {
+
+                this.game.player.y = pipe.y - this.game.player.height;
+                this.game.player.velY = 0;
+                this.game.player.grounded = true;
+                this.game.player.isJumping = false;
+                pipe.playerOnTop = true;
+                return; // Safe on top
+            }
+
             const hitbox = pipe.getPiranhaHitbox();
             if (hitbox && checkCollision(this.game.player, hitbox)) {
                 if (this.game.player.velY > 0 && this.game.player.y + this.game.player.height < hitbox.y + hitbox.height / 2) {
