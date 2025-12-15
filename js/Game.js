@@ -741,8 +741,8 @@ export class Game {
         this.ctx.clearRect(-10, -10, this.width + 20, this.height + 20);
 
         if (this.gameState === 'BONUS') {
-            // Black background for bonus level
-            this.ctx.fillStyle = '#000000';
+            // Random background for bonus level
+            this.ctx.fillStyle = this.bonusBgColor || '#000000';
             this.ctx.fillRect(0, 0, this.width, this.height);
         } else {
             this.background.draw(this.ctx, this.height, this.camera);
@@ -982,11 +982,16 @@ export class Game {
         const groundY = this.height - 50;
         const ceilingY = 50;
 
+        // Randomize Layout
+        const layouts = ['CLASSIC', 'PYRAMID', 'SKY_STEPS'];
+        const selectedLayout = layouts[Math.floor(Math.random() * layouts.length)];
+        console.log('Bonus Level Layout:', selectedLayout);
 
-        // Background override (handled in draw, but we can set a flag or biome if needed)
-        // For now, Game.draw handles black background for BONUS state.
+        // Randomize Background Color (handled in draw, but we can store it)
+        const bgColors = ['#000000', '#1a0b2e', '#001f3f', '#2c0b0e'];
+        this.bonusBgColor = bgColors[Math.floor(Math.random() * bgColors.length)];
 
-        // Floor
+        // Common: Floor
         this.platforms.push({
             x: 0, y: groundY, width: roomWidth, height: 50, draw: (ctx) => {
                 ctx.fillStyle = '#0055AA'; // Blue bricks for underground
@@ -1003,7 +1008,7 @@ export class Game {
             }
         });
 
-        // Ceiling
+        // Common: Ceiling
         this.platforms.push({
             x: 0, y: 0, width: roomWidth, height: ceilingY, draw: (ctx) => {
                 ctx.fillStyle = '#0055AA';
@@ -1011,59 +1016,160 @@ export class Game {
             }
         });
 
-        // Walls (Invisible barriers)
-        // Left Wall
-        this.platforms.push({
-            x: -50, y: -1000, width: 50, height: this.height + 2000,
-            draw: () => { } // Invisible
-        });
-        // Right Wall
-        this.platforms.push({
-            x: roomWidth, y: -1000, width: 50, height: this.height + 2000,
-            draw: () => { } // Invisible
-        });
+        // Common: Walls (Invisible barriers)
+        this.platforms.push({ x: -50, y: -1000, width: 50, height: this.height + 2000, draw: () => { } });
+        this.platforms.push({ x: roomWidth, y: -1000, width: 50, height: this.height + 2000, draw: () => { } });
 
-        // Platforms
-        // A few steps leading to coins
-        for (let i = 0; i < 3; i++) {
+        // Layout Specific Generation
+        if (selectedLayout === 'CLASSIC') {
+            // Platforms leading to coins
+            for (let i = 0; i < 3; i++) {
+                this.platforms.push({
+                    x: 300 + i * 150,
+                    y: groundY - 100 - i * 50,
+                    width: 100,
+                    height: 20,
+                    draw: (ctx, camera) => {
+                        const x = 300 + i * 150 - camera.x;
+                        const y = groundY - 100 - i * 50;
+                        ctx.fillStyle = '#FF8C00';
+                        ctx.fillRect(x, y, 100, 20);
+                        ctx.strokeStyle = '#000';
+                        ctx.strokeRect(x, y, 100, 20);
+                    }
+                });
+            }
+            // Grid of coins
+            for (let i = 0; i < 8; i++) {
+                for (let j = 0; j < 3; j++) {
+                    this.coins.push(this.coinPool.get(250 + i * 60, 150 + j * 50));
+                }
+            }
+            // Smiley Face
+            const centerX = 850;
+            const centerY = 200;
+            this.coins.push(this.coinPool.get(centerX - 30, centerY - 30));
+            this.coins.push(this.coinPool.get(centerX + 30, centerY - 30));
+            this.coins.push(this.coinPool.get(centerX - 40, centerY + 20));
+            this.coins.push(this.coinPool.get(centerX - 20, centerY + 35));
+            this.coins.push(this.coinPool.get(centerX, centerY + 40));
+            this.coins.push(this.coinPool.get(centerX + 20, centerY + 35));
+            this.coins.push(this.coinPool.get(centerX + 40, centerY + 20));
+
+        } else if (selectedLayout === 'PYRAMID') {
+            // Pyramid structure
+            const startX = 200;
+            const stepWidth = 60;
+            const stepHeight = 60;
+            const levels = 5;
+
+            for (let i = 0; i < levels; i++) {
+                // Left side steps
+                this.platforms.push({
+                    x: startX + i * stepWidth,
+                    y: groundY - (i + 1) * stepHeight,
+                    width: stepWidth,
+                    height: (i + 1) * stepHeight,
+                    draw: (ctx, camera) => {
+                        const x = startX + i * stepWidth - camera.x;
+                        const y = groundY - (i + 1) * stepHeight;
+                        ctx.fillStyle = '#B8860B'; // Dark Goldenrod
+                        ctx.fillRect(x, y, stepWidth, (i + 1) * stepHeight);
+                        ctx.strokeStyle = '#000';
+                        ctx.strokeRect(x, y, stepWidth, (i + 1) * stepHeight);
+                    }
+                });
+                // Coin on each step
+                this.coins.push(this.coinPool.get(startX + i * stepWidth + 15, groundY - (i + 1) * stepHeight - 40));
+
+                // Right side steps (mirror)
+                const rightX = startX + (levels * 2 - 1 - i) * stepWidth;
+                this.platforms.push({
+                    x: rightX,
+                    y: groundY - (i + 1) * stepHeight,
+                    width: stepWidth,
+                    height: (i + 1) * stepHeight,
+                    draw: (ctx, camera) => {
+                        const x = rightX - camera.x;
+                        const y = groundY - (i + 1) * stepHeight;
+                        ctx.fillStyle = '#B8860B';
+                        ctx.fillRect(x, y, stepWidth, (i + 1) * stepHeight);
+                        ctx.strokeStyle = '#000';
+                        ctx.strokeRect(x, y, stepWidth, (i + 1) * stepHeight);
+                    }
+                });
+                // Coin on each step
+                this.coins.push(this.coinPool.get(rightX + 15, groundY - (i + 1) * stepHeight - 40));
+            }
+
+            // Top platform
+            const topX = startX + levels * stepWidth;
             this.platforms.push({
-                x: 300 + i * 150,
-                y: groundY - 100 - i * 50,
-                width: 100,
-                height: 20,
+                x: topX,
+                y: groundY - (levels + 1) * stepHeight,
+                width: stepWidth * 2, // Wider top
+                height: (levels + 1) * stepHeight,
                 draw: (ctx, camera) => {
-                    const x = 300 + i * 150 - camera.x;
-                    const y = groundY - 100 - i * 50;
-                    ctx.fillStyle = '#FF8C00'; // Orange blocks
-                    ctx.fillRect(x, y, 100, 20);
+                    const x = topX - camera.x;
+                    const y = groundY - (levels + 1) * stepHeight;
+                    ctx.fillStyle = '#FFD700'; // Gold top
+                    ctx.fillRect(x, y, stepWidth * 2, (levels + 1) * stepHeight);
                     ctx.strokeStyle = '#000';
-                    ctx.strokeRect(x, y, 100, 20);
+                    ctx.strokeRect(x, y, stepWidth * 2, (levels + 1) * stepHeight);
                 }
             });
-        }
+            // Big reward on top
+            this.coins.push(this.coinPool.get(topX + 20, groundY - (levels + 1) * stepHeight - 40));
+            this.coins.push(this.coinPool.get(topX + 60, groundY - (levels + 1) * stepHeight - 40));
+            this.coins.push(this.coinPool.get(topX + 40, groundY - (levels + 1) * stepHeight - 80));
 
-        // Coins!
-        // Grid of coins
-        for (let i = 0; i < 8; i++) {
-            for (let j = 0; j < 3; j++) {
-                this.coins.push(this.coinPool.get(250 + i * 60, 150 + j * 50));
+        } else if (selectedLayout === 'SKY_STEPS') {
+            // Floating platforms
+            const platformCount = 6;
+            for (let i = 0; i < platformCount; i++) {
+                const x = 200 + i * 120;
+                const y = groundY - 100 - (i % 2 === 0 ? 0 : 100); // Zigzag height
+
+                this.platforms.push({
+                    x: x,
+                    y: y,
+                    width: 80,
+                    height: 20,
+                    draw: (ctx, camera) => {
+                        const px = x - camera.x;
+                        const py = y;
+                        ctx.fillStyle = '#87CEEB'; // Sky blue
+                        ctx.fillRect(px, py, 80, 20);
+                        ctx.strokeStyle = '#FFF';
+                        ctx.strokeRect(px, py, 80, 20);
+                    }
+                });
+
+                // Coins above and below
+                this.coins.push(this.coinPool.get(x + 25, y - 40));
+                if (i % 2 !== 0) {
+                    this.coins.push(this.coinPool.get(x + 25, y + 40));
+                }
+            }
+
+            // Final cloud platform
+            this.platforms.push({
+                x: 200 + platformCount * 120,
+                y: groundY - 200,
+                width: 150,
+                height: 30,
+                draw: (ctx, camera) => {
+                    const px = 200 + platformCount * 120 - camera.x;
+                    const py = groundY - 200;
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(px, py, 150, 30);
+                }
+            });
+            // Rain of coins
+            for (let k = 0; k < 5; k++) {
+                this.coins.push(this.coinPool.get(200 + platformCount * 120 + 20 + k * 25, groundY - 240));
             }
         }
-
-        // Big Coin Reward (using multiple coins to simulate big one or just a pile)
-        // Let's make a "smiley" face of coins at the end
-        const centerX = 850;
-        const centerY = 200;
-        // Eyes
-        this.coins.push(this.coinPool.get(centerX - 30, centerY - 30));
-        this.coins.push(this.coinPool.get(centerX + 30, centerY - 30));
-        // Mouth
-        this.coins.push(this.coinPool.get(centerX - 40, centerY + 20));
-        this.coins.push(this.coinPool.get(centerX - 20, centerY + 35));
-        this.coins.push(this.coinPool.get(centerX, centerY + 40));
-        this.coins.push(this.coinPool.get(centerX + 20, centerY + 35));
-        this.coins.push(this.coinPool.get(centerX + 40, centerY + 20));
-
 
         // Exit Pipe
         const exitPipe = new Pipe(roomWidth - 100, groundY - 80, 80, false);
