@@ -457,6 +457,13 @@ export class Player {
         return 'dead';
     }
 
+    takeDamage() {
+        const result = this.hit();
+        if (result === 'dead') {
+            this.die();
+        }
+    }
+
     updateInvincibility() {
         if (this.invincible) {
             this.invincibleTime--;

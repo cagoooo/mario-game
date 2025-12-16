@@ -195,6 +195,12 @@ export class PipeState extends State {
         this.player.velY = 0;
         this.player.pipeTimer = 0;
         this.player.game.playSound('powerup_mushroom');
+
+        // Center player on pipe
+        if (this.player.autoMovePipe) {
+            const pipeCenter = this.player.autoMovePipe.x + this.player.autoMovePipe.width / 2;
+            this.player.x = pipeCenter - this.player.width / 2;
+        }
     }
 
     handleInput(input) {

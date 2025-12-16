@@ -30,4 +30,44 @@ export class LevelGenerator {
             pipes
         };
     }
+
+    generateBossArena(startX, groundY) {
+        const width = 1200; // Arena width
+        const endX = startX + width;
+
+        // Arena Walls
+        const platforms = [];
+        // Left Wall (Invisible barrier)
+        platforms.push({ x: startX - 50, y: -1000, width: 50, height: 2000, draw: () => { } });
+        // Right Wall (Invisible barrier)
+        platforms.push({ x: endX, y: -1000, width: 50, height: 2000, draw: () => { } });
+
+        // Platforms for fighting
+        // Two floating platforms
+        platforms.push({
+            x: startX + 300, y: groundY - 120, width: 150, height: 20,
+            draw: (ctx, camera) => {
+                const x = startX + 300 - camera.x;
+                const y = groundY - 120;
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(x, y, 150, 20);
+            }
+        });
+
+        platforms.push({
+            x: startX + 750, y: groundY - 120, width: 150, height: 20,
+            draw: (ctx, camera) => {
+                const x = startX + 750 - camera.x;
+                const y = groundY - 120;
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(x, y, 150, 20);
+            }
+        });
+
+        return {
+            startX,
+            endX,
+            platforms
+        };
+    }
 }
