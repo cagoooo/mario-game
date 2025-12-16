@@ -393,7 +393,46 @@ export class Game {
         });
 
         this.lava.forEach(lava => lava.update());
+        this.lava.forEach(lava => lava.update());
         this.collisionSystem.update();
+
+        // === BOUNDARY CHECKS (Bonus Level) ===
+        if (this.gameState === 'BONUS') {
+            // Ceiling check (Invisible wall at top)
+            if (this.player.y < 50) {
+                this.player.y = 50;
+                if (this.player.velY < 0) this.player.velY = 0;
+            }
+            // Horizontal bounds (Invisible walls)
+            if (this.player.x < 0) this.player.x = 0;
+            if (this.player.x + this.player.width > this.levelWidth) {
+                this.player.x = this.levelWidth - this.player.width;
+            }
+        }
+
+        // === AUTO-ENTER PIPE CHECK (After Collision) ===
+        // We check here because collisionSystem updates 'grounded' and 'playerOnTop'
+        if (!this.player.isEnteringPipe && !this.player.isExitingPipe && this.player.grounded) {
+            const standingPipe = this.pipes.find(p => {
+                // Use the flag set by CollisionSystem
+                if (p.playerOnTop) return true;
+
+                // Fallback geometric check (in case CollisionSystem missed it or logic differs)
+                const playerCenter = this.player.x + this.player.width / 2;
+                const pipeCenter = p.x + p.width / 2;
+                const horizontalCheck = Math.abs(playerCenter - pipeCenter) < p.width / 2;
+                const verticalCheck = Math.abs((this.player.y + this.player.height) - p.y) < 5;
+                return horizontalCheck && verticalCheck;
+            });
+
+            if (standingPipe) {
+                if (this.gameState === 'OVERWORLD' && standingPipe.type === 'ENTRANCE' && !standingPipe.used) {
+                    this.enterBonusLevel(standingPipe);
+                } else if (this.gameState === 'BONUS' && standingPipe.type === 'EXIT') {
+                    this.returnToOverworld();
+                }
+            }
+        }
 
         if (this.screenShake.intensity > 0) {
             this.screenShake.x = (Math.random() - 0.5) * this.screenShake.intensity * 2;

@@ -2,7 +2,7 @@ import { Game } from './Game.js?v=1.9.26';
 import { AssetLoader } from './AssetLoader.js?v=1.9.26';
 
 window.onload = async function () {
-    console.log('%c Game Version: 1.9.30 (Pipe & Boss Fixes) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 1.9.32 (Bonus Level Fixes) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements

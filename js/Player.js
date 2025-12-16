@@ -129,11 +129,16 @@ export class Player {
 
                     // Ensure game reference exists and method is callable
                     if (this.game && typeof this.game.enterBonusLevel === 'function') {
-                        this.game.enterBonusLevel(this.autoMovePipe);
+                        // Check if it's an entrance or exit pipe
+                        if (this.game.gameState === 'OVERWORLD') {
+                            this.game.enterBonusLevel(this.autoMovePipe);
+                        } else {
+                            this.game.returnToOverworld();
+                        }
                     } else {
                         console.error('Game reference or enterBonusLevel missing in Player auto-walk');
                     }
-                    this.autoMovePipe = null;
+                    // DO NOT clear autoMovePipe here, it's needed for PipeState logic
                 }
                 return;
             }
