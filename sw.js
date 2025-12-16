@@ -1,18 +1,18 @@
-const CACHE_NAME = 'mario-game-v1.9.32';
+const CACHE_NAME = 'mario-game-v1.9.33';
 const urlsToCache = [
     './',
     './index.html',
-    './style.css',
+    './css/style.css',
     './js/main.js',
     './js/Game.js',
     './js/Player.js',
-    './js/PlayerStates.js',
-    './js/Enemy.js',
-    './js/Boss.js',
-    './js/Platform.js',
-    './js/Lava.js',
     './js/Background.js',
     './js/InputHandler.js',
+    './js/utils.js',
+    './js/LevelGenerator.js',
+    './js/CollisionSystem.js',
+    './js/EnemyManager.js',
+    './js/Enemy.js',
     './js/Coin.js',
     './js/QuestionBlock.js',
     './js/Mushroom.js',
@@ -20,17 +20,21 @@ const urlsToCache = [
     './js/FireFlower.js',
     './js/Fireball.js',
     './js/Pipe.js',
+    './js/Lava.js',
+    './js/Boss.js',
     './js/AudioSystem.js',
     './js/ParticleSystem.js',
-    './js/LevelGenerator.js',
     './js/ObjectPool.js',
-    './js/utils.js',
-    './manifest.json',
-    './assets/icon-192.png',
+    './js/PlayerStates.js',
+    './js/AssetLoader.js',
+    './js/Magnet.js',
+    './js/MegaMushroom.js',
     './assets/player.png',
     './assets/enemy.png',
     './assets/tiles.png',
-    './favicon.ico'
+    './manifest.json',
+    './icon-192.png',
+    './icon-512.png'
 ];
 
 // Install event - cache files

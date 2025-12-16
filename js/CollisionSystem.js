@@ -2,6 +2,8 @@ import { checkCollision } from './utils.js?v=1.6.22';
 import { Mushroom } from './Mushroom.js?v=1.6.22';
 import { Star } from './Star.js?v=1.6.22';
 import { FireFlower } from './FireFlower.js?v=1.6.22';
+import { Magnet } from './Magnet.js?v=1.9.32';
+import { MegaMushroom } from './MegaMushroom.js?v=1.9.32';
 
 export class CollisionSystem {
     constructor(game) {
@@ -21,6 +23,18 @@ export class CollisionSystem {
             const enemy = this.game.enemies[i];
 
             if (checkCollision(this.game.player, enemy)) {
+                // Mega Mario Destruction
+                if (this.game.player.isMega) {
+                    this.game.addScorePopup(enemy.x, enemy.y, 100);
+                    this.game.addParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 8, '#FFD700');
+                    this.game.enemies.splice(i, 1);
+                    this.game.score += 100;
+                    this.game.updateScore();
+                    this.game.playSound('stomp'); // Or kick
+                    this.game.triggerScreenShake(5);
+                    continue;
+                }
+
                 // Relaxed stomp check
                 if (this.game.player.velY > 0 &&
                     this.game.player.y + this.game.player.height < enemy.y + enemy.height * 0.8 &&
@@ -103,6 +117,16 @@ export class CollisionSystem {
                         const flower = new FireFlower(block.x, block.y);
                         flower.spawn();
                         this.game.fireflowers.push(flower);
+                        this.game.playSound('block');
+                    } else if (result.type === 'magnet') {
+                        const magnet = new Magnet(block.x, block.y);
+                        magnet.spawn();
+                        this.game.magnets.push(magnet);
+                        this.game.playSound('block');
+                    } else if (result.type === 'mega_mushroom') {
+                        const mega = new MegaMushroom(block.x, block.y);
+                        mega.spawn();
+                        this.game.megaMushrooms.push(mega);
                         this.game.playSound('block');
                     }
                     this.game.triggerScreenShake(3);
@@ -188,6 +212,34 @@ export class CollisionSystem {
                     }
                 }
                 this.game.fireflowers.splice(i, 1);
+            }
+        }
+
+        // Magnets
+        for (let i = this.game.magnets.length - 1; i >= 0; i--) {
+            const magnet = this.game.magnets[i];
+            if (checkCollision(this.game.player, magnet) && magnet.active && !magnet.spawning) {
+                magnet.collected = true;
+                this.game.score += 1000;
+                this.game.addScorePopup(magnet.x, magnet.y, 1000);
+                this.game.updateScore();
+                this.game.playSound('powerup_mushroom');
+                if (this.game.player.getMagnetPower) this.game.player.getMagnetPower();
+                this.game.magnets.splice(i, 1);
+            }
+        }
+
+        // Mega Mushrooms
+        for (let i = this.game.megaMushrooms.length - 1; i >= 0; i--) {
+            const mega = this.game.megaMushrooms[i];
+            if (checkCollision(this.game.player, mega) && mega.active && !mega.spawning) {
+                mega.collected = true;
+                this.game.score += 2000;
+                this.game.addScorePopup(mega.x, mega.y, 2000);
+                this.game.updateScore();
+                this.game.playSound('powerup_mushroom');
+                if (this.game.player.getMegaMushroom) this.game.player.getMegaMushroom();
+                this.game.megaMushrooms.splice(i, 1);
             }
         }
     }

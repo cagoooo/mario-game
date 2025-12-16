@@ -11,7 +11,9 @@ import { Mushroom } from './Mushroom.js?v=1.8.9';
 import { Star } from './Star.js?v=1.8.9';
 import { FireFlower } from './FireFlower.js?v=1.8.9';
 import { Fireball } from './Fireball.js?v=1.8.9';
+import { MegaMushroom } from './MegaMushroom.js?v=1.9.32';
 import { Pipe } from './Pipe.js?v=1.8.9';
+import { Magnet } from './Magnet.js?v=1.9.32';
 import { Lava } from './Lava.js?v=1.8.9';
 import { EnhancedAudioSystem } from './AudioSystem.js?v=1.8.9';
 import { ParticleSystem } from './ParticleSystem.js?v=1.8.9';
@@ -191,6 +193,8 @@ export class Game {
         this.fireflowers = [];
         if (this.fireballs) this.fireballs.forEach(f => this.fireballPool.release(f));
         this.fireballs = [];
+        this.magnets = [];
+        this.megaMushrooms = [];
         this.pipes = [];
         this.lava = [];
         const biomeKeys = Object.keys(Biomes);
@@ -354,7 +358,25 @@ export class Game {
 
         for (let i = this.coins.length - 1; i >= 0; i--) {
             const coin = this.coins[i];
-            coin.update();
+            coin.update(this.player);
+        }
+
+        for (let i = this.magnets.length - 1; i >= 0; i--) {
+            const magnet = this.magnets[i];
+            magnet.update(this.platforms, this.GROUND_Y, this.levelWidth);
+            if (magnet.collected) {
+                this.magnets.splice(i, 1);
+                continue;
+            }
+        }
+
+        for (let i = this.megaMushrooms.length - 1; i >= 0; i--) {
+            const mega = this.megaMushrooms[i];
+            mega.update(this.platforms, this.GROUND_Y, this.levelWidth);
+            if (mega.collected) {
+                this.megaMushrooms.splice(i, 1);
+                continue;
+            }
         }
 
         for (let i = this.mushrooms.length - 1; i >= 0; i--) {
@@ -599,6 +621,18 @@ export class Game {
         this.coins.forEach(coin => {
             if (isEntityVisible(coin, this.camera, this.width, this.height)) {
                 coin.draw(this.ctx, this.camera);
+            }
+        });
+
+        this.magnets.forEach(m => {
+            if (isEntityVisible(m, this.camera, this.width, this.height)) {
+                m.draw(this.ctx, this.camera);
+            }
+        });
+
+        this.megaMushrooms.forEach(m => {
+            if (isEntityVisible(m, this.camera, this.width, this.height)) {
+                m.draw(this.ctx, this.camera);
             }
         });
 

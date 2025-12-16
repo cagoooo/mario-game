@@ -71,6 +71,14 @@ export class Player {
         this.invincibleDuration = 90; // frames
         this.flashTimer = 0;
 
+        // Magnet Power
+        this.magnetPower = false;
+        this.magnetTimer = 0;
+
+        // Mega Mushroom
+        this.isMega = false;
+        this.megaTimer = 0;
+
         // Dust particles for landing and running
         this.dustParticles = [];
         this.justLanded = false;
@@ -202,6 +210,31 @@ export class Player {
             if (this.starTimer <= 0) {
                 this.starPower = false;
                 this.maxSpeed = 3.5; // Reset to normal speed
+            }
+        }
+
+        // Update Magnet Power
+        if (this.magnetPower) {
+            this.magnetTimer--;
+            if (this.magnetTimer <= 0) {
+                this.magnetPower = false;
+                if (this.game) this.game.playSound('powerdown');
+            }
+        }
+
+        // Update Mega Mushroom
+        if (this.isMega) {
+            this.megaTimer--;
+            if (this.megaTimer <= 0) {
+                this.isMega = false;
+                // Revert size
+                this.powerScale = this.isPowered ? 1.6 : 1.0;
+                const oldHeight = this.height;
+                this.width = this.baseWidth * this.powerScale;
+                this.height = this.baseHeight * this.powerScale;
+                this.y += (oldHeight - this.height); // Keep feet on ground
+
+                if (this.game) this.game.playSound('powerdown');
             }
         }
 
@@ -406,6 +439,25 @@ export class Player {
         this.maxSpeed = 6; // Speed boost!
     }
 
+    getMagnetPower() {
+        this.magnetPower = true;
+        this.magnetTimer = 900; // 15 seconds
+    }
+
+    getMegaMushroom() {
+        this.isMega = true;
+        this.megaTimer = 600; // 10 seconds
+        this.invincible = true;
+        this.invincibleTime = 600;
+
+        // Grow HUGE
+        this.powerScale = 3.0;
+        const oldHeight = this.height;
+        this.width = this.baseWidth * this.powerScale;
+        this.height = this.baseHeight * this.powerScale;
+        this.y -= (this.height - oldHeight);
+    }
+
     getFirePower() {
         this.firePower = true;
         this.powerUp(); // Also grow if not already
@@ -520,6 +572,27 @@ export class Player {
 
     draw(ctx, camera) {
         ctx.save();
+
+        // Magnet Aura
+        if (this.magnetPower) {
+            const screenX = this.x - camera.x + this.width / 2;
+            const screenY = this.y + this.height / 2;
+
+            ctx.save();
+            ctx.translate(screenX, screenY);
+            ctx.strokeStyle = `rgba(255, 50, 50, ${0.3 + Math.sin(Date.now() / 100) * 0.2})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, 0, 40 + Math.sin(Date.now() / 200) * 5, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Inner ring
+            ctx.strokeStyle = `rgba(200, 200, 255, ${0.3 + Math.cos(Date.now() / 150) * 0.2})`;
+            ctx.beginPath();
+            ctx.arc(0, 0, 30 + Math.cos(Date.now() / 200) * 5, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+        }
 
         // Flashing effect when invincible
         if (this.invincible) {

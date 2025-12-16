@@ -28,7 +28,18 @@ export class Coin {
         this.sparkles = []; // Clear existing sparkles
     }
 
-    update() {
+    update(player) {
+        // Magnet attraction
+        if (player && player.magnetPower && !this.collected) {
+            const dx = (player.x + player.width / 2) - (this.x + this.width / 2);
+            const dy = (player.y + player.height / 2) - (this.y + this.height / 2);
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < 300) {
+                this.x += (dx / dist) * 8; // Move towards player
+                this.y += (dy / dist) * 8;
+            }
+        }
         // Bob animation
         this.bobOffset += 0.1 * this.bobDirection;
         if (Math.abs(this.bobOffset) > 3) {

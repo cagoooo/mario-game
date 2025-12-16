@@ -101,6 +101,16 @@ export class EnhancedAudioSystem {
                 decay: 0.05
             },
 
+            // Power Down (Shrink/Lose Power)
+            powerdown: {
+                type: 'sawtooth',
+                frequencies: [440, 330, 220, 110],
+                durations: [0.1, 0.1, 0.1, 0.2],
+                volumes: [0.3, 0.25, 0.2, 0.1],
+                attack: 0.01,
+                decay: 0.1
+            },
+
             // 撞擊磚塊音效
             block: {
                 type: 'square',
