@@ -18,7 +18,7 @@ import { Lava } from './Lava.js?v=1.8.9';
 import { EnhancedAudioSystem } from './AudioSystem.js?v=1.8.9';
 import { ParticleSystem } from './ParticleSystem.js?v=1.8.9';
 import { ObjectPool } from './ObjectPool.js?v=1.8.9';
-import { Boss } from './Boss.js?v=1.9.27';
+import { Boss, createBoss } from './Boss.js?v=1.9.33';
 
 export class Game {
     constructor(canvas, uiElements, assetLoader) {
@@ -427,8 +427,13 @@ export class Game {
             }
             // Horizontal bounds (Invisible walls)
             if (this.player.x < 0) this.player.x = 0;
-            if (this.player.x + this.player.width > this.levelWidth) {
-                this.player.x = this.levelWidth - this.player.width;
+
+            // Find the exit pipe and use its right edge as the boundary
+            const exitPipe = this.pipes.find(p => p.type === 'EXIT');
+            const rightBoundary = exitPipe ? (exitPipe.x + exitPipe.width) : this.levelWidth;
+
+            if (this.player.x + this.player.width > rightBoundary) {
+                this.player.x = rightBoundary - this.player.width;
             }
         }
 
@@ -489,7 +494,7 @@ export class Game {
         this.bossArenaStartX = arenaStart;
         const arena = this.levelGenerator.generateBossArena(arenaStart, this.GROUND_Y);
         this.platforms.push(...arena.platforms);
-        this.boss = new Boss(arenaStart + 800, this.GROUND_Y - 100, this.getDifficultyMultiplier());
+        this.boss = createBoss(this.currentBiome, arenaStart + 800, this.GROUND_Y - 100, this.getDifficultyMultiplier());
         this.renderDistance = 0;
     }
 

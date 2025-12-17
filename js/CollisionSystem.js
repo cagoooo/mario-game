@@ -13,6 +13,7 @@ export class CollisionSystem {
     update() {
         this.handleEnemyCollisions();
         this.handleBlockCollisions();
+        this.handlePlatformCollisions();
         this.handleItemCollisions();
         this.handleFireballCollisions();
         this.handleEnvironmentCollisions();
@@ -72,7 +73,23 @@ export class CollisionSystem {
     }
 
     handleBlockCollisions() {
-        this.game.questionBlocks.forEach(block => {
+        for (let i = this.game.questionBlocks.length - 1; i >= 0; i--) {
+            const block = this.game.questionBlocks[i];
+
+            // Mega Mario Destruction - destroy blocks on any contact
+            if (this.game.player.isMega && checkCollision(this.game.player, block)) {
+                // Destroy the block with spectacular effects
+                this.game.addParticles(block.x + block.width / 2, block.y + block.height / 2, 15, '#B8860B');
+                this.game.addParticles(block.x + block.width / 2, block.y + block.height / 2, 10, '#FFD700');
+                this.game.addScorePopup(block.x, block.y, 50);
+                this.game.score += 50;
+                this.game.updateScore();
+                this.game.playSound('bump');
+                this.game.triggerScreenShake(8);
+                this.game.questionBlocks.splice(i, 1);
+                continue;
+            }
+
             // Check for landing on top (Solid Platform)
             if (this.game.player.velY >= 0 && // Falling or flat
                 this.game.player.x + this.game.player.width > block.x &&
@@ -84,7 +101,7 @@ export class CollisionSystem {
                 this.game.player.velY = 0;
                 this.game.player.grounded = true;
                 this.game.player.isJumping = false;
-                return; // Handled platform collision, skip bottom collision
+                continue; // Handled platform collision, skip bottom collision
             }
 
             // Check for hitting from bottom (Question Block activation)
@@ -136,7 +153,47 @@ export class CollisionSystem {
                     this.game.player.y = block.y + block.height;
                 }
             }
-        });
+        }
+    }
+
+    handlePlatformCollisions() {
+        // Mega Mario Destruction - destroy platforms on side/bottom contact
+        if (!this.game.player.isMega) return;
+
+        for (let i = this.game.platforms.length - 1; i >= 0; i--) {
+            const platform = this.game.platforms[i];
+
+            // Skip ground platforms (very wide or at GROUND_Y)
+            if (platform.width > 500 || platform.y >= this.game.GROUND_Y - 10) continue;
+
+            // Skip bonus level special platforms (floor, ceiling, walls)
+            if (this.game.gameState === 'BONUS') {
+                // Skip the floor, ceiling, and wall platforms in bonus level
+                if (platform.y < 0 || platform.x < 0 || platform.x >= this.game.levelWidth - 50) continue;
+                if (platform.y >= this.game.GROUND_Y - 60 && platform.width > 200) continue;
+            }
+
+            if (checkCollision(this.game.player, platform)) {
+                // Check if player is on top of platform (don't destroy if just standing)
+                const playerBottom = this.game.player.y + this.game.player.height;
+                const isStandingOnTop = playerBottom <= platform.y + 15 &&
+                    playerBottom >= platform.y - 5 &&
+                    this.game.player.velY >= 0;
+
+                // Only destroy if hitting from side or bottom
+                if (!isStandingOnTop || this.game.player.velY < 0) {
+                    // Destroy the platform with spectacular effects
+                    this.game.addParticles(platform.x + platform.width / 2, platform.y + platform.height / 2, 15, '#8B4513');
+                    this.game.addParticles(platform.x + platform.width / 2, platform.y + platform.height / 2, 10, '#D2691E');
+                    this.game.addScorePopup(platform.x, platform.y, 25);
+                    this.game.score += 25;
+                    this.game.updateScore();
+                    this.game.playSound('bump');
+                    this.game.triggerScreenShake(6);
+                    this.game.platforms.splice(i, 1);
+                }
+            }
+        }
     }
 
     handleItemCollisions() {
@@ -269,12 +326,49 @@ export class CollisionSystem {
 
     handleEnvironmentCollisions() {
         // Pipes (Piranha Plants)
-        this.game.pipes.forEach(pipe => {
+        for (let i = this.game.pipes.length - 1; i >= 0; i--) {
+            const pipe = this.game.pipes[i];
+
             // Skip collision if entering/exiting pipe
-            if (this.game.player.isEnteringPipe || this.game.player.isExitingPipe) return;
+            if (this.game.player.isEnteringPipe || this.game.player.isExitingPipe) continue;
 
             // Reset playerOnTop flag each frame
             pipe.playerOnTop = false;
+
+            // Mega Mario Destruction - destroy pipes on side contact (except ENTRANCE/EXIT in OVERWORLD)
+            if (this.game.player.isMega && checkCollision(this.game.player, pipe)) {
+                // Don't destroy entrance/exit pipes - they're important for gameplay
+                if (pipe.type === 'ENTRANCE' || pipe.type === 'EXIT') {
+                    // Just kill the piranha if any
+                    if (pipe.piranhaState !== 'DEAD') {
+                        pipe.killPiranha();
+                        this.game.addScorePopup(pipe.x, pipe.y, 200);
+                        this.game.score += 200;
+                        this.game.updateScore();
+                        this.game.playSound('stomp');
+                    }
+                    // Still allow standing on top
+                    if (this.game.player.velY >= 0 &&
+                        this.game.player.y + this.game.player.height <= pipe.y + 10) {
+                        this.game.player.y = pipe.y - this.game.player.height;
+                        this.game.player.velY = 0;
+                        this.game.player.grounded = true;
+                        pipe.playerOnTop = true;
+                    }
+                    continue;
+                }
+
+                // Destroy the pipe with spectacular effects
+                this.game.addParticles(pipe.x + pipe.width / 2, pipe.y + pipe.height / 2, 20, '#228B22');
+                this.game.addParticles(pipe.x + pipe.width / 2, pipe.y + pipe.height / 2, 15, '#32CD32');
+                this.game.addScorePopup(pipe.x, pipe.y, 100);
+                this.game.score += 100;
+                this.game.updateScore();
+                this.game.playSound('bump');
+                this.game.triggerScreenShake(10);
+                this.game.pipes.splice(i, 1);
+                continue;
+            }
 
             // Check for landing on top (Solid Platform)
             // Pipe width is 48, but let's make the standing area slightly smaller to avoid edge clipping
@@ -289,11 +383,23 @@ export class CollisionSystem {
                 this.game.player.grounded = true;
                 this.game.player.isJumping = false;
                 pipe.playerOnTop = true;
-                return; // Safe on top
+                continue; // Safe on top
             }
 
             const hitbox = pipe.getPiranhaHitbox();
             if (hitbox && checkCollision(this.game.player, hitbox)) {
+                // Mega Mario auto-kills piranha
+                if (this.game.player.isMega) {
+                    pipe.killPiranha();
+                    this.game.addScorePopup(hitbox.x, hitbox.y, 200);
+                    this.game.addParticles(hitbox.x + hitbox.width / 2, hitbox.y + hitbox.height / 2, 10, '#228B22');
+                    this.game.score += 200;
+                    this.game.updateScore();
+                    this.game.playSound('stomp');
+                    this.game.triggerScreenShake(5);
+                    continue;
+                }
+
                 if (this.game.player.velY > 0 && this.game.player.y + this.game.player.height < hitbox.y + hitbox.height / 2) {
                     pipe.killPiranha();
                     this.game.player.velY = -12;
@@ -320,18 +426,32 @@ export class CollisionSystem {
                     }
                 }
             }
-        });
+        }
 
         // Lava
-        this.game.lava.forEach(lava => {
+        for (let i = this.game.lava.length - 1; i >= 0; i--) {
+            const lava = this.game.lava[i];
             if (checkCollision(this.game.player, lava)) {
+                // Mega Mario destroys lava!
+                if (this.game.player.isMega) {
+                    this.game.addParticles(lava.x + lava.width / 2, lava.y, 20, '#FF4500');
+                    this.game.addParticles(lava.x + lava.width / 2, lava.y, 15, '#FFD700');
+                    this.game.addScorePopup(lava.x, lava.y, 50);
+                    this.game.score += 50;
+                    this.game.updateScore();
+                    this.game.playSound('bump');
+                    this.game.triggerScreenShake(8);
+                    this.game.lava.splice(i, 1);
+                    continue;
+                }
+
                 if (!this.game.player.isDead) {
                     this.game.playSound('death');
                     this.game.player.die();
                     this.game.gameOver();
                 }
             }
-        });
+        }
     }
 
     checkNewHighScore() {
