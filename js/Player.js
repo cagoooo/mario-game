@@ -1,5 +1,6 @@
 import { checkCollision } from './utils.js?v=1.6.22';
 import { Idle, Running, Jumping, Falling, Dead, PipeState } from './PlayerStates.js?v=1.9.26';
+import { createMarioAnimator } from './SpriteAnimator.js?v=2.0.0';
 
 export class Player {
     constructor(game, x, y, spriteSheet) {
@@ -103,6 +104,10 @@ export class Player {
         // Auto-walk properties
         this.autoMoveTargetX = null;
         this.autoMovePipe = null;
+
+        // Sprite Animator
+        this.animator = createMarioAnimator();
+        this.animator.play('idle');
     }
 
     setGroundY(y) {
@@ -323,10 +328,20 @@ export class Player {
                     this.runDustTimer = 0;
                 }
             }
+            this.animator.play('run');
         } else if (this.currentState instanceof Idle) {
             this.animationFrame = 0;
             this.animationTick = 0;
+            this.animator.play('idle');
+        } else if (this.currentState instanceof Jumping) {
+            this.animator.play('jump');
+        } else if (this.currentState instanceof Falling) {
+            this.animator.play('fall');
         }
+
+        // Update animator
+        this.animator.update();
+        this.animator.setFlipX(this.direction === -1);
 
         // === VARIABLE JUMP HEIGHT ===
         if (this.jumpHeld && this.velY < 0) {
