@@ -513,6 +513,16 @@ export class Game {
             this.lastCleanedX = this.camera.x - this.cleanupMargin;
         }
 
+        // Update checkpoints
+        for (const checkpoint of this.checkpoints) {
+            checkpoint.update();
+        }
+
+        // Update 1UP mushrooms
+        for (const oneUp of this.oneUpMushrooms) {
+            oneUp.update(this.platforms, this.GROUND_Y);
+        }
+
         this.background.update(this.score);
     }
 

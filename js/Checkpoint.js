@@ -2,11 +2,16 @@
 export class Checkpoint {
     constructor(x, y) {
         this.x = x;
-        this.y = y;
-        this.width = 40;
-        this.height = 120;
+        this.baseY = y; // Ground level
+        this.poleHeight = 120;
+
+        // Collision box - the entire pole area
+        this.y = y - this.poleHeight; // Top of pole
+        this.width = 60; // Wider for easier collision
+        this.height = this.poleHeight; // Full pole height
+
         this.activated = false;
-        this.flagY = 0; // Flag position on pole (0 = top, 1 = bottom)
+        this.flagY = 1; // Flag position on pole (0 = top, 1 = bottom)
         this.animationTimer = 0;
     }
 
@@ -15,27 +20,23 @@ export class Checkpoint {
 
         this.activated = true;
         game.lastCheckpointX = this.x;
-        game.playSound('coin'); // Or a checkpoint sound
-        game.addScorePopup(this.x, this.y - 20, 'CHECKPOINT!', true);
+        game.playSound('coin');
+        game.addScorePopup(this.x + 20, this.y, 'CHECKPOINT!', true);
 
-        // Animate flag going up
-        this.animateFlag();
-    }
+        // Add celebratory particles
+        game.addParticles(this.x + 20, this.y + 30, 15, '#FFD700');
 
-    animateFlag() {
-        const animate = () => {
-            if (this.flagY > 0) {
-                this.flagY -= 0.05;
-                requestAnimationFrame(animate);
-            } else {
-                this.flagY = 0;
-            }
-        };
-        this.flagY = 1;
-        animate();
+        // Flag already at bottom, will animate to top
+        console.log('Checkpoint activated at x:', this.x);
     }
 
     update() {
+        // Animate flag going up when activated
+        if (this.activated && this.flagY > 0) {
+            this.flagY -= 0.03;
+            if (this.flagY < 0) this.flagY = 0;
+        }
+
         if (this.activated) {
             this.animationTimer++;
         }
@@ -44,31 +45,31 @@ export class Checkpoint {
     draw(ctx, camera) {
         ctx.save();
         const drawX = this.x - camera.x;
-        const drawY = this.y;
+        const groundY = this.baseY; // Use baseY (ground level) for drawing
 
         // Pole shadow
         ctx.fillStyle = 'rgba(0,0,0,0.2)';
-        ctx.fillRect(drawX + 18, drawY - this.height + 5, 8, this.height);
+        ctx.fillRect(drawX + 18, groundY - this.poleHeight + 5, 8, this.poleHeight);
 
         // Pole
         ctx.fillStyle = '#8B4513';
-        ctx.fillRect(drawX + 16, drawY - this.height, 8, this.height);
+        ctx.fillRect(drawX + 16, groundY - this.poleHeight, 8, this.poleHeight);
 
         // Pole top ball
         ctx.fillStyle = this.activated ? '#FFD700' : '#C0C0C0';
         ctx.beginPath();
-        ctx.arc(drawX + 20, drawY - this.height - 8, 10, 0, Math.PI * 2);
+        ctx.arc(drawX + 20, groundY - this.poleHeight - 8, 10, 0, Math.PI * 2);
         ctx.fill();
 
         // Highlight on ball
         ctx.fillStyle = 'rgba(255,255,255,0.5)';
         ctx.beginPath();
-        ctx.arc(drawX + 17, drawY - this.height - 11, 4, 0, Math.PI * 2);
+        ctx.arc(drawX + 17, groundY - this.poleHeight - 11, 4, 0, Math.PI * 2);
         ctx.fill();
 
         // Flag
-        const flagTopY = drawY - this.height + 10;
-        const flagBottomY = drawY - 30;
+        const flagTopY = groundY - this.poleHeight + 10;
+        const flagBottomY = groundY - 30;
         const currentFlagY = flagTopY + (flagBottomY - flagTopY) * this.flagY;
 
         // Flag wave animation
@@ -97,12 +98,12 @@ export class Checkpoint {
 
         // Base
         ctx.fillStyle = '#654321';
-        ctx.fillRect(drawX, drawY - 20, 40, 20);
+        ctx.fillRect(drawX, groundY - 20, 40, 20);
 
         // Grass on base
         ctx.fillStyle = '#228B22';
         ctx.beginPath();
-        ctx.ellipse(drawX + 20, drawY - 18, 22, 8, 0, Math.PI, 0);
+        ctx.ellipse(drawX + 20, groundY - 18, 22, 8, 0, Math.PI, 0);
         ctx.fill();
 
         ctx.restore();
