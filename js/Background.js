@@ -37,6 +37,11 @@ export class Background {
         this.clouds = this.generateClouds(8);
         this.bushes = this.generateBushes(12);
 
+        // Dynamic elements
+        this.birds = this.generateBirds(5);
+        this.stars = this.generateStars(20);
+        this.time = 0;
+
         // Weather System
         this.weather = 'CLEAR';
         this.weatherTimer = 0;
@@ -51,6 +56,36 @@ export class Background {
         // Off-screen Canvases
         this.layerCanvases = {};
         this.initLayerCanvases();
+    }
+
+    generateBirds(count) {
+        const birds = [];
+        for (let i = 0; i < count; i++) {
+            birds.push({
+                x: Math.random() * this.canvasWidth * 2,
+                y: 60 + Math.random() * 100,
+                speed: 1 + Math.random() * 1.5,
+                wingPhase: Math.random() * Math.PI * 2,
+                size: 8 + Math.random() * 6,
+                direction: Math.random() > 0.3 ? 1 : -1
+            });
+        }
+        return birds;
+    }
+
+    generateStars(count) {
+        const stars = [];
+        for (let i = 0; i < count; i++) {
+            stars.push({
+                x: Math.random() * this.canvasWidth,
+                y: 20 + Math.random() * 100,
+                size: 1 + Math.random() * 2,
+                twinkleSpeed: 0.02 + Math.random() * 0.05,
+                twinklePhase: Math.random() * Math.PI * 2,
+                brightness: Math.random()
+            });
+        }
+        return stars;
     }
 
     setBiome(biomeType) {
@@ -190,6 +225,8 @@ export class Background {
     }
 
     update(score = 0) {
+        this.time++;
+
         this.clouds.forEach(cloud => {
             cloud.x += cloud.speed;
             // Gentle floating
@@ -200,6 +237,28 @@ export class Background {
             }
         });
         this.currentScore = score;
+
+        // Update birds
+        this.birds.forEach(bird => {
+            bird.x += bird.speed * bird.direction;
+            bird.wingPhase += 0.3;
+
+            // Wrap around
+            if (bird.direction > 0 && bird.x > this.canvasWidth * 2 + 50) {
+                bird.x = -50;
+            } else if (bird.direction < 0 && bird.x < -50) {
+                bird.x = this.canvasWidth * 2 + 50;
+            }
+
+            // Slight vertical bobbing
+            bird.y += Math.sin(this.time * 0.02 + bird.wingPhase) * 0.1;
+        });
+
+        // Update stars (only visible in SPOOKY biome or at night)
+        this.stars.forEach(star => {
+            star.twinklePhase += star.twinkleSpeed;
+            star.brightness = 0.3 + Math.sin(star.twinklePhase) * 0.7;
+        });
 
         // Update Weather
         this.updateWeather();
@@ -279,8 +338,17 @@ export class Background {
     draw(ctx, canvasHeight, camera) {
         this.drawSky(ctx, canvasHeight);
 
+        // Draw stars (only in SPOOKY biome)
+        if (this.currentBiome === 'SPOOKY') {
+            this.drawStars(ctx, camera);
+        }
+
         // Draw pre-rendered layers
         this.drawLayer(ctx, this.layerCanvases.farMountains, camera, 0.05);
+
+        // Draw birds between mountain layers
+        this.drawBirds(ctx, camera);
+
         this.drawLayer(ctx, this.layerCanvases.nearMountains, camera, 0.15);
 
         // Clouds are dynamic, draw normally
@@ -290,6 +358,68 @@ export class Background {
 
         this.drawGround(ctx, canvasHeight, camera);
         this.drawWeather(ctx);
+    }
+
+    drawBirds(ctx, camera) {
+        ctx.save();
+        this.birds.forEach(bird => {
+            const screenX = bird.x - camera.x * 0.1; // Very slow parallax for depth
+            if (screenX < -50 || screenX > this.canvasWidth + 50) return;
+
+            ctx.fillStyle = '#333';
+            ctx.save();
+            ctx.translate(screenX, bird.y);
+            ctx.scale(bird.direction, 1);
+
+            // Simple bird shape with flapping wings
+            const wingAngle = Math.sin(bird.wingPhase) * 0.5;
+
+            // Body
+            ctx.beginPath();
+            ctx.ellipse(0, 0, bird.size, bird.size / 3, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Wings
+            ctx.save();
+            ctx.rotate(wingAngle);
+            ctx.beginPath();
+            ctx.moveTo(-bird.size / 2, 0);
+            ctx.quadraticCurveTo(-bird.size, -bird.size, -bird.size / 4, -bird.size / 2);
+            ctx.fill();
+            ctx.restore();
+
+            ctx.save();
+            ctx.rotate(-wingAngle);
+            ctx.beginPath();
+            ctx.moveTo(-bird.size / 2, 0);
+            ctx.quadraticCurveTo(-bird.size, bird.size, -bird.size / 4, bird.size / 2);
+            ctx.fill();
+            ctx.restore();
+
+            ctx.restore();
+        });
+        ctx.restore();
+    }
+
+    drawStars(ctx, camera) {
+        ctx.save();
+        this.stars.forEach(star => {
+            const screenX = (star.x - camera.x * 0.02) % this.canvasWidth;
+            const adjustedX = screenX < 0 ? screenX + this.canvasWidth : screenX;
+
+            ctx.globalAlpha = star.brightness;
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(adjustedX, star.y, star.size, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Glow effect
+            ctx.globalAlpha = star.brightness * 0.3;
+            ctx.beginPath();
+            ctx.arc(adjustedX, star.y, star.size * 3, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        ctx.restore();
     }
 
     drawLayer(ctx, layerCanvas, camera, parallaxFactor) {
