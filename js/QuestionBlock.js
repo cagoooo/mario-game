@@ -46,6 +46,8 @@ export class QuestionBlock {
             return { type: 'magnet' };
         } else if (this.content === 'mega_mushroom') {
             return { type: 'mega_mushroom' };
+        } else if (this.content === 'oneup') {
+            return { type: 'oneup' };
         }
 
         return null;
@@ -164,12 +166,13 @@ export function generateQuestionBlocks(startX, endX, groundY) {
             const rand = Math.random();
             let content = 'coin';
 
-            if (rand < 0.10) content = 'star';        // 10%
-            else if (rand < 0.25) content = 'fireflower'; // 15%
-            else if (rand < 0.50) content = 'mushroom';   // 25%
-            else if (rand < 0.65) content = 'magnet';     // 15% (Increased)
-            else if (rand < 0.75) content = 'mega_mushroom'; // 10% (Increased)
-            // else coin (25%)
+            if (rand < 0.05) content = 'oneup';         // 5% - 1UP
+            else if (rand < 0.12) content = 'star';        // 7%
+            else if (rand < 0.25) content = 'fireflower'; // 13%
+            else if (rand < 0.48) content = 'mushroom';   // 23%
+            else if (rand < 0.60) content = 'magnet';     // 12%
+            else if (rand < 0.70) content = 'mega_mushroom'; // 10%
+            // else coin (30%)
 
             blocks.push(new QuestionBlock(x + Math.random() * 100, blockY, content));
         }

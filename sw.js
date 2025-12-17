@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mario-game-v2.0.0';
+const CACHE_NAME = 'mario-game-v2.3.0';
 const urlsToCache = [
     './',
     './index.html',
@@ -32,6 +32,11 @@ const urlsToCache = [
     './js/Cannon.js',
     './js/AchievementSystem.js',
     './js/SpriteAnimator.js',
+    './js/OneUpMushroom.js',
+    './js/Checkpoint.js',
+    './js/LightingSystem.js',
+    './js/WeatherSystem.js',
+    './js/Camera.js',
     './assets/player.png',
     './assets/enemy.png',
     './assets/tiles.png',

@@ -4,6 +4,7 @@ import { Star } from './Star.js?v=1.6.22';
 import { FireFlower } from './FireFlower.js?v=1.6.22';
 import { Magnet } from './Magnet.js?v=1.9.32';
 import { MegaMushroom } from './MegaMushroom.js?v=1.9.32';
+import { OneUpMushroom } from './OneUpMushroom.js?v=2.1.0';
 
 export class CollisionSystem {
     constructor(game) {
@@ -148,6 +149,10 @@ export class CollisionSystem {
                         const mega = new MegaMushroom(block.x, block.y);
                         mega.spawn();
                         this.game.megaMushrooms.push(mega);
+                        this.game.playSound('block');
+                    } else if (result.type === 'oneup') {
+                        const oneUp = new OneUpMushroom(block.x, block.y);
+                        this.game.oneUpMushrooms.push(oneUp);
                         this.game.playSound('block');
                     }
                     this.game.triggerScreenShake(3);
@@ -303,6 +308,24 @@ export class CollisionSystem {
                 this.game.playSound('powerup_mushroom');
                 if (this.game.player.getMegaMushroom) this.game.player.getMegaMushroom();
                 this.game.megaMushrooms.splice(i, 1);
+            }
+        }
+
+        // 1UP Mushrooms
+        for (let i = this.game.oneUpMushrooms.length - 1; i >= 0; i--) {
+            const oneUp = this.game.oneUpMushrooms[i];
+            if (checkCollision(this.game.player, oneUp) && oneUp.active && !oneUp.spawning) {
+                oneUp.collected = true;
+                this.game.addLife();
+                this.game.addParticles(oneUp.x + oneUp.width / 2, oneUp.y + oneUp.height / 2, 12, '#32CD32');
+                this.game.oneUpMushrooms.splice(i, 1);
+            }
+        }
+
+        // Checkpoints
+        for (const checkpoint of this.game.checkpoints) {
+            if (!checkpoint.activated && checkCollision(this.game.player, checkpoint)) {
+                checkpoint.activate(this.game);
             }
         }
     }

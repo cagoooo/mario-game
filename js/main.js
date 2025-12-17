@@ -1,8 +1,8 @@
-import { Game } from './Game.js?v=2.0.0';
-import { AssetLoader } from './AssetLoader.js?v=2.0.0';
+import { Game } from './Game.js?v=2.3.0';
+import { AssetLoader } from './AssetLoader.js?v=2.3.0';
 
 window.onload = async function () {
-    console.log('%c Game Version: 2.0.0 (Sprite Animation System) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 2.3.0 (Life System + Visual Effects) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements

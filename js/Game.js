@@ -21,6 +21,11 @@ import { ObjectPool } from './ObjectPool.js?v=1.8.9';
 import { Boss, createBoss } from './Boss.js?v=1.9.35';
 import { Cannon } from './Cannon.js?v=1.9.35';
 import { AchievementSystem } from './AchievementSystem.js?v=1.9.36';
+import { OneUpMushroom } from './OneUpMushroom.js?v=2.1.0';
+import { Checkpoint, generateCheckpoints } from './Checkpoint.js?v=2.1.0';
+import { LightingSystem } from './LightingSystem.js?v=2.2.0';
+import { WeatherSystem } from './WeatherSystem.js?v=2.3.0';
+import { Camera } from './Camera.js?v=2.3.0';
 
 export class Game {
     constructor(canvas, uiElements, assetLoader) {
@@ -72,6 +77,8 @@ export class Game {
         );
 
         this.particleSystem = new ParticleSystem();
+        this.lightingSystem = new LightingSystem(this);
+        this.weatherSystem = new WeatherSystem(this);
         this.screenShake = { x: 0, y: 0, intensity: 0 };
         this.freezeFrames = 0;
         this.deathFlashTimer = 0;
@@ -98,6 +105,12 @@ export class Game {
         this.boss = null;
         this.bossBattleActive = false;
         this.bossArenaStartX = 0;
+
+        // Life System
+        this.lives = 3;
+        this.maxLives = 99;
+        this.lastCheckpointX = 0;
+        this.checkpoints = [];
         this.bossTriggerDistance = 5000;
 
         this.player = null;
@@ -202,6 +215,10 @@ export class Game {
         this.pipes = [];
         this.lava = [];
         this.cannons = [];
+        this.oneUpMushrooms = [];
+        this.checkpoints = [];
+        this.lives = 3;
+        this.lastCheckpointX = 0;
         const biomeKeys = Object.keys(Biomes);
         this.currentBiome = biomeKeys[Math.floor(Math.random() * biomeKeys.length)];
         this.background.setBiome(this.currentBiome);
@@ -750,6 +767,20 @@ export class Game {
             }
         });
 
+        // Draw 1UP Mushrooms
+        this.oneUpMushrooms.forEach(m => {
+            if (isEntityVisible(m, this.camera, this.width, this.height)) {
+                m.draw(this.ctx, this.camera);
+            }
+        });
+
+        // Draw Checkpoints
+        this.checkpoints.forEach(cp => {
+            if (isEntityVisible(cp, this.camera, this.width, this.height)) {
+                cp.draw(this.ctx, this.camera);
+            }
+        });
+
         this.platforms.forEach(p => {
             if (isEntityVisible(p, this.camera, this.width, this.height)) {
                 p.draw(this.ctx, this.camera);
@@ -852,6 +883,10 @@ export class Game {
             }
         });
 
+        // Lighting effects (draw before particles for proper layering)
+        this.lightingSystem.update();
+        this.lightingSystem.draw(this.ctx, this.camera);
+
         this.particleSystem.draw(this.ctx, this.camera);
 
         if (this.isNewHighScore && this.gameRunning) {
@@ -871,6 +906,20 @@ export class Game {
         // Draw achievement notifications (always on top)
         this.achievementSystem.update();
         this.achievementSystem.draw(this.ctx, this.width);
+
+        // Weather effects (draw on top of everything except UI)
+        this.weatherSystem.update();
+        this.weatherSystem.draw(this.ctx, this.camera);
+
+        // Draw Lives UI
+        this.ctx.font = 'bold 18px Arial';
+        this.ctx.textAlign = 'left';
+        this.ctx.fillStyle = '#FFF';
+        this.ctx.strokeStyle = '#000';
+        this.ctx.lineWidth = 3;
+        const livesText = `❤️ × ${this.lives}`;
+        this.ctx.strokeText(livesText, 15, 30);
+        this.ctx.fillText(livesText, 15, 30);
 
         this.ctx.restore();
     }
@@ -1225,6 +1274,95 @@ export class Game {
         this.playSound('death');
 
         this.isGameOverSequence = true;
+
+        // Life system - use loseLife instead of immediate game over
+        setTimeout(() => {
+            this.loseLife();
+        }, 2000); // Wait for death animation
+    }
+
+    loseLife() {
+        this.lives--;
+
+        if (this.lives > 0) {
+            // Show lives remaining briefly then respawn
+            this.showLivesScreen();
+            setTimeout(() => {
+                this.respawn();
+            }, 1500);
+        } else {
+            // No lives left - real game over
+            this.showGameOverScreen();
+        }
+    }
+
+    respawn() {
+        // Reset player at checkpoint or start
+        const respawnX = this.lastCheckpointX > 0 ? this.lastCheckpointX : 50;
+
+        this.player.x = respawnX;
+        this.player.y = this.GROUND_Y;
+        this.player.velX = 0;
+        this.player.velY = 0;
+        this.player.isDead = false;
+        this.player.grounded = true;
+        this.player.setState(0); // Idle
+
+        // Reset power-ups but keep score
+        this.player.isPowered = false;
+        this.player.powerScale = 1.0;
+        this.player.firePower = false;
+        this.player.starPower = false;
+        this.player.isMega = false;
+        this.player.invincible = true;
+        this.player.invincibleTime = 120; // Brief invincibility
+
+        // Reset camera
+        this.camera.x = Math.max(0, respawnX - 200);
+
+        // Resume game
+        this.isGameOverSequence = false;
+        this.gameRunning = true;
+        this.startBGM();
+
+        // Update lives UI
+        this.updateLivesUI();
+    }
+
+    showLivesScreen() {
+        // Brief screen showing lives remaining
+        this.ctx.save();
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        this.ctx.fillRect(0, 0, this.width, this.height);
+
+        this.ctx.fillStyle = '#FFF';
+        this.ctx.font = 'bold 40px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(`× ${this.lives}`, this.width / 2 + 30, this.height / 2);
+
+        // Draw Mario icon
+        this.ctx.fillStyle = '#FF0000';
+        this.ctx.beginPath();
+        this.ctx.arc(this.width / 2 - 40, this.height / 2 - 10, 20, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        this.ctx.restore();
+    }
+
+    addLife() {
+        if (this.lives < this.maxLives) {
+            this.lives++;
+            this.updateLivesUI();
+            this.playSound('powerup_mushroom');
+            this.addScorePopup(this.player.x, this.player.y - 30, '1UP', true);
+        }
+    }
+
+    updateLivesUI() {
+        // Update the UI to show lives
+        if (this.ui.score) {
+            // We'll add lives display alongside score
+        }
     }
 
     showGameOverScreen() {
@@ -1384,6 +1522,10 @@ export class Game {
         this.questionBlocks.push(...generated.questionBlocks);
         this.pipes.push(...generated.pipes);
         this.cannons.push(...generated.cannons);
+
+        // Generate checkpoints
+        const newCheckpoints = generateCheckpoints(startX, endX, this.GROUND_Y, this.checkpoints);
+        this.checkpoints.push(...newCheckpoints);
 
         this.lastGeneratedX = endX;
         this.levelWidth = endX;
