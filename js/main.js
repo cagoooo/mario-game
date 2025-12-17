@@ -2,7 +2,7 @@ import { Game } from './Game.js?v=2.3.0';
 import { AssetLoader } from './AssetLoader.js?v=2.3.0';
 
 window.onload = async function () {
-    console.log('%c Game Version: 2.4.0 (Dynamic Parallax) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 2.5.0 (Bonus Level Variety) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements

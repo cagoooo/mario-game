@@ -26,6 +26,7 @@ import { Checkpoint, generateCheckpoints } from './Checkpoint.js?v=2.1.0';
 import { LightingSystem } from './LightingSystem.js?v=2.2.0';
 import { WeatherSystem } from './WeatherSystem.js?v=2.3.0';
 import { Camera } from './Camera.js?v=2.3.0';
+import { BonusLevelGenerator } from './BonusLevelGenerator.js?v=2.5.0';
 
 export class Game {
     constructor(canvas, uiElements, assetLoader) {
@@ -1018,182 +1019,17 @@ export class Game {
 
         const roomWidth = 1000;
         this.levelWidth = roomWidth;
-
         const groundY = this.height - 50;
-        const ceilingY = 50;
 
-        const layouts = ['CLASSIC', 'PYRAMID', 'SKY_STEPS'];
-        const selectedLayout = layouts[Math.floor(Math.random() * layouts.length)];
-        console.log('Bonus Level Layout:', selectedLayout);
+        // Use the new bonus level generator
+        const generator = new BonusLevelGenerator(roomWidth, this.height, groundY, this.coinPool);
+        const generated = generator.generate();
 
-        const bgColors = ['#000000', '#1a0b2e', '#001f3f', '#2c0b0e'];
-        this.bonusBgColor = bgColors[Math.floor(Math.random() * bgColors.length)];
+        this.bonusBgColor = generated.bgColor;
+        this.platforms = generated.platforms;
+        this.coins = generated.coins;
 
-        this.platforms.push({
-            x: 0, y: groundY, width: roomWidth, height: 50, draw: (ctx) => {
-                ctx.fillStyle = '#0055AA';
-                ctx.fillRect(0, groundY, roomWidth, 50);
-                ctx.strokeStyle = '#000000';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                for (let i = 0; i < roomWidth; i += 50) {
-                    ctx.moveTo(i, groundY);
-                    ctx.lineTo(i, groundY + 50);
-                }
-                ctx.stroke();
-            }
-        });
-
-        this.platforms.push({
-            x: 0,
-            y: -1000,
-            width: roomWidth,
-            height: 1000 + ceilingY,
-            draw: (ctx) => {
-                ctx.fillStyle = '#0055AA';
-                ctx.fillRect(0, 0, roomWidth, ceilingY);
-            }
-        });
-
-        this.platforms.push({ x: -50, y: -1000, width: 50, height: this.height + 2000, draw: () => { } });
-        this.platforms.push({ x: roomWidth, y: -1000, width: 50, height: this.height + 2000, draw: () => { } });
-
-        if (selectedLayout === 'CLASSIC') {
-            for (let i = 0; i < 3; i++) {
-                this.platforms.push({
-                    x: 300 + i * 150,
-                    y: groundY - 100 - i * 50,
-                    width: 100,
-                    height: 20,
-                    draw: (ctx, camera) => {
-                        const x = 300 + i * 150 - camera.x;
-                        const y = groundY - 100 - i * 50;
-                        ctx.fillStyle = '#FF8C00';
-                        ctx.fillRect(x, y, 100, 20);
-                        ctx.strokeStyle = '#000';
-                        ctx.strokeRect(x, y, 100, 20);
-                    }
-                });
-            }
-            for (let i = 0; i < 8; i++) {
-                for (let j = 0; j < 3; j++) {
-                    this.coins.push(this.coinPool.get(250 + i * 60, 150 + j * 50));
-                }
-            }
-            const centerX = 850;
-            const centerY = 200;
-            this.coins.push(this.coinPool.get(centerX - 30, centerY - 30));
-            this.coins.push(this.coinPool.get(centerX + 30, centerY - 30));
-            this.coins.push(this.coinPool.get(centerX - 40, centerY + 20));
-            this.coins.push(this.coinPool.get(centerX - 20, centerY + 35));
-            this.coins.push(this.coinPool.get(centerX, centerY + 40));
-            this.coins.push(this.coinPool.get(centerX + 20, centerY + 35));
-            this.coins.push(this.coinPool.get(centerX + 40, centerY + 20));
-
-        } else if (selectedLayout === 'PYRAMID') {
-            const startX = 200;
-            const stepWidth = 60;
-            const stepHeight = 60;
-            const levels = 5;
-
-            for (let i = 0; i < levels; i++) {
-                this.platforms.push({
-                    x: startX + i * stepWidth,
-                    y: groundY - (i + 1) * stepHeight,
-                    width: stepWidth,
-                    height: (i + 1) * stepHeight,
-                    draw: (ctx, camera) => {
-                        const x = startX + i * stepWidth - camera.x;
-                        const y = groundY - (i + 1) * stepHeight;
-                        ctx.fillStyle = '#B8860B';
-                        ctx.fillRect(x, y, stepWidth, (i + 1) * stepHeight);
-                        ctx.strokeStyle = '#000';
-                        ctx.strokeRect(x, y, stepWidth, (i + 1) * stepHeight);
-                    }
-                });
-                this.coins.push(this.coinPool.get(startX + i * stepWidth + 15, groundY - (i + 1) * stepHeight - 40));
-
-                const rightX = startX + (levels * 2 - 1 - i) * stepWidth;
-                this.platforms.push({
-                    x: rightX,
-                    y: groundY - (i + 1) * stepHeight,
-                    width: stepWidth,
-                    height: (i + 1) * stepHeight,
-                    draw: (ctx, camera) => {
-                        const x = rightX - camera.x;
-                        const y = groundY - (i + 1) * stepHeight;
-                        ctx.fillStyle = '#B8860B';
-                        ctx.fillRect(x, y, stepWidth, (i + 1) * stepHeight);
-                        ctx.strokeStyle = '#000';
-                        ctx.strokeRect(x, y, stepWidth, (i + 1) * stepHeight);
-                    }
-                });
-                this.coins.push(this.coinPool.get(rightX + 15, groundY - (i + 1) * stepHeight - 40));
-            }
-
-            const topX = startX + levels * stepWidth;
-            this.platforms.push({
-                x: topX,
-                y: groundY - (levels + 1) * stepHeight,
-                width: stepWidth * 2,
-                height: (levels + 1) * stepHeight,
-                draw: (ctx, camera) => {
-                    const x = topX - camera.x;
-                    const y = groundY - (levels + 1) * stepHeight;
-                    ctx.fillStyle = '#FFD700';
-                    ctx.fillRect(x, y, stepWidth * 2, (levels + 1) * stepHeight);
-                    ctx.strokeStyle = '#000';
-                    ctx.strokeRect(x, y, stepWidth * 2, (levels + 1) * stepHeight);
-                }
-            });
-            this.coins.push(this.coinPool.get(topX + 20, groundY - (levels + 1) * stepHeight - 40));
-            this.coins.push(this.coinPool.get(topX + 60, groundY - (levels + 1) * stepHeight - 40));
-            this.coins.push(this.coinPool.get(topX + 40, groundY - (levels + 1) * stepHeight - 80));
-
-        } else if (selectedLayout === 'SKY_STEPS') {
-            const platformCount = 6;
-            for (let i = 0; i < platformCount; i++) {
-                const x = 200 + i * 120;
-                const y = groundY - 100 - (i % 2 === 0 ? 0 : 100);
-
-                this.platforms.push({
-                    x: x,
-                    y: y,
-                    width: 80,
-                    height: 20,
-                    draw: (ctx, camera) => {
-                        const px = x - camera.x;
-                        const py = y;
-                        ctx.fillStyle = '#87CEEB';
-                        ctx.fillRect(px, py, 80, 20);
-                        ctx.strokeStyle = '#FFF';
-                        ctx.strokeRect(px, py, 80, 20);
-                    }
-                });
-
-                this.coins.push(this.coinPool.get(x + 25, y - 40));
-                if (i % 2 !== 0) {
-                    this.coins.push(this.coinPool.get(x + 25, y + 40));
-                }
-            }
-
-            this.platforms.push({
-                x: 200 + platformCount * 120,
-                y: groundY - 200,
-                width: 150,
-                height: 30,
-                draw: (ctx, camera) => {
-                    const px = 200 + platformCount * 120 - camera.x;
-                    const py = groundY - 200;
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.fillRect(px, py, 150, 30);
-                }
-            });
-            for (let k = 0; k < 5; k++) {
-                this.coins.push(this.coinPool.get(200 + platformCount * 120 + 20 + k * 25, groundY - 240));
-            }
-        }
-
+        // Add exit pipe
         const exitPipe = new Pipe(roomWidth - 100, groundY - 80, 80, false);
         exitPipe.type = 'EXIT';
         this.pipes.push(exitPipe);
