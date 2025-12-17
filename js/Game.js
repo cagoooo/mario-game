@@ -18,7 +18,9 @@ import { Lava } from './Lava.js?v=1.8.9';
 import { EnhancedAudioSystem } from './AudioSystem.js?v=1.8.9';
 import { ParticleSystem } from './ParticleSystem.js?v=1.8.9';
 import { ObjectPool } from './ObjectPool.js?v=1.8.9';
-import { Boss, createBoss } from './Boss.js?v=1.9.33';
+import { Boss, createBoss } from './Boss.js?v=1.9.35';
+import { Cannon } from './Cannon.js?v=1.9.35';
+import { AchievementSystem } from './AchievementSystem.js?v=1.9.36';
 
 export class Game {
     constructor(canvas, uiElements, assetLoader) {
@@ -119,6 +121,8 @@ export class Game {
         this.canvas.addEventListener('click', this.handleCanvasClick);
         this.canvas.addEventListener('touchstart', this.handleCanvasClick, { passive: false });
 
+        this.achievementSystem = new AchievementSystem(this);
+
         this.start();
         this.startBGM();
     }
@@ -197,6 +201,7 @@ export class Game {
         this.megaMushrooms = [];
         this.pipes = [];
         this.lava = [];
+        this.cannons = [];
         const biomeKeys = Object.keys(Biomes);
         this.currentBiome = biomeKeys[Math.floor(Math.random() * biomeKeys.length)];
         this.background.setBiome(this.currentBiome);
@@ -415,7 +420,15 @@ export class Game {
         });
 
         this.lava.forEach(lava => lava.update());
-        this.lava.forEach(lava => lava.update());
+
+        // Update Cannons
+        this.cannons.forEach(cannon => {
+            cannon.update(this.player, this.width + this.camera.x);
+        });
+
+        // Check HammerBro hammer collisions and BulletBill collisions
+        this.checkProjectileCollisions();
+
         this.collisionSystem.update();
 
         // === BOUNDARY CHECKS (Bonus Level) ===
@@ -558,6 +571,94 @@ export class Game {
         }
     }
 
+    checkProjectileCollisions() {
+        // Check HammerBro hammers
+        for (const enemy of this.enemies) {
+            if (enemy.type === 'hammerbro' && enemy.hammers) {
+                for (let i = enemy.hammers.length - 1; i >= 0; i--) {
+                    const hammer = enemy.hammers[i];
+                    if (checkCollision(this.player, hammer)) {
+                        // Mega Mario destroys hammers
+                        if (this.player.isMega) {
+                            this.addParticles(hammer.x, hammer.y, 5, '#8B4513');
+                            enemy.hammers.splice(i, 1);
+                            continue;
+                        }
+                        // Star invincibility destroys hammers
+                        if (this.player.starPower) {
+                            this.addParticles(hammer.x, hammer.y, 5, '#8B4513');
+                            enemy.hammers.splice(i, 1);
+                            continue;
+                        }
+                        // Player takes damage
+                        if (!this.player.invincible) {
+                            const result = this.player.hit();
+                            if (result === 'dead') {
+                                this.triggerDeathEffect();
+                                this.gameOver();
+                            } else if (result === 'shrink') {
+                                this.triggerScreenShake(5);
+                                this.triggerFreeze(20);
+                                this.playSound('shrink');
+                            }
+                            enemy.hammers.splice(i, 1);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check Cannon BulletBills
+        for (const cannon of this.cannons) {
+            const bulletHitboxes = cannon.getBulletHitboxes();
+            for (const hitbox of bulletHitboxes) {
+                if (checkCollision(this.player, hitbox)) {
+                    // Mega Mario destroys bullets
+                    if (this.player.isMega) {
+                        this.addParticles(hitbox.x, hitbox.y, 8, '#1a1a1a');
+                        this.addScorePopup(hitbox.x, hitbox.y, 100);
+                        this.score += 100;
+                        this.updateScore();
+                        hitbox.bullet.alive = false;
+                        continue;
+                    }
+                    // Star power destroys bullets
+                    if (this.player.starPower) {
+                        this.addParticles(hitbox.x, hitbox.y, 8, '#1a1a1a');
+                        this.addScorePopup(hitbox.x, hitbox.y, 100);
+                        this.score += 100;
+                        this.updateScore();
+                        hitbox.bullet.alive = false;
+                        continue;
+                    }
+                    // Player jumping on top kills bullet
+                    if (this.player.velY > 0 && this.player.y + this.player.height < hitbox.y + hitbox.height / 2) {
+                        this.addParticles(hitbox.x, hitbox.y, 8, '#1a1a1a');
+                        this.addScorePopup(hitbox.x, hitbox.y, 200);
+                        this.score += 200;
+                        this.updateScore();
+                        this.player.velY = -10;
+                        this.playSound('stomp');
+                        hitbox.bullet.alive = false;
+                        continue;
+                    }
+                    // Player takes damage
+                    if (!this.player.invincible) {
+                        const result = this.player.hit();
+                        if (result === 'dead') {
+                            this.triggerDeathEffect();
+                            this.gameOver();
+                        } else if (result === 'shrink') {
+                            this.triggerScreenShake(5);
+                            this.triggerFreeze(20);
+                            this.playSound('shrink');
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     handleBossDefeat() {
         console.log('BOSS DEFEATED!');
         const baseScore = 5000;
@@ -571,6 +672,7 @@ export class Game {
         this.addParticles(this.boss.x, this.boss.y, 30, '#FF4500');
         this.renderDistance = 2000;
         this.bossTriggerDistance = this.player.x + 5000;
+        this.achievementSystem.trackBossKill();
     }
 
     addScorePopup(x, y, value, isCritical = false) {
@@ -620,6 +722,13 @@ export class Game {
         this.lava.forEach(lava => {
             if (isEntityVisible(lava, this.camera, this.width, this.height)) {
                 lava.draw(this.ctx, this.camera);
+            }
+        });
+
+        // Draw Cannons
+        this.cannons.forEach(cannon => {
+            if (isEntityVisible(cannon, this.camera, this.width, this.height)) {
+                cannon.draw(this.ctx, this.camera);
             }
         });
 
@@ -759,6 +868,10 @@ export class Game {
             this.ctx.restore();
         }
 
+        // Draw achievement notifications (always on top)
+        this.achievementSystem.update();
+        this.achievementSystem.draw(this.ctx, this.width);
+
         this.ctx.restore();
     }
 
@@ -823,7 +936,7 @@ export class Game {
 
         this.player.autoMovePipe = pipe;
         this.player.enterPipe();
-
+        this.achievementSystem.trackBonusLevel();
         this.savedState = {
             cameraX: this.camera.x,
             playerX: this.player.x,
@@ -1270,6 +1383,7 @@ export class Game {
 
         this.questionBlocks.push(...generated.questionBlocks);
         this.pipes.push(...generated.pipes);
+        this.cannons.push(...generated.cannons);
 
         this.lastGeneratedX = endX;
         this.levelWidth = endX;

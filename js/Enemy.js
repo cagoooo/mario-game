@@ -459,6 +459,219 @@ export class Ghost extends Enemy {
     }
 }
 
+// Hammer Bro - Throws hammers in an arc
+export class HammerBro extends Enemy {
+    constructor(x, y, speed, direction) {
+        super(x, y, speed, direction, null);
+        this.type = 'hammerbro';
+        this.height = 45;
+        this.width = 35;
+        this.throwTimer = 0;
+        this.throwCooldown = 90; // Throw every 1.5 seconds
+        this.jumpTimer = 0;
+        this.jumpCooldown = 180;
+        this.groundY = y;
+        this.velY = 0;
+        this.isJumping = false;
+        this.hammers = [];
+    }
+
+    reset(x, y, speed, direction) {
+        super.reset(x, y, speed, direction);
+        this.type = 'hammerbro';
+        this.height = 45;
+        this.groundY = y;
+        this.velY = 0;
+        this.isJumping = false;
+        this.throwTimer = Math.random() * 60;
+        this.jumpTimer = Math.random() * 60;
+        this.hammers = [];
+    }
+
+    update(canvasWidth, player) {
+        if (!this.alive) return;
+
+        // Face player
+        if (player) {
+            this.direction = player.x < this.x ? -1 : 1;
+        }
+
+        // Movement (small patrol)
+        this.x += this.speed * this.direction * 0.3;
+        if (this.x <= 0 || this.x + this.width >= canvasWidth) {
+            this.direction *= -1;
+        }
+
+        // Jump logic
+        if (!this.isJumping) {
+            this.jumpTimer++;
+            if (this.jumpTimer > this.jumpCooldown) {
+                this.velY = -10;
+                this.isJumping = true;
+                this.jumpTimer = 0;
+            }
+        } else {
+            this.velY += 0.5;
+            this.y += this.velY;
+            if (this.y >= this.groundY) {
+                this.y = this.groundY;
+                this.velY = 0;
+                this.isJumping = false;
+                this.jumpTimer = Math.random() * 60;
+            }
+        }
+
+        // Throw hammer
+        this.throwTimer++;
+        if (this.throwTimer > this.throwCooldown && player) {
+            this.throwHammer(player);
+            this.throwTimer = 0;
+        }
+
+        // Update hammers
+        for (let i = this.hammers.length - 1; i >= 0; i--) {
+            const h = this.hammers[i];
+            h.update();
+            if (h.y > this.groundY + 100 || h.x < -50 || h.x > canvasWidth + 50) {
+                this.hammers.splice(i, 1);
+            }
+        }
+
+        this.animationTick++;
+        if (this.animationTick >= 10) {
+            this.animationFrame = (this.animationFrame + 1) % 2;
+            this.animationTick = 0;
+        }
+    }
+
+    throwHammer(player) {
+        const hammer = new Hammer(
+            this.x + (this.direction > 0 ? this.width : 0),
+            this.y - 10,
+            this.direction * 4,
+            -8
+        );
+        this.hammers.push(hammer);
+    }
+
+    draw(ctx, camera) {
+        ctx.save();
+        const drawX = this.x - camera.x + this.width / 2;
+        const drawY = this.y + this.height / 2;
+
+        ctx.translate(drawX, drawY);
+        ctx.scale(this.direction, 1);
+
+        // Body (Green shell)
+        ctx.fillStyle = '#228B22';
+        ctx.beginPath();
+        ctx.ellipse(0, 5, 16, 14, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Shell pattern
+        ctx.strokeStyle = '#006400';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 5, 10, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Head (Yellow with helmet)
+        ctx.fillStyle = '#FFEB3B';
+        ctx.beginPath();
+        ctx.arc(8, -12, 12, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Helmet
+        ctx.fillStyle = '#228B22';
+        ctx.beginPath();
+        ctx.ellipse(8, -18, 14, 8, 0, Math.PI, 0);
+        ctx.fill();
+
+        // White stripe on helmet
+        ctx.strokeStyle = '#FFF';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(8, -18, 10, Math.PI + 0.3, -0.3, false);
+        ctx.stroke();
+
+        // Eyes
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(12, -12, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'black';
+        ctx.beginPath();
+        ctx.arc(13, -12, 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Arm holding hammer
+        ctx.fillStyle = '#FFEB3B';
+        ctx.beginPath();
+        ctx.ellipse(15, -5, 6, 8, 0.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Feet
+        ctx.fillStyle = '#FFEB3B';
+        const footOffset = this.animationFrame === 0 ? -2 : 2;
+        ctx.fillRect(-10 + footOffset, 18, 8, 6);
+        ctx.fillRect(2 - footOffset, 18, 8, 6);
+
+        ctx.restore();
+
+        // Draw hammers
+        this.hammers.forEach(h => h.draw(ctx, camera));
+    }
+
+    getHammerHitboxes() {
+        return this.hammers.filter(h => h.active).map(h => ({
+            x: h.x,
+            y: h.y,
+            width: h.width,
+            height: h.height
+        }));
+    }
+}
+
+// Hammer projectile thrown by HammerBro
+export class Hammer {
+    constructor(x, y, velX, velY) {
+        this.x = x;
+        this.y = y;
+        this.velX = velX;
+        this.velY = velY;
+        this.width = 20;
+        this.height = 20;
+        this.rotation = 0;
+        this.active = true;
+    }
+
+    update() {
+        this.x += this.velX;
+        this.velY += 0.3; // Gravity
+        this.y += this.velY;
+        this.rotation += 0.3;
+    }
+
+    draw(ctx, camera) {
+        ctx.save();
+        const drawX = this.x - camera.x;
+        const drawY = this.y;
+
+        ctx.translate(drawX, drawY);
+        ctx.rotate(this.rotation);
+
+        // Hammer head
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(-12, -6, 24, 12);
+
+        // Hammer handle
+        ctx.fillStyle = '#D2691E';
+        ctx.fillRect(-3, -6, 6, 20);
+
+        ctx.restore();
+    }
+}
+
 export function createEnemies(startX, endX, canvasHeight, spriteSheet, difficultyMultiplier = 1, biome = 'PLAINS') {
     const enemiesData = [];
     const groundY = canvasHeight - 50;
@@ -474,6 +687,13 @@ export function createEnemies(startX, endX, canvasHeight, spriteSheet, difficult
         const speed = baseSpeed * difficultyMultiplier;
         const direction = Math.random() < 0.5 ? -1 : 1;
         const rand = Math.random();
+
+        // Rare chance for HammerBro in any biome (increases with difficulty)
+        const hammerBroChance = 0.05 * difficultyMultiplier;
+        if (rand < hammerBroChance) {
+            enemiesData.push({ type: 'hammerbro', x, y: groundY - 45, speed: speed * 0.5, direction });
+            continue;
+        }
 
         // Biome-specific enemy generation
         if (biome === 'DESERT') {

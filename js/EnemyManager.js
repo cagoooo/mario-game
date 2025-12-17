@@ -1,5 +1,5 @@
 import { ObjectPool } from './ObjectPool.js?v=1.8.0';
-import { Enemy, Koopa, FlyingEnemy, Cactus, Yeti, Ghost } from './Enemy.js?v=1.9.24';
+import { Enemy, Koopa, FlyingEnemy, Cactus, Yeti, Ghost, HammerBro } from './Enemy.js?v=1.9.35';
 
 export class EnemyManager {
     constructor() {
@@ -37,6 +37,11 @@ export class EnemyManager {
             () => new Ghost(0, 0, 0, 0),
             (e, x, y, speed, direction) => e.reset(x, y, speed, direction)
         );
+
+        this.hammerbroPool = new ObjectPool(
+            () => new HammerBro(0, 0, 0, 0),
+            (e, x, y, speed, direction) => e.reset(x, y, speed, direction)
+        );
     }
 
     spawn(data) {
@@ -53,6 +58,8 @@ export class EnemyManager {
             enemy = this.yetiPool.get(data.x, data.y, data.speed, data.direction);
         } else if (data.type === 'ghost') {
             enemy = this.ghostPool.get(data.x, data.y, data.speed, data.direction);
+        } else if (data.type === 'hammerbro') {
+            enemy = this.hammerbroPool.get(data.x, data.y, data.speed, data.direction);
         }
 
         if (enemy) {
@@ -88,6 +95,7 @@ export class EnemyManager {
         else if (enemy.type === 'cactus') this.cactusPool.release(enemy);
         else if (enemy.type === 'yeti') this.yetiPool.release(enemy);
         else if (enemy.type === 'ghost') this.ghostPool.release(enemy);
+        else if (enemy.type === 'hammerbro') this.hammerbroPool.release(enemy);
     }
 
     getEnemies() {

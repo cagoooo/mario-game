@@ -33,6 +33,8 @@ export class CollisionSystem {
                     this.game.updateScore();
                     this.game.playSound('stomp'); // Or kick
                     this.game.triggerScreenShake(5);
+                    this.game.achievementSystem.trackEnemyKill();
+                    this.game.achievementSystem.trackMegaDestroy();
                     continue;
                 }
 
@@ -48,6 +50,7 @@ export class CollisionSystem {
                     this.game.score += 100;
                     this.game.updateScore();
                     this.game.playSound('stomp');
+                    this.game.achievementSystem.trackEnemyKill();
                     this.checkNewHighScore();
                 } else {
                     const result = this.game.player.hit();
@@ -58,6 +61,7 @@ export class CollisionSystem {
                         this.game.score += 100;
                         this.game.updateScore();
                         this.game.playSound('stomp');
+                        this.game.achievementSystem.trackEnemyKill();
                         this.checkNewHighScore();
                     } else if (result === 'dead') {
                         this.game.triggerDeathEffect();
@@ -212,6 +216,7 @@ export class CollisionSystem {
                 this.game.addParticles(coin.x + 10, coin.y + 12, 5, '#FFD700', 'sparkle');
                 this.game.updateScore();
                 this.game.playSound('coin');
+                this.game.achievementSystem.trackCoinCollect();
                 this.checkNewHighScore();
             }
         }
@@ -244,6 +249,7 @@ export class CollisionSystem {
                 this.game.updateScore();
                 this.game.playSound('powerup_star');
                 this.game.triggerFreeze(20);
+                this.game.achievementSystem.trackStarCollect();
                 if (this.game.player.getStarPower) this.game.player.getStarPower();
                 this.game.stars.splice(i, 1);
             }

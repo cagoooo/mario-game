@@ -1,8 +1,9 @@
 import { generatePlatforms } from './Platform.js?v=1.6.22';
-import { createEnemies } from './Enemy.js?v=1.6.22';
+import { createEnemies } from './Enemy.js?v=1.9.35';
 import { generateCoins } from './Coin.js?v=1.6.22';
 import { generateQuestionBlocks } from './QuestionBlock.js?v=1.6.22';
 import { generatePipes } from './Pipe.js?v=1.6.22';
+import { Cannon } from './Cannon.js?v=1.9.35';
 
 export class LevelGenerator {
     constructor() {
@@ -22,13 +23,35 @@ export class LevelGenerator {
 
         const pipes = generatePipes(startX, endX, groundY);
 
+        // Generate cannons (rare, increases with difficulty)
+        const cannons = this.generateCannons(startX, endX, groundY, difficulty);
+
         return {
             platforms,
             enemies,
             coins,
             questionBlocks,
-            pipes
+            pipes,
+            cannons
         };
+    }
+
+    generateCannons(startX, endX, groundY, difficulty) {
+        const cannons = [];
+        const width = endX - startX;
+
+        // Chance to spawn cannon increases with difficulty
+        const cannonChance = 0.15 * difficulty;
+        if (Math.random() < cannonChance && width > 500) {
+            // Place 1-2 cannons in this chunk
+            const count = Math.random() < 0.3 ? 2 : 1;
+            for (let i = 0; i < count; i++) {
+                const x = startX + 200 + Math.random() * (width - 400);
+                const direction = Math.random() < 0.5 ? -1 : 1;
+                cannons.push(new Cannon(x, groundY - 60, direction));
+            }
+        }
+        return cannons;
     }
 
     generateBossArena(startX, groundY) {
