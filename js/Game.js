@@ -107,7 +107,7 @@ export class Game {
         this.bossArenaStartX = 0;
 
         // Life System
-        this.lives = 3;
+        this.lives = 1;
         this.maxLives = 99;
         this.lastCheckpointX = 0;
         this.checkpoints = [];
@@ -217,7 +217,7 @@ export class Game {
         this.cannons = [];
         this.oneUpMushrooms = [];
         this.checkpoints = [];
-        this.lives = 3;
+        this.lives = 1;
         this.lastCheckpointX = 0;
         const biomeKeys = Object.keys(Biomes);
         this.currentBiome = biomeKeys[Math.floor(Math.random() * biomeKeys.length)];
@@ -1282,51 +1282,68 @@ export class Game {
     }
 
     loseLife() {
-        this.lives--;
-
         if (this.lives > 0) {
-            // Show lives remaining briefly then respawn
-            this.showLivesScreen();
-            setTimeout(() => {
-                this.respawn();
-            }, 1500);
+            this.lives--;
+            // Show lives remaining briefly then respawn or game over
+            if (this.lives > 0) {
+                this.showLivesScreen();
+                setTimeout(() => {
+                    this.respawn();
+                }, 1500);
+            } else {
+                // No lives left - real game over
+                setTimeout(() => {
+                    this.showGameOverScreen();
+                }, 500);
+            }
         } else {
-            // No lives left - real game over
+            // Already at 0 lives
             this.showGameOverScreen();
         }
     }
 
     respawn() {
-        // Reset player at checkpoint or start
-        const respawnX = this.lastCheckpointX > 0 ? this.lastCheckpointX : 50;
+        // Reset player at checkpoint or nearby death location
+        // If we have a checkpoint, use it. Otherwise respawn near where they were.
+        let respawnX;
+
+        if (this.lastCheckpointX > 0) {
+            respawnX = this.lastCheckpointX;
+        } else {
+            // Respawn a bit behind the death location but keep progress
+            respawnX = Math.max(50, this.camera.x + 100);
+        }
 
         this.player.x = respawnX;
-        this.player.y = this.GROUND_Y;
+        this.player.y = this.GROUND_Y - this.player.height;
         this.player.velX = 0;
         this.player.velY = 0;
         this.player.isDead = false;
         this.player.grounded = true;
         this.player.setState(0); // Idle
+        this.player.width = this.player.baseWidth;
+        this.player.height = this.player.baseHeight;
 
         // Reset power-ups but keep score
         this.player.isPowered = false;
         this.player.powerScale = 1.0;
         this.player.firePower = false;
         this.player.starPower = false;
+        this.player.starTimer = 0;
         this.player.isMega = false;
+        this.player.megaTimer = 0;
+        this.player.magnetPower = false;
+        this.player.magnetTimer = 0;
         this.player.invincible = true;
         this.player.invincibleTime = 120; // Brief invincibility
 
-        // Reset camera
+        // Reset camera to follow player
         this.camera.x = Math.max(0, respawnX - 200);
 
-        // Resume game
+        // Resume game - keep score and progress!
         this.isGameOverSequence = false;
         this.gameRunning = true;
         this.startBGM();
-
-        // Update lives UI
-        this.updateLivesUI();
     }
 
     showLivesScreen() {

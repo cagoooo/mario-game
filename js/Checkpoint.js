@@ -112,7 +112,7 @@ export class Checkpoint {
 // Generate checkpoints at intervals
 export function generateCheckpoints(startX, endX, groundY, existingCheckpoints = []) {
     const checkpoints = [];
-    const checkpointInterval = 2000; // Every 2000 pixels
+    const checkpointInterval = 1000; // Every 1000 pixels (more frequent)
 
     // Find last checkpoint position
     let lastCheckpointX = 0;
