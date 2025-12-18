@@ -49,6 +49,60 @@ export class EnhancedAudioSystem {
         }
     }
 
+    // ========== 音量控制 ==========
+
+    /**
+     * 設定音效音量 (SFX)
+     * @param {number} volume - 0.0 到 1.0
+     */
+    setSFXVolume(volume) {
+        if (this.sfxGain) {
+            this.sfxGain.gain.value = Math.max(0, Math.min(1, volume));
+            localStorage.setItem('marioSFXVolume', volume.toString());
+        }
+    }
+
+    /**
+     * 設定音樂音量 (BGM)
+     * @param {number} volume - 0.0 到 1.0
+     */
+    setMusicVolume(volume) {
+        if (this.musicGain) {
+            this.musicGain.gain.value = Math.max(0, Math.min(1, volume));
+            localStorage.setItem('marioMusicVolume', volume.toString());
+        }
+    }
+
+    /**
+     * 取得音效音量
+     * @returns {number}
+     */
+    getSFXVolume() {
+        return this.sfxGain ? this.sfxGain.gain.value : 0.7;
+    }
+
+    /**
+     * 取得音樂音量
+     * @returns {number}
+     */
+    getMusicVolume() {
+        return this.musicGain ? this.musicGain.gain.value : 0.4;
+    }
+
+    /**
+     * 載入儲存的音量設定
+     */
+    loadVolumeSettings() {
+        try {
+            const sfxVol = localStorage.getItem('marioSFXVolume');
+            const musicVol = localStorage.getItem('marioMusicVolume');
+            if (sfxVol !== null) this.setSFXVolume(parseFloat(sfxVol));
+            if (musicVol !== null) this.setMusicVolume(parseFloat(musicVol));
+        } catch (e) {
+            console.warn('Could not load volume settings');
+        }
+    }
+
     initSoundPresets() {
         return {
             // 跳躍音效 - 經典Mario跳躍聲
@@ -269,6 +323,56 @@ export class EnhancedAudioSystem {
                 volumes: [0.2, 0.2, 0.2, 0.2, 0.2, 0.1],
                 attack: 0.01,
                 decay: 0.05
+            },
+
+            // 踢擊音效 (Kick) - 用於踢龜殼等
+            kick: {
+                type: 'sawtooth',
+                frequencies: [180, 120, 80],
+                durations: [0.04, 0.06, 0.1],
+                volumes: [0.35, 0.25, 0.15],
+                attack: 0.01,
+                decay: 0.03
+            },
+
+            // 存檔點音效 (Checkpoint)
+            checkpoint: {
+                type: 'triangle',
+                frequencies: [523, 659, 784, 1047],
+                durations: [0.15, 0.15, 0.15, 0.25],
+                volumes: [0.25, 0.25, 0.25, 0.2],
+                attack: 0.02,
+                decay: 0.1
+            },
+
+            // 腳步聲 (Footstep) - 輕微的土地踩踏聲
+            footstep: {
+                type: 'sawtooth',
+                frequencies: [80, 60],
+                durations: [0.02, 0.03],
+                volumes: [0.08, 0.05],
+                attack: 0.01,
+                decay: 0.02
+            },
+
+            // 成就解鎖音效 (Achievement)
+            achievement: {
+                type: 'square',
+                frequencies: [659, 784, 988, 1319, 1568],
+                durations: [0.1, 0.1, 0.1, 0.1, 0.3],
+                volumes: [0.2, 0.22, 0.24, 0.25, 0.2],
+                attack: 0.01,
+                decay: 0.1
+            },
+
+            // Boss 出現音效
+            bossAppear: {
+                type: 'sawtooth',
+                frequencies: [110, 130, 110, 82, 98, 82],
+                durations: [0.2, 0.2, 0.2, 0.3, 0.3, 0.4],
+                volumes: [0.3, 0.32, 0.3, 0.35, 0.35, 0.25],
+                attack: 0.05,
+                decay: 0.15
             }
         };
     }
@@ -313,6 +417,40 @@ export class EnhancedAudioSystem {
         } catch (e) {
             console.warn('Sound playback failed:', e);
         }
+    }
+
+    /**
+     * 播放音效並加入隨機變化 - 讓音效更生動自然
+     * @param {string} type - 音效類型
+     * @param {number} pitchVariation - 音高變化範圍 (預設 0.1 = ±10%)
+     * @param {number} volumeVariation - 音量變化範圍 (預設 0.2 = ±20%)
+     */
+    playSoundWithVariation(type, pitchVariation = 0.1, volumeVariation = 0.2) {
+        // 隨機音高變化: 1.0 ± pitchVariation
+        const randomPitch = 1 + (Math.random() - 0.5) * 2 * pitchVariation;
+
+        // 隨機音量變化: 1.0 ± volumeVariation
+        const randomVolume = 1 + (Math.random() - 0.5) * 2 * volumeVariation;
+
+        this.playSound(type, randomPitch, Math.max(0.3, randomVolume));
+    }
+
+    /**
+     * 播放踩踏音效 - 隨機選擇變化
+     */
+    playStompVariation() {
+        const variations = ['stomp', 'kick', 'bump'];
+        const randomType = variations[Math.floor(Math.random() * variations.length)];
+        this.playSoundWithVariation(randomType === 'stomp' ? 'stomp' : 'stomp', 0.15, 0.1);
+    }
+
+    /**
+     * 播放金幣音效 - 帶音高變化
+     */
+    playCoinVariation() {
+        // 每次收集金幣音高略有不同，避免重複感
+        const pitchOffset = 0.9 + Math.random() * 0.2; // 0.9 ~ 1.1
+        this.playSound('coin', pitchOffset, 1);
     }
 
     setBGMTempo(bpm) {
