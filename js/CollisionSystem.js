@@ -5,9 +5,6 @@ import { FireFlower } from './FireFlower.js?v=1.6.22';
 import { Magnet } from './Magnet.js?v=1.9.32';
 import { MegaMushroom } from './MegaMushroom.js?v=1.9.32';
 import { OneUpMushroom } from './OneUpMushroom.js?v=2.1.0';
-import { TimeFreezeItem } from './TimeFreezeItem.js?v=2.7.0';
-import { InvisibilityCloak } from './InvisibilityCloak.js?v=2.7.0';
-import { MagnetUpgrade } from './MagnetUpgrade.js?v=2.7.0';
 
 export class CollisionSystem {
     constructor(game) {
@@ -156,21 +153,6 @@ export class CollisionSystem {
                     } else if (result.type === 'oneup') {
                         const oneUp = new OneUpMushroom(block.x, block.y);
                         this.game.oneUpMushrooms.push(oneUp);
-                        this.game.playSound('block');
-                    } else if (result.type === 'time_freeze') {
-                        const item = new TimeFreezeItem(block.x, block.y);
-                        item.spawn();
-                        this.game.timeFreezeItems.push(item);
-                        this.game.playSound('block');
-                    } else if (result.type === 'invisibility_cloak') {
-                        const item = new InvisibilityCloak(block.x, block.y);
-                        item.spawn();
-                        this.game.invisibilityCloaks.push(item);
-                        this.game.playSound('block');
-                    } else if (result.type === 'magnet_upgrade') {
-                        const item = new MagnetUpgrade(block.x, block.y);
-                        item.spawn();
-                        this.game.magnetUpgrades.push(item);
                         this.game.playSound('block');
                     }
                     this.game.triggerScreenShake(3);
@@ -347,60 +329,6 @@ export class CollisionSystem {
         for (const checkpoint of this.game.checkpoints) {
             if (!checkpoint.activated && checkCollision(this.game.player, checkpoint)) {
                 checkpoint.activate(this.game);
-            }
-        }
-
-        // Time Freeze Items
-        for (let i = this.game.timeFreezeItems.length - 1; i >= 0; i--) {
-            const item = this.game.timeFreezeItems[i];
-            if (checkCollision(this.game.player, item) && item.active && !item.spawning) {
-                item.collected = true;
-                this.game.score += 1500;
-                this.game.addScorePopup(item.x, item.y, 1500);
-                this.game.updateScore();
-                this.game.playSound('powerup_mushroom');
-                this.game.addParticles(item.x + item.width / 2, item.y + item.height / 2, 10, '#87CEEB');
-                // Activate Time Freeze power
-                this.game.player.isTimeFrozen = true;
-                this.game.player.timeFreezeTimer = 180; // 3 seconds at 60fps
-                this.game.timeFreezeItems.splice(i, 1);
-            }
-        }
-
-        // Invisibility Cloaks
-        for (let i = this.game.invisibilityCloaks.length - 1; i >= 0; i--) {
-            const item = this.game.invisibilityCloaks[i];
-            if (checkCollision(this.game.player, item) && item.active && !item.spawning) {
-                item.collected = true;
-                this.game.score += 2000;
-                this.game.addScorePopup(item.x, item.y, 2000);
-                this.game.updateScore();
-                this.game.playSound('powerup_mushroom');
-                this.game.addParticles(item.x + item.width / 2, item.y + item.height / 2, 12, '#9966FF');
-                // Activate Invisibility power
-                this.game.player.isInvisible = true;
-                this.game.player.invisibleTimer = 300; // 5 seconds at 60fps
-                this.game.player.invincible = true;
-                this.game.invisibilityCloaks.splice(i, 1);
-            }
-        }
-
-        // Magnet Upgrades
-        for (let i = this.game.magnetUpgrades.length - 1; i >= 0; i--) {
-            const item = this.game.magnetUpgrades[i];
-            if (checkCollision(this.game.player, item) && item.active && !item.spawning) {
-                item.collected = true;
-                this.game.score += 1000;
-                this.game.addScorePopup(item.x, item.y, 1000);
-                this.game.updateScore();
-                this.game.playSound('powerup_mushroom');
-                this.game.addParticles(item.x + item.width / 2, item.y + item.height / 2, 10, '#FFD700');
-                // Activate Magnet Upgrade power (also activate base magnet if not active)
-                this.game.player.magnetPower = true;
-                this.game.player.magnetTimer = 600; // Reset base timer
-                this.game.player.magnetUpgraded = true;
-                this.game.player.magnetUpgradeTimer = 600; // 10 seconds at 60fps
-                this.game.magnetUpgrades.splice(i, 1);
             }
         }
     }

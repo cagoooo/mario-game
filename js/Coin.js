@@ -35,13 +35,9 @@ export class Coin {
             const dy = (player.y + player.height / 2) - (this.y + this.height / 2);
             const dist = Math.sqrt(dx * dx + dy * dy);
 
-            // Larger range when magnet is upgraded
-            const magnetRange = player.magnetUpgraded ? 500 : 300;
-            const magnetSpeed = player.magnetUpgraded ? 12 : 8;
-
-            if (dist < magnetRange) {
-                this.x += (dx / dist) * magnetSpeed; // Move towards player
-                this.y += (dy / dist) * magnetSpeed;
+            if (dist < 300) {
+                this.x += (dx / dist) * 8; // Move towards player
+                this.y += (dy / dist) * 8;
             }
         }
         // Bob animation

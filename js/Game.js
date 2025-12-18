@@ -28,9 +28,6 @@ import { WeatherSystem } from './WeatherSystem.js?v=2.3.0';
 import { Camera } from './Camera.js?v=2.3.0';
 import { BonusLevelGenerator } from './BonusLevelGenerator.js?v=2.5.0';
 import { Tutorial } from './Tutorial.js?v=2.6.0';
-import { TimeFreezeItem } from './TimeFreezeItem.js?v=2.7.0';
-import { InvisibilityCloak } from './InvisibilityCloak.js?v=2.7.0';
-import { MagnetUpgrade } from './MagnetUpgrade.js?v=2.7.0';
 
 export class Game {
     constructor(canvas, uiElements, assetLoader) {
@@ -227,10 +224,6 @@ export class Game {
         this.cannons = [];
         this.oneUpMushrooms = [];
         this.checkpoints = [];
-        // New power-up items
-        this.timeFreezeItems = [];
-        this.invisibilityCloaks = [];
-        this.magnetUpgrades = [];
         this.lives = 3;
         this.lastCheckpointX = 0;
         const biomeKeys = Object.keys(Biomes);
@@ -372,10 +365,7 @@ export class Game {
         if (targetCamX < 0) targetCamX = 0;
         this.camera.x = targetCamX;
 
-        // Skip enemy updates if time is frozen
-        if (!this.player.isTimeFrozen) {
-            this.enemyManager.update(this.camera.x + this.width + 1000);
-        }
+        this.enemyManager.update(this.camera.x + this.width + 1000);
         this.questionBlocks.forEach(block => block.update());
 
         for (let i = this.scorePopups.length - 1; i >= 0; i--) {
@@ -446,33 +436,6 @@ export class Game {
             if (flower.collected) {
                 this.fireflowers.splice(i, 1);
                 continue;
-            }
-        }
-
-        // Update Time Freeze Items
-        for (let i = this.timeFreezeItems.length - 1; i >= 0; i--) {
-            const item = this.timeFreezeItems[i];
-            item.update(this.platforms, this.GROUND_Y, this.levelWidth);
-            if (item.collected) {
-                this.timeFreezeItems.splice(i, 1);
-            }
-        }
-
-        // Update Invisibility Cloaks
-        for (let i = this.invisibilityCloaks.length - 1; i >= 0; i--) {
-            const item = this.invisibilityCloaks[i];
-            item.update(this.platforms, this.GROUND_Y, this.levelWidth);
-            if (item.collected) {
-                this.invisibilityCloaks.splice(i, 1);
-            }
-        }
-
-        // Update Magnet Upgrades
-        for (let i = this.magnetUpgrades.length - 1; i >= 0; i--) {
-            const item = this.magnetUpgrades[i];
-            item.update(this.platforms, this.GROUND_Y, this.levelWidth);
-            if (item.collected) {
-                this.magnetUpgrades.splice(i, 1);
             }
         }
 
@@ -836,27 +799,6 @@ export class Game {
         this.checkpoints.forEach(cp => {
             if (isEntityVisible(cp, this.camera, this.width, this.height)) {
                 cp.draw(this.ctx, this.camera);
-            }
-        });
-
-        // Draw Time Freeze Items
-        this.timeFreezeItems.forEach(item => {
-            if (isEntityVisible(item, this.camera, this.width, this.height)) {
-                item.draw(this.ctx, this.camera);
-            }
-        });
-
-        // Draw Invisibility Cloaks
-        this.invisibilityCloaks.forEach(item => {
-            if (isEntityVisible(item, this.camera, this.width, this.height)) {
-                item.draw(this.ctx, this.camera);
-            }
-        });
-
-        // Draw Magnet Upgrades
-        this.magnetUpgrades.forEach(item => {
-            if (isEntityVisible(item, this.camera, this.width, this.height)) {
-                item.draw(this.ctx, this.camera);
             }
         });
 
