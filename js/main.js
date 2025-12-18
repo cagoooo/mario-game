@@ -2,7 +2,7 @@ import { Game } from './Game.js?v=2.3.0';
 import { AssetLoader } from './AssetLoader.js?v=2.3.0';
 
 window.onload = async function () {
-    console.log('%c Game Version: 2.6.2 (Audio Settings UI) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 2.7.0 (New Power-ups) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements

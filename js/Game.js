@@ -113,6 +113,7 @@ export class Game {
         this.maxLives = 99;
         this.lastCheckpointX = 0;
         this.checkpoints = [];
+        this.isProcessingDeath = false; // Flag to prevent multiple loseLife calls
         this.bossTriggerDistance = 5000;
 
         this.player = null;
@@ -335,10 +336,9 @@ export class Game {
         }
 
         if (this.player.isDead) {
+            // Continue death animation
             this.player.update(this.input, this.platforms, this.width, this.camera);
-            if (this.player.y > this.height + 100) {
-                this.showGameOverScreen();
-            }
+            // loseLife() is called via setTimeout in gameOver()
             return;
         }
 
@@ -1129,17 +1129,19 @@ export class Game {
 
     gameOver() {
         if (!this.gameRunning) return;
+        if (this.isProcessingDeath) return; // Prevent double calls
 
+        this.isProcessingDeath = true;
         this.player.die();
         this.stopBGM();
         this.playSound('death');
 
         this.isGameOverSequence = true;
 
-        // Life system - use loseLife instead of immediate game over
+        // Wait for death animation, then process life loss
         setTimeout(() => {
             this.loseLife();
-        }, 2000); // Wait for death animation
+        }, 2000);
     }
 
     loseLife() {
@@ -1203,6 +1205,7 @@ export class Game {
 
         // Resume game - keep score and progress!
         this.isGameOverSequence = false;
+        this.isProcessingDeath = false; // Reset so player can die again
         this.gameRunning = true;
         this.startBGM();
     }
