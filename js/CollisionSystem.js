@@ -1,23 +1,76 @@
-import { checkCollision } from './utils.js?v=1.6.22';
-import { Mushroom } from './Mushroom.js?v=1.6.22';
-import { Star } from './Star.js?v=1.6.22';
-import { FireFlower } from './FireFlower.js?v=1.6.22';
-import { Magnet } from './Magnet.js?v=1.9.32';
-import { MegaMushroom } from './MegaMushroom.js?v=1.9.32';
-import { OneUpMushroom } from './OneUpMushroom.js?v=2.1.0';
+import { checkCollision } from './utils.js?v=2.9.0';
+import { Mushroom } from './Mushroom.js?v=2.9.0';
+import { Star } from './Star.js?v=2.9.0';
+import { FireFlower } from './FireFlower.js?v=2.9.0';
+import { Magnet } from './Magnet.js?v=2.9.0';
+import { MegaMushroom } from './MegaMushroom.js?v=2.9.0';
+import { OneUpMushroom } from './OneUpMushroom.js?v=2.9.0';
+import { SpatialGrid } from './SpatialGrid.js?v=2.9.0';
 
 export class CollisionSystem {
     constructor(game) {
         this.game = game;
+
+        // Spatial partitioning for optimized collision detection
+        this.spatialGrid = new SpatialGrid(100); // 100px cells
+        this.lastGridRebuild = 0;
+        this.GRID_REBUILD_INTERVAL = 5; // Rebuild every 5 frames
     }
 
     update() {
+        // Periodically rebuild spatial grid with all collidable entities
+        this.lastGridRebuild++;
+        if (this.lastGridRebuild >= this.GRID_REBUILD_INTERVAL) {
+            this.rebuildSpatialGrid();
+            this.lastGridRebuild = 0;
+        }
+
         this.handleEnemyCollisions();
         this.handleBlockCollisions();
         this.handlePlatformCollisions();
         this.handleItemCollisions();
         this.handleFireballCollisions();
         this.handleEnvironmentCollisions();
+    }
+
+    /**
+     * Rebuild the spatial grid with all relevant entities
+     */
+    rebuildSpatialGrid() {
+        this.spatialGrid.clear();
+
+        // Add all collidable entities
+        for (const enemy of this.game.enemies) {
+            this.spatialGrid.insert(enemy);
+        }
+        for (const coin of this.game.coins) {
+            this.spatialGrid.insert(coin);
+        }
+        for (const block of this.game.questionBlocks) {
+            this.spatialGrid.insert(block);
+        }
+        for (const pipe of this.game.pipes) {
+            this.spatialGrid.insert(pipe);
+        }
+        for (const platform of this.game.platforms) {
+            this.spatialGrid.insert(platform);
+        }
+    }
+
+    /**
+     * Get entities near the player using spatial grid
+     */
+    getNearbyEntities(entityArray) {
+        const player = this.game.player;
+        const nearby = [];
+        const candidates = this.spatialGrid.getPotentialCollisions(player);
+
+        for (const entity of entityArray) {
+            if (candidates.has(entity)) {
+                nearby.push(entity);
+            }
+        }
+        return nearby;
     }
 
     handleEnemyCollisions() {

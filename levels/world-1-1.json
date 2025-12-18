@@ -1,0 +1,229 @@
+{
+    "name": "World 1-1 Classic",
+    "width": 3200,
+    "biome": "PLAINS",
+    "playerSpawn": {
+        "x": 50,
+        "y": 0
+    },
+    "platforms": [
+        {
+            "x": 200,
+            "y": 300,
+            "width": 150
+        },
+        {
+            "x": 450,
+            "y": 250,
+            "width": 100
+        },
+        {
+            "x": 700,
+            "y": 280,
+            "width": 200
+        },
+        {
+            "x": 1000,
+            "y": 220,
+            "width": 120
+        },
+        {
+            "x": 1200,
+            "y": 180,
+            "width": 80
+        },
+        {
+            "x": 1400,
+            "y": 260,
+            "width": 150
+        },
+        {
+            "x": 1700,
+            "y": 200,
+            "width": 180
+        },
+        {
+            "x": 2000,
+            "y": 240,
+            "width": 100
+        },
+        {
+            "x": 2200,
+            "y": 280,
+            "width": 200
+        },
+        {
+            "x": 2500,
+            "y": 200,
+            "width": 150
+        },
+        {
+            "x": 2800,
+            "y": 160,
+            "width": 120
+        }
+    ],
+    "coins": [
+        {
+            "x": 220,
+            "y": 260,
+            "count": 3,
+            "spacing": 30
+        },
+        {
+            "x": 460,
+            "y": 210,
+            "count": 2,
+            "spacing": 30
+        },
+        {
+            "x": 750,
+            "y": 240,
+            "count": 4,
+            "spacing": 30
+        },
+        {
+            "x": 1010,
+            "y": 180
+        },
+        {
+            "x": 1040,
+            "y": 180
+        },
+        {
+            "x": 1070,
+            "y": 180
+        },
+        {
+            "x": 1420,
+            "y": 220,
+            "count": 3,
+            "spacing": 30
+        },
+        {
+            "x": 1750,
+            "y": 160,
+            "count": 4,
+            "spacing": 25
+        },
+        {
+            "x": 2020,
+            "y": 200,
+            "count": 2,
+            "spacing": 30
+        },
+        {
+            "x": 2550,
+            "y": 160,
+            "count": 3,
+            "spacing": 30
+        }
+    ],
+    "questionBlocks": [
+        {
+            "x": 300,
+            "y": 200,
+            "content": "coin"
+        },
+        {
+            "x": 500,
+            "y": 150,
+            "content": "mushroom"
+        },
+        {
+            "x": 900,
+            "y": 200,
+            "content": "coin"
+        },
+        {
+            "x": 1100,
+            "y": 120,
+            "content": "star"
+        },
+        {
+            "x": 1500,
+            "y": 180,
+            "content": "fireflower"
+        },
+        {
+            "x": 1900,
+            "y": 160,
+            "content": "coin"
+        },
+        {
+            "x": 2300,
+            "y": 200,
+            "content": "mushroom"
+        },
+        {
+            "x": 2600,
+            "y": 100,
+            "content": "iceflower"
+        }
+    ],
+    "pipes": [
+        {
+            "x": 600,
+            "y": 270,
+            "height": 80,
+            "hasPiranha": true
+        },
+        {
+            "x": 1300,
+            "y": 270,
+            "height": 100,
+            "hasPiranha": false,
+            "type": "ENTRANCE"
+        },
+        {
+            "x": 1800,
+            "y": 270,
+            "height": 80,
+            "hasPiranha": true
+        },
+        {
+            "x": 2400,
+            "y": 270,
+            "height": 120,
+            "hasPiranha": true
+        }
+    ],
+    "enemies": [
+        {
+            "x": 350,
+            "type": "goomba"
+        },
+        {
+            "x": 550,
+            "type": "goomba"
+        },
+        {
+            "x": 800,
+            "type": "koopa"
+        },
+        {
+            "x": 1150,
+            "type": "goomba"
+        },
+        {
+            "x": 1600,
+            "type": "koopa"
+        },
+        {
+            "x": 1850,
+            "type": "goomba"
+        },
+        {
+            "x": 2100,
+            "type": "goomba"
+        },
+        {
+            "x": 2350,
+            "type": "koopa"
+        },
+        {
+            "x": 2700,
+            "type": "hammerbro"
+        }
+    ]
+}

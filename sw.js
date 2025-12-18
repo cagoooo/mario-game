@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mario-game-v2.8.0-modularization';
+const CACHE_NAME = 'mario-game-v2.9.0-phase45';
 const urlsToCache = [
     './',
     './index.html',
@@ -42,6 +42,11 @@ const urlsToCache = [
     './js/Config.js',
     './js/UIManager.js',
     './js/TransitionManager.js',
+    './js/SpatialGrid.js',
+    './js/LevelLoader.js',
+    './js/IceFlower.js',
+    './js/Iceball.js',
+    './levels/world-1-1.json',
     './assets/player.png',
     './assets/enemy.png',
     './assets/tiles.png',

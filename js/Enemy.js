@@ -672,7 +672,373 @@ export class Hammer {
     }
 }
 
+// Lakitu - Cloud enemy that throws Spinies
+export class Lakitu extends Enemy {
+    constructor(x, y, speed, direction) {
+        super(x, y, speed, direction, null);
+        this.type = 'lakitu';
+        this.width = 40;
+        this.height = 50;
+        this.baseY = y;
+        this.floatOffset = 0;
+        this.throwTimer = 0;
+        this.throwCooldown = 120; // Throw every 2 seconds
+        this.spinies = [];
+        this.patrolRange = 200;
+        this.startX = x;
+    }
+
+    reset(x, y, speed, direction) {
+        super.reset(x, y, speed, direction);
+        this.type = 'lakitu';
+        this.baseY = y;
+        this.startX = x;
+        this.floatOffset = 0;
+        this.throwTimer = Math.random() * 60;
+        this.spinies = [];
+    }
+
+    update(canvasWidth, player, groundY) {
+        if (!this.alive) return;
+
+        // Floating motion
+        this.floatOffset += 0.03;
+        this.y = this.baseY + Math.sin(this.floatOffset) * 15;
+
+        // Follow player horizontally if nearby
+        if (player) {
+            const dx = player.x - this.x;
+            if (Math.abs(dx) < 400) {
+                this.x += Math.sign(dx) * this.speed * 0.5;
+                this.direction = Math.sign(dx);
+            } else {
+                // Patrol
+                this.x += this.direction * this.speed;
+                if (Math.abs(this.x - this.startX) > this.patrolRange) {
+                    this.direction *= -1;
+                }
+            }
+        }
+
+        // Throw spiny
+        this.throwTimer++;
+        if (this.throwTimer > this.throwCooldown && player) {
+            this.throwSpiny(groundY || this.baseY + 200);
+            this.throwTimer = 0;
+        }
+
+        // Update spinies
+        for (let i = this.spinies.length - 1; i >= 0; i--) {
+            const spiny = this.spinies[i];
+            spiny.update(canvasWidth);
+            if (spiny.y > groundY + 50 || !spiny.alive) {
+                this.spinies.splice(i, 1);
+            }
+        }
+    }
+
+    throwSpiny(groundY) {
+        const spiny = new Spiny(
+            this.x + this.width / 2,
+            this.y + this.height,
+            groundY
+        );
+        this.spinies.push(spiny);
+    }
+
+    draw(ctx, camera) {
+        ctx.save();
+        const drawX = this.x - camera.x + this.width / 2;
+        const drawY = this.y + this.height / 2;
+
+        ctx.translate(drawX, drawY);
+        ctx.scale(this.direction, 1);
+
+        // Cloud
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(-8, 12, 18, 0, Math.PI * 2);
+        ctx.arc(8, 12, 18, 0, Math.PI * 2);
+        ctx.arc(0, 8, 20, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Cloud outline
+        ctx.strokeStyle = '#DDD';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Lakitu body (yellow)
+        ctx.fillStyle = '#FFEB3B';
+        ctx.beginPath();
+        ctx.arc(0, -8, 14, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Goggles
+        ctx.fillStyle = '#1E88E5';
+        ctx.fillRect(-12, -12, 10, 6);
+        ctx.fillRect(2, -12, 10, 6);
+
+        // Goggle shine
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.fillRect(-10, -11, 3, 2);
+        ctx.fillRect(4, -11, 3, 2);
+
+        // Shell on back
+        ctx.fillStyle = '#228B22';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 10, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+
+        // Draw spinies
+        this.spinies.forEach(s => s.draw(ctx, camera));
+    }
+
+    getSpinyHitboxes() {
+        return this.spinies.filter(s => s.alive && s.grounded).map(s => ({
+            x: s.x, y: s.y, width: s.width, height: s.height, spiky: true
+        }));
+    }
+}
+
+// Spiny - Thrown by Lakitu, spiky enemy
+export class Spiny extends Enemy {
+    constructor(x, y, groundY) {
+        super(x, y, 0.8, Math.random() < 0.5 ? -1 : 1, null);
+        this.type = 'spiny';
+        this.width = 24;
+        this.height = 24;
+        this.spiky = true;
+        this.velY = 0;
+        this.groundY = groundY;
+        this.grounded = false;
+    }
+
+    update(canvasWidth) {
+        if (!this.alive) return;
+
+        // Fall until grounded
+        if (!this.grounded) {
+            this.velY += 0.4;
+            this.y += this.velY;
+
+            if (this.y + this.height >= this.groundY) {
+                this.y = this.groundY - this.height;
+                this.grounded = true;
+                this.velY = 0;
+            }
+        } else {
+            // Walk on ground
+            this.x += this.speed * this.direction;
+            if (this.x < 0 || this.x + this.width > canvasWidth) {
+                this.direction *= -1;
+            }
+        }
+
+        this.animationTick++;
+        if (this.animationTick >= 8) {
+            this.animationFrame = (this.animationFrame + 1) % 2;
+            this.animationTick = 0;
+        }
+    }
+
+    draw(ctx, camera) {
+        ctx.save();
+        const drawX = this.x - camera.x + this.width / 2;
+        const drawY = this.y + this.height / 2;
+
+        ctx.translate(drawX, drawY);
+        ctx.scale(this.direction, 1);
+
+        // Body (Red shell)
+        ctx.fillStyle = '#D32F2F';
+        ctx.beginPath();
+        ctx.ellipse(0, 2, 12, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Spikes
+        ctx.fillStyle = '#FFD700';
+        const spikePositions = [
+            [-8, -4], [-4, -8], [0, -10], [4, -8], [8, -4]
+        ];
+        spikePositions.forEach(([sx, sy]) => {
+            ctx.beginPath();
+            ctx.moveTo(sx, sy);
+            ctx.lineTo(sx - 3, sy + 6);
+            ctx.lineTo(sx + 3, sy + 6);
+            ctx.closePath();
+            ctx.fill();
+        });
+
+        // Eyes
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(-4, 0, 4, 0, Math.PI * 2);
+        ctx.arc(4, 0, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = 'black';
+        ctx.beginPath();
+        ctx.arc(-3, 0, 2, 0, Math.PI * 2);
+        ctx.arc(5, 0, 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Feet
+        ctx.fillStyle = '#FFC107';
+        const footOffset = this.animationFrame === 0 ? -2 : 2;
+        ctx.fillRect(-8 + footOffset, 8, 6, 4);
+        ctx.fillRect(2 - footOffset, 8, 6, 4);
+
+        ctx.restore();
+    }
+}
+
+// Thwomp - Stone block that falls when player is underneath
+export class Thwomp extends Enemy {
+    constructor(x, y, speed, direction) {
+        super(x, y, 0, 0, null);
+        this.type = 'thwomp';
+        this.width = 48;
+        this.height = 64;
+        this.spiky = true;
+        this.baseY = y;
+        this.groundY = y + 200; // How far it falls
+        this.state = 'waiting'; // waiting, falling, rising
+        this.velY = 0;
+        this.waitTimer = 0;
+        this.triggerDistance = 80; // Horizontal distance to trigger
+    }
+
+    reset(x, y, speed, direction) {
+        super.reset(x, y, speed, direction);
+        this.type = 'thwomp';
+        this.baseY = y;
+        this.state = 'waiting';
+        this.velY = 0;
+        this.waitTimer = 0;
+    }
+
+    update(canvasWidth, player) {
+        if (!this.alive) return;
+
+        if (this.state === 'waiting') {
+            // Check if player is underneath
+            if (player) {
+                const dx = Math.abs(player.x + player.width / 2 - (this.x + this.width / 2));
+                const isBelow = player.y > this.y;
+
+                if (dx < this.triggerDistance && isBelow) {
+                    this.state = 'falling';
+                }
+            }
+        } else if (this.state === 'falling') {
+            // Fall fast
+            this.velY += 1.5;
+            this.y += this.velY;
+
+            if (this.y >= this.groundY) {
+                this.y = this.groundY;
+                this.velY = 0;
+                this.state = 'waiting_to_rise';
+                this.waitTimer = 0;
+            }
+        } else if (this.state === 'waiting_to_rise') {
+            this.waitTimer++;
+            if (this.waitTimer > 60) {
+                this.state = 'rising';
+            }
+        } else if (this.state === 'rising') {
+            // Rise slowly
+            this.y -= 2;
+            if (this.y <= this.baseY) {
+                this.y = this.baseY;
+                this.state = 'waiting';
+            }
+        }
+
+        this.animationTick++;
+    }
+
+    draw(ctx, camera) {
+        ctx.save();
+        const drawX = this.x - camera.x;
+        const drawY = this.y;
+
+        // Stone body
+        ctx.fillStyle = '#607D8B';
+        ctx.fillRect(drawX, drawY, this.width, this.height);
+
+        // Stone texture
+        ctx.strokeStyle = '#455A64';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(drawX + 4, drawY + 4, this.width - 8, this.height - 8);
+
+        // Cracks
+        ctx.beginPath();
+        ctx.moveTo(drawX + 10, drawY + 15);
+        ctx.lineTo(drawX + 20, drawY + 25);
+        ctx.moveTo(drawX + 30, drawY + 40);
+        ctx.lineTo(drawX + 38, drawY + 50);
+        ctx.stroke();
+
+        // Angry face
+        const faceY = drawY + this.height / 2;
+
+        // Eyes
+        ctx.fillStyle = '#212121';
+        ctx.fillRect(drawX + 8, faceY - 15, 12, 8);
+        ctx.fillRect(drawX + 28, faceY - 15, 12, 8);
+
+        // Eyebrows (angry)
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(drawX + 6, faceY - 20);
+        ctx.lineTo(drawX + 22, faceY - 15);
+        ctx.moveTo(drawX + 42, faceY - 20);
+        ctx.lineTo(drawX + 26, faceY - 15);
+        ctx.stroke();
+
+        // Mouth (jagged)
+        ctx.fillStyle = '#212121';
+        ctx.beginPath();
+        ctx.moveTo(drawX + 10, faceY + 10);
+        ctx.lineTo(drawX + 15, faceY + 5);
+        ctx.lineTo(drawX + 20, faceY + 12);
+        ctx.lineTo(drawX + 25, faceY + 5);
+        ctx.lineTo(drawX + 30, faceY + 12);
+        ctx.lineTo(drawX + 35, faceY + 5);
+        ctx.lineTo(drawX + 40, faceY + 10);
+        ctx.lineTo(drawX + 40, faceY + 15);
+        ctx.lineTo(drawX + 10, faceY + 15);
+        ctx.closePath();
+        ctx.fill();
+
+        // Spikes on sides
+        ctx.fillStyle = '#37474F';
+        const spikeSize = 8;
+        for (let i = 0; i < 4; i++) {
+            const sy = drawY + 10 + i * 15;
+            // Left spikes
+            ctx.beginPath();
+            ctx.moveTo(drawX, sy);
+            ctx.lineTo(drawX - spikeSize, sy + spikeSize / 2);
+            ctx.lineTo(drawX, sy + spikeSize);
+            ctx.fill();
+            // Right spikes
+            ctx.beginPath();
+            ctx.moveTo(drawX + this.width, sy);
+            ctx.lineTo(drawX + this.width + spikeSize, sy + spikeSize / 2);
+            ctx.lineTo(drawX + this.width, sy + spikeSize);
+            ctx.fill();
+        }
+
+        ctx.restore();
+    }
+}
+
 export function createEnemies(startX, endX, canvasHeight, spriteSheet, difficultyMultiplier = 1, biome = 'PLAINS') {
+
     const enemiesData = [];
     const groundY = canvasHeight - 50;
     const width = endX - startX;
