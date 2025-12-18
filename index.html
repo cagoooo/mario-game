@@ -15,7 +15,7 @@
   <link rel="icon" type="image/png" href="assets/icon-192.png">
   <link rel="shortcut icon" type="image/png" href="assets/icon-192.png">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="style.css?v=2.5.2">
+  <link rel="stylesheet" href="style.css?v=2.6.2">
 </head>
 
 <body>
@@ -39,6 +39,7 @@
     <div id="score">⭐ 0</div>
     <div id="highScore">🏆 0</div>
     <button id="muteButton">🔊</button>
+    <button id="settingsButton" title="音效設定">⚙️</button>
     <button id="fullscreenButton">⛶</button>
     <button id="pauseButton">⏸️</button>
   </div>
@@ -57,6 +58,24 @@
     <button id="restartButton">重新開始</button>
   </div>
 
+  <!-- Audio Settings Modal -->
+  <div id="audioSettingsModal" class="modal-overlay">
+    <div class="modal-content">
+      <h3>🔊 音效設定</h3>
+      <div class="volume-control">
+        <label>🎵 音樂 (BGM)</label>
+        <input type="range" id="musicVolumeSlider" min="0" max="100" value="40">
+        <span id="musicVolumeValue">40%</span>
+      </div>
+      <div class="volume-control">
+        <label>🔔 音效 (SFX)</label>
+        <input type="range" id="sfxVolumeSlider" min="0" max="100" value="70">
+        <span id="sfxVolumeValue">70%</span>
+      </div>
+      <button id="closeSettingsBtn">確定</button>
+    </div>
+  </div>
+
   <!-- Touch Controls -->
   <div id="controlButtons">
     <div id="leftButton" class="controlButton">◀</div>
@@ -64,7 +83,7 @@
     <div id="rightButton" class="controlButton">▶</div>
   </div>
 
-  <script type="module" src="js/main.js?v=2.6.0"></script>
+  <script type="module" src="js/main.js?v=2.6.2"></script>
   <script>
     // Unregister Service Worker to prevent caching issues during development/debugging
     if ('serviceWorker' in navigator) {

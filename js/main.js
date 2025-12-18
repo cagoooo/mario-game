@@ -2,7 +2,7 @@ import { Game } from './Game.js?v=2.3.0';
 import { AssetLoader } from './AssetLoader.js?v=2.3.0';
 
 window.onload = async function () {
-    console.log('%c Game Version: 2.6.0 (Gameplay Optimizations) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 2.6.2 (Audio Settings UI) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements
@@ -23,7 +23,14 @@ window.onload = async function () {
         pauseBtn: document.getElementById('pauseButton'),
         resumeBtn: document.getElementById('resumeButton'),
         muteBtn: document.getElementById('muteButton'),
-        fullscreenBtn: document.getElementById('fullscreenButton')
+        fullscreenBtn: document.getElementById('fullscreenButton'),
+        settingsBtn: document.getElementById('settingsButton'),
+        audioModal: document.getElementById('audioSettingsModal'),
+        musicSlider: document.getElementById('musicVolumeSlider'),
+        sfxSlider: document.getElementById('sfxVolumeSlider'),
+        musicValue: document.getElementById('musicVolumeValue'),
+        sfxValue: document.getElementById('sfxVolumeValue'),
+        closeSettingsBtn: document.getElementById('closeSettingsBtn')
     };
 
     // Preload images
@@ -198,4 +205,53 @@ window.onload = async function () {
 
     // Initial check
     checkOrientation();
+
+    // ========== Audio Settings Modal ==========
+    if (uiElements.settingsBtn && uiElements.audioModal) {
+        // Open settings modal
+        uiElements.settingsBtn.addEventListener('click', () => {
+            uiElements.audioModal.classList.add('active');
+            // Load current values from game audio system
+            if (game && game.audioSystem && typeof game.audioSystem.getMusicVolume === 'function') {
+                const musicVol = Math.round(game.audioSystem.getMusicVolume() * 100);
+                const sfxVol = Math.round(game.audioSystem.getSFXVolume() * 100);
+                uiElements.musicSlider.value = musicVol;
+                uiElements.sfxSlider.value = sfxVol;
+                uiElements.musicValue.textContent = musicVol + '%';
+                uiElements.sfxValue.textContent = sfxVol + '%';
+            }
+        });
+
+        // Music volume slider
+        uiElements.musicSlider.addEventListener('input', (e) => {
+            const value = e.target.value;
+            uiElements.musicValue.textContent = value + '%';
+            if (game && game.audioSystem && typeof game.audioSystem.setMusicVolume === 'function') {
+                game.audioSystem.setMusicVolume(value / 100);
+            }
+        });
+
+        // SFX volume slider
+        uiElements.sfxSlider.addEventListener('input', (e) => {
+            const value = e.target.value;
+            uiElements.sfxValue.textContent = value + '%';
+            if (game && game.audioSystem && typeof game.audioSystem.setSFXVolume === 'function') {
+                game.audioSystem.setSFXVolume(value / 100);
+                // Play test sound
+                game.audioSystem.playSound('coin', 1, 0.5);
+            }
+        });
+
+        // Close modal
+        uiElements.closeSettingsBtn.addEventListener('click', () => {
+            uiElements.audioModal.classList.remove('active');
+        });
+
+        // Close modal on background click
+        uiElements.audioModal.addEventListener('click', (e) => {
+            if (e.target === uiElements.audioModal) {
+                uiElements.audioModal.classList.remove('active');
+            }
+        });
+    }
 };
