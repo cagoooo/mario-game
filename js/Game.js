@@ -1,33 +1,36 @@
-import { Player } from './Player.js?v=1.8.9';
-import { Background, Biomes } from './Background.js?v=1.8.9';
-import { InputHandler } from './InputHandler.js?v=1.8.9';
-import { checkCollision, isEntityVisible } from './utils.js?v=1.8.9';
-import { LevelGenerator } from './LevelGenerator.js?v=1.8.9';
-import { CollisionSystem } from './CollisionSystem.js?v=1.8.9';
-import { EnemyManager } from './EnemyManager.js?v=1.8.9';
-import { Coin } from './Coin.js?v=1.8.9';
-import { QuestionBlock } from './QuestionBlock.js?v=1.8.9';
-import { Mushroom } from './Mushroom.js?v=1.8.9';
-import { Star } from './Star.js?v=1.8.9';
-import { FireFlower } from './FireFlower.js?v=1.8.9';
-import { Fireball } from './Fireball.js?v=1.8.9';
-import { MegaMushroom } from './MegaMushroom.js?v=1.9.32';
-import { Pipe } from './Pipe.js?v=1.8.9';
-import { Magnet } from './Magnet.js?v=1.9.32';
-import { Lava } from './Lava.js?v=1.8.9';
-import { EnhancedAudioSystem } from './AudioSystem.js?v=1.8.9';
-import { ParticleSystem } from './ParticleSystem.js?v=1.8.9';
-import { ObjectPool } from './ObjectPool.js?v=1.8.9';
-import { Boss, createBoss } from './Boss.js?v=1.9.35';
-import { Cannon } from './Cannon.js?v=1.9.35';
-import { AchievementSystem } from './AchievementSystem.js?v=1.9.36';
-import { OneUpMushroom } from './OneUpMushroom.js?v=2.1.0';
-import { Checkpoint, generateCheckpoints } from './Checkpoint.js?v=2.1.0';
-import { LightingSystem } from './LightingSystem.js?v=2.2.0';
-import { WeatherSystem } from './WeatherSystem.js?v=2.3.0';
-import { Camera } from './Camera.js?v=2.3.0';
-import { BonusLevelGenerator } from './BonusLevelGenerator.js?v=2.5.0';
-import { Tutorial } from './Tutorial.js?v=2.6.0';
+import { Player } from './Player.js?v=2.8.0';
+import { Background, Biomes } from './Background.js?v=2.8.0';
+import { InputHandler } from './InputHandler.js?v=2.8.0';
+import { checkCollision, isEntityVisible } from './utils.js?v=2.8.0';
+import { LevelGenerator } from './LevelGenerator.js?v=2.8.0';
+import { CollisionSystem } from './CollisionSystem.js?v=2.8.0';
+import { EnemyManager } from './EnemyManager.js?v=2.8.0';
+import { Coin } from './Coin.js?v=2.8.0';
+import { QuestionBlock } from './QuestionBlock.js?v=2.8.0';
+import { Mushroom } from './Mushroom.js?v=2.8.0';
+import { Star } from './Star.js?v=2.8.0';
+import { FireFlower } from './FireFlower.js?v=2.8.0';
+import { Fireball } from './Fireball.js?v=2.8.0';
+import { MegaMushroom } from './MegaMushroom.js?v=2.8.0';
+import { Pipe } from './Pipe.js?v=2.8.0';
+import { Magnet } from './Magnet.js?v=2.8.0';
+import { Lava } from './Lava.js?v=2.8.0';
+import { EnhancedAudioSystem } from './AudioSystem.js?v=2.8.0';
+import { ParticleSystem } from './ParticleSystem.js?v=2.8.0';
+import { ObjectPool } from './ObjectPool.js?v=2.8.0';
+import { Boss, createBoss } from './Boss.js?v=2.8.0';
+import { Cannon } from './Cannon.js?v=2.8.0';
+import { AchievementSystem } from './AchievementSystem.js?v=2.8.0';
+import { OneUpMushroom } from './OneUpMushroom.js?v=2.8.0';
+import { Checkpoint, generateCheckpoints } from './Checkpoint.js?v=2.8.0';
+import { LightingSystem } from './LightingSystem.js?v=2.8.0';
+import { WeatherSystem } from './WeatherSystem.js?v=2.8.0';
+import { Camera } from './Camera.js?v=2.8.0';
+import { BonusLevelGenerator } from './BonusLevelGenerator.js?v=2.8.0';
+import { Tutorial } from './Tutorial.js?v=2.8.0';
+import { CONFIG } from './Config.js?v=2.8.0';
+import { UIManager } from './UIManager.js?v=2.8.0';
+import { TransitionManager } from './TransitionManager.js?v=2.8.0';
 
 export class Game {
     constructor(canvas, uiElements, assetLoader) {
@@ -138,6 +141,10 @@ export class Game {
         this.canvas.addEventListener('touchstart', this.handleCanvasClick, { passive: false });
 
         this.achievementSystem = new AchievementSystem(this);
+
+        // Phase 3 Systems
+        this.uiManager = new UIManager(this);
+        this.transitionManager = new TransitionManager(this);
 
         this.start();
         this.startBGM();
@@ -816,69 +823,22 @@ export class Game {
 
         if (this.bossBattleActive && this.boss) {
             this.boss.draw(this.ctx, this.camera);
-            if (this.boss.alive) {
-                this.ctx.save();
-                const barWidth = 300;
-                const barHeight = 25;
-                const barX = this.width / 2 - barWidth / 2;
-                const barY = 50;
-                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-                this.ctx.fillRect(barX + 4, barY + 4, barWidth, barHeight);
-                this.ctx.strokeStyle = '#FFF';
-                this.ctx.lineWidth = 3;
-                this.ctx.strokeRect(barX, barY, barWidth, barHeight);
-                this.ctx.fillStyle = '#333';
-                this.ctx.fillRect(barX, barY, barWidth, barHeight);
-                const hpPercent = this.boss.hp / this.boss.maxHp;
-                const gradient = this.ctx.createLinearGradient(barX, 0, barX + barWidth, 0);
-                gradient.addColorStop(0, '#FF4500');
-                gradient.addColorStop(1, '#FF0000');
-                this.ctx.fillStyle = gradient;
-                this.ctx.fillRect(barX, barY, barWidth * hpPercent, barHeight);
-                this.ctx.fillStyle = '#FFF';
-                this.ctx.font = 'bold 20px "Arial Black", Gadget, sans-serif';
-                this.ctx.textAlign = 'center';
-                this.ctx.shadowColor = 'black';
-                this.ctx.shadowBlur = 4;
-                this.ctx.fillText('☠️ BOSS ☠️', this.width / 2, barY - 10);
-                this.ctx.shadowBlur = 0;
-                this.ctx.restore();
-            }
+            // Boss health bar is now drawn by UIManager
         }
 
         if (this.player && !isAnimatingPipe) {
             this.player.draw(this.ctx, this.camera);
         }
 
-        this.scorePopups.forEach(popup => {
-            if (popup.x > this.camera.x - 50 && popup.x < this.camera.x + this.width + 50) {
-                const screenX = popup.x - this.camera.x;
-                const alpha = popup.life / 60;
-                this.ctx.save();
-                this.ctx.globalAlpha = alpha;
-                if (popup.isCritical) {
-                    this.ctx.font = 'bold 40px "Arial Black", sans-serif';
-                    this.ctx.fillStyle = '#FFD700';
-                    this.ctx.strokeStyle = '#FF4500';
-                    this.ctx.lineWidth = 4;
-                    const shakeX = (Math.random() - 0.5) * 4;
-                    const shakeY = (Math.random() - 0.5) * 4;
-                    this.ctx.translate(shakeX, shakeY);
-                    this.ctx.textAlign = 'center';
-                    this.ctx.strokeText(`+${popup.value}`, screenX, popup.y);
-                    this.ctx.fillText(`+${popup.value}`, screenX, popup.y);
-                } else {
-                    this.ctx.font = 'bold 20px Arial';
-                    this.ctx.fillStyle = '#FFD700';
-                    this.ctx.strokeStyle = '#000';
-                    this.ctx.lineWidth = 3;
-                    this.ctx.textAlign = 'center';
-                    this.ctx.strokeText(`+${popup.value}`, screenX, popup.y);
-                    this.ctx.fillText(`+${popup.value}`, screenX, popup.y);
-                }
-                this.ctx.restore();
+        // Score popups are now drawn by UIManager
+        // Update popup positions and lifetimes
+        for (let i = this.scorePopups.length - 1; i >= 0; i--) {
+            this.scorePopups[i].y += this.scorePopups[i].velocity;
+            this.scorePopups[i].life--;
+            if (this.scorePopups[i].life <= 0) {
+                this.scorePopups.splice(i, 1);
             }
-        });
+        }
 
         this.mushrooms.forEach(mushroom => {
             if (isEntityVisible(mushroom, this.camera, this.width, this.height)) {
@@ -910,20 +870,6 @@ export class Game {
 
         this.particleSystem.draw(this.ctx, this.camera);
 
-        if (this.isNewHighScore && this.gameRunning) {
-            this.ctx.save();
-            this.ctx.font = 'bold 18px Arial';
-            this.ctx.fillStyle = '#FFD700';
-            this.ctx.strokeStyle = '#000';
-            this.ctx.lineWidth = 2;
-            this.ctx.textAlign = 'center';
-            const pulse = Math.sin(Date.now() / 200) * 0.2 + 0.8;
-            this.ctx.globalAlpha = pulse;
-            this.ctx.strokeText('🎉 新紀錄！', this.width / 2, 100);
-            this.ctx.fillText('🎉 新紀錄！', this.width / 2, 100);
-            this.ctx.restore();
-        }
-
         // Draw achievement notifications (always on top)
         this.achievementSystem.update();
         this.achievementSystem.draw(this.ctx, this.width);
@@ -932,20 +878,16 @@ export class Game {
         this.weatherSystem.update();
         this.weatherSystem.draw(this.ctx, this.camera);
 
-        // Draw Lives UI
-        this.ctx.font = 'bold 18px Arial';
-        this.ctx.textAlign = 'left';
-        this.ctx.fillStyle = '#FFF';
-        this.ctx.strokeStyle = '#000';
-        this.ctx.lineWidth = 3;
-        const livesText = `❤️ × ${this.lives}`;
-        this.ctx.strokeText(livesText, 15, 30);
-        this.ctx.fillText(livesText, 15, 30);
+        // Draw UI elements via UIManager (Phase 3)
+        this.uiManager.draw();
 
         // Draw Tutorial Overlay (on top of everything)
         if (this.tutorial && !this.tutorial.isCompleted()) {
             this.tutorial.draw(this.ctx, this.width, this.height);
         }
+
+        // Draw scene transition overlay (topmost layer)
+        this.transitionManager.draw();
 
         this.ctx.restore();
     }

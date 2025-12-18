@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mario-game-v2.7.0-lives-fix';
+const CACHE_NAME = 'mario-game-v2.8.0-modularization';
 const urlsToCache = [
     './',
     './index.html',
@@ -38,6 +38,10 @@ const urlsToCache = [
     './js/WeatherSystem.js',
     './js/Camera.js',
     './js/BonusLevelGenerator.js',
+    './js/Tutorial.js',
+    './js/Config.js',
+    './js/UIManager.js',
+    './js/TransitionManager.js',
     './assets/player.png',
     './assets/enemy.png',
     './assets/tiles.png',
