@@ -74,6 +74,9 @@ export class CollisionSystem {
     }
 
     handleEnemyCollisions() {
+        // Skip if player is already dead or in death sequence
+        if (this.game.player.isDead || this.game.isProcessingDeath) return;
+
         for (let i = this.game.enemies.length - 1; i >= 0; i--) {
             const enemy = this.game.enemies[i];
 
@@ -120,6 +123,7 @@ export class CollisionSystem {
                     } else if (result === 'dead') {
                         this.game.triggerDeathEffect();
                         this.game.gameOver();
+                        return; // Stop processing after death
                     } else if (result === 'shrink') {
                         this.game.triggerScreenShake(5);
                         this.game.triggerFreeze(20);

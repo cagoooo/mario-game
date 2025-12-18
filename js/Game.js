@@ -1,36 +1,36 @@
-import { Player } from './Player.js?v=2.8.0';
-import { Background, Biomes } from './Background.js?v=2.8.0';
-import { InputHandler } from './InputHandler.js?v=2.8.0';
-import { checkCollision, isEntityVisible } from './utils.js?v=2.8.0';
-import { LevelGenerator } from './LevelGenerator.js?v=2.8.0';
-import { CollisionSystem } from './CollisionSystem.js?v=2.8.0';
-import { EnemyManager } from './EnemyManager.js?v=2.8.0';
-import { Coin } from './Coin.js?v=2.8.0';
-import { QuestionBlock } from './QuestionBlock.js?v=2.8.0';
-import { Mushroom } from './Mushroom.js?v=2.8.0';
-import { Star } from './Star.js?v=2.8.0';
-import { FireFlower } from './FireFlower.js?v=2.8.0';
-import { Fireball } from './Fireball.js?v=2.8.0';
-import { MegaMushroom } from './MegaMushroom.js?v=2.8.0';
-import { Pipe } from './Pipe.js?v=2.8.0';
-import { Magnet } from './Magnet.js?v=2.8.0';
-import { Lava } from './Lava.js?v=2.8.0';
-import { EnhancedAudioSystem } from './AudioSystem.js?v=2.8.0';
-import { ParticleSystem } from './ParticleSystem.js?v=2.8.0';
-import { ObjectPool } from './ObjectPool.js?v=2.8.0';
-import { Boss, createBoss } from './Boss.js?v=2.8.0';
-import { Cannon } from './Cannon.js?v=2.8.0';
-import { AchievementSystem } from './AchievementSystem.js?v=2.8.0';
-import { OneUpMushroom } from './OneUpMushroom.js?v=2.8.0';
-import { Checkpoint, generateCheckpoints } from './Checkpoint.js?v=2.8.0';
-import { LightingSystem } from './LightingSystem.js?v=2.8.0';
-import { WeatherSystem } from './WeatherSystem.js?v=2.8.0';
-import { Camera } from './Camera.js?v=2.8.0';
-import { BonusLevelGenerator } from './BonusLevelGenerator.js?v=2.8.0';
-import { Tutorial } from './Tutorial.js?v=2.8.0';
-import { CONFIG } from './Config.js?v=2.8.0';
-import { UIManager } from './UIManager.js?v=2.8.0';
-import { TransitionManager } from './TransitionManager.js?v=2.8.0';
+import { Player } from './Player.js?v=2.10.4';
+import { Background, Biomes } from './Background.js?v=2.10.4';
+import { InputHandler } from './InputHandler.js?v=2.10.4';
+import { checkCollision, isEntityVisible } from './utils.js?v=2.10.4';
+import { LevelGenerator } from './LevelGenerator.js?v=2.10.4';
+import { CollisionSystem } from './CollisionSystem.js?v=2.10.4';
+import { EnemyManager } from './EnemyManager.js?v=2.10.4';
+import { Coin } from './Coin.js?v=2.10.4';
+import { QuestionBlock } from './QuestionBlock.js?v=2.10.4';
+import { Mushroom } from './Mushroom.js?v=2.10.4';
+import { Star } from './Star.js?v=2.10.4';
+import { FireFlower } from './FireFlower.js?v=2.10.4';
+import { Fireball } from './Fireball.js?v=2.10.4';
+import { MegaMushroom } from './MegaMushroom.js?v=2.10.4';
+import { Pipe } from './Pipe.js?v=2.10.4';
+import { Magnet } from './Magnet.js?v=2.10.4';
+import { Lava } from './Lava.js?v=2.10.4';
+import { EnhancedAudioSystem } from './AudioSystem.js?v=2.10.4';
+import { ParticleSystem } from './ParticleSystem.js?v=2.10.4';
+import { ObjectPool } from './ObjectPool.js?v=2.10.4';
+import { Boss, createBoss } from './Boss.js?v=2.10.4';
+import { Cannon } from './Cannon.js?v=2.10.4';
+import { AchievementSystem } from './AchievementSystem.js?v=2.10.4';
+import { OneUpMushroom } from './OneUpMushroom.js?v=2.10.4';
+import { Checkpoint, generateCheckpoints } from './Checkpoint.js?v=2.10.4';
+import { LightingSystem } from './LightingSystem.js?v=2.10.4';
+import { WeatherSystem } from './WeatherSystem.js?v=2.10.4';
+import { Camera } from './Camera.js?v=2.10.4';
+import { BonusLevelGenerator } from './BonusLevelGenerator.js?v=2.10.4';
+import { Tutorial } from './Tutorial.js?v=2.10.4';
+import { CONFIG } from './Config.js?v=2.10.4';
+import { UIManager } from './UIManager.js?v=2.10.4';
+import { TransitionManager } from './TransitionManager.js?v=2.10.4';
 
 export class Game {
     constructor(canvas, uiElements, assetLoader) {
@@ -159,6 +159,7 @@ export class Game {
         this.gameRunning = true;
         this.initGame();
         this.isGameOverSequence = false;
+        this.isProcessingDeath = false; // Reset death flag for new game
         this.isNewHighScore = false;
         this.isPaused = false;
         this.score = 0;
@@ -299,7 +300,8 @@ export class Game {
             this.tutorial.update();
         }
 
-        if (this.gameState === 'OVERWORLD' && !this.player.isEnteringPipe && !this.player.isExitingPipe) {
+        // Prevent bonus level entry during boss battle or death
+        if (this.gameState === 'OVERWORLD' && !this.bossBattleActive && !this.player.isEnteringPipe && !this.player.isExitingPipe && !this.player.isDead && !this.isProcessingDeath) {
             if (this.player.grounded && (this.input.keys['ArrowDown'] || this.input.keys['KeyS'])) {
                 const pipe = this.pipes.find(p => p.playerOnTop && p.type === 'ENTRANCE' && !p.used);
                 if (pipe) {
@@ -458,7 +460,7 @@ export class Game {
 
         // Update Cannons
         this.cannons.forEach(cannon => {
-            cannon.update(this.player, this.width + this.camera.x);
+            cannon.update(this.player, this.width, this.camera.x);
         });
 
         // Check HammerBro hammer collisions and BulletBill collisions
@@ -558,6 +560,15 @@ export class Game {
 
     updateBossBattle() {
         if (!this.boss) return;
+
+        // If player is dead or in death sequence, don't update boss battle normally
+        // But DO NOT lock the camera - allow respawn to work
+        if (this.player.isDead || this.isGameOverSequence || this.isProcessingDeath) {
+            // Still update boss for visual continuity, but don't lock camera
+            this.boss.update(this.player, this.platforms, this.width);
+            return;
+        }
+
         this.boss.update(this.player, this.platforms, this.width);
         if (!this.boss.alive && this.boss.y > this.height + 200) {
             this.bossBattleActive = false;
@@ -576,6 +587,10 @@ export class Game {
 
     checkBossCollisions() {
         if (!this.boss || !this.boss.alive || this.boss.state === 'DIE') return;
+
+        // Stop all boss interactions if player is dead
+        if (this.player.isDead || this.isGameOverSequence || this.isProcessingDeath) return;
+
         if (checkCollision(this.player, this.boss)) {
             const hitFromAbove = this.player.velY > 0 &&
                 this.player.y + this.player.height < this.boss.y + this.boss.height / 2;
@@ -601,10 +616,24 @@ export class Game {
                         }
                     }
                 } else if (!this.player.invincible && !this.boss.isInvincible) {
-                    this.player.takeDamage();
+                    // Use player.hit() and properly handle death
+                    const result = this.player.hit();
+                    if (result === 'dead') {
+                        this.triggerDeathEffect();
+                        this.gameOver();
+                        return; // Stop processing
+                    } else if (result === 'shrink') {
+                        this.triggerScreenShake(5);
+                        this.triggerFreeze(20);
+                        this.playSound('shrink');
+                    }
                 }
             }
         }
+
+        // Also stop fireball damage if player is dead
+        if (this.player.isDead) return;
+
         for (let i = this.fireballs.length - 1; i >= 0; i--) {
             const fb = this.fireballs[i];
             if (checkCollision(fb, this.boss)) {
@@ -612,6 +641,9 @@ export class Game {
                 this.fireballPool.release(fb);
                 this.fireballs.splice(i, 1);
                 this.addParticles(fb.x, fb.y, 5, '#FF4500');
+                if (!this.boss.alive) {
+                    this.handleBossDefeat();
+                }
             }
         }
     }
@@ -655,7 +687,7 @@ export class Game {
 
         // Check Cannon BulletBills
         for (const cannon of this.cannons) {
-            const bulletHitboxes = cannon.getBulletHitboxes();
+            const bulletHitboxes = cannon.getBulletHitboxes(this.camera.x, this.width);
             for (const hitbox of bulletHitboxes) {
                 if (checkCollision(this.player, hitbox)) {
                     // Mega Mario destroys bullets
@@ -770,10 +802,58 @@ export class Game {
             }
         });
 
-        // Draw Cannons
+        // Draw Cannons and their bullets
         this.cannons.forEach(cannon => {
+            // Always draw bullets regardless of cannon visibility
+            // This is because bullets can travel far from the cannon
+            cannon.bullets.forEach(bullet => {
+                if (bullet.alive) {
+                    bullet.draw(this.ctx, this.camera);
+                }
+            });
+
+            // Only draw cannon itself if visible
             if (isEntityVisible(cannon, this.camera, this.width, this.height)) {
-                cannon.draw(this.ctx, this.camera);
+                // Draw cannon (without bullets, since we already drew them)
+                this.ctx.save();
+                const drawX = cannon.x - this.camera.x + cannon.width / 2;
+                const drawY = cannon.y + cannon.height / 2;
+                this.ctx.translate(drawX, drawY);
+
+                if (cannon.firingAnimation > 0) {
+                    this.ctx.translate((Math.random() - 0.5) * 4, 0);
+                }
+
+                // Base
+                this.ctx.fillStyle = '#2d2d2d';
+                this.ctx.fillRect(-25, 10, 50, 25);
+
+                // Cannon body
+                this.ctx.fillStyle = '#1a1a1a';
+                this.ctx.beginPath();
+                this.ctx.ellipse(0, -5, 22, 18, 0, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                // Cannon opening
+                this.ctx.fillStyle = '#0a0a0a';
+                this.ctx.beginPath();
+                this.ctx.ellipse(0, -5, 14, 10, 0, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                // Skull
+                this.ctx.fillStyle = 'white';
+                this.ctx.beginPath();
+                this.ctx.arc(0, -5, 8, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                this.ctx.fillStyle = 'black';
+                this.ctx.beginPath();
+                this.ctx.arc(-3, -6, 2, 0, Math.PI * 2);
+                this.ctx.arc(3, -6, 2, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.fillRect(-4, -2, 8, 3);
+
+                this.ctx.restore();
             }
         });
 
@@ -1112,7 +1192,26 @@ export class Game {
         // If we have a checkpoint, use it. Otherwise respawn near where they were.
         let respawnX;
 
-        if (this.lastCheckpointX > 0) {
+        // If dying during boss battle, respawn before boss arena
+        if (this.bossBattleActive || this.gameState === 'BOSS_BATTLE') {
+            // Reset boss battle state so player can retry
+            this.bossBattleActive = false;
+            this.boss = null;
+            this.gameState = 'OVERWORLD';
+            this.renderDistance = 2000; // Restore normal render distance
+
+            // Respawn before the boss arena
+            if (this.bossArenaStartX > 0) {
+                respawnX = Math.max(this.lastCheckpointX, this.bossArenaStartX - 500);
+            } else if (this.lastCheckpointX > 0) {
+                respawnX = this.lastCheckpointX;
+            } else {
+                respawnX = Math.max(50, this.camera.x - 200);
+            }
+
+            // Reset boss trigger distance so boss can spawn again
+            this.bossTriggerDistance = respawnX + 2000;
+        } else if (this.lastCheckpointX > 0) {
             respawnX = this.lastCheckpointX;
         } else {
             // Respawn a bit behind the death location but keep progress
@@ -1191,7 +1290,14 @@ export class Game {
     showGameOverScreen() {
         this.gameRunning = false;
         this.isGameOverSequence = false;
+        this.isProcessingDeath = false; // Reset death flag for new game
         this.stopBGM();
+
+        // Reset boss battle state completely
+        this.bossBattleActive = false;
+        this.boss = null;
+        this.gameState = 'OVERWORLD';
+        this.renderDistance = 2000;
 
         this.ui.gameOverOverlay.style.display = 'flex';
         this.ui.finalScore.textContent = `最終分數: ${this.score}`;

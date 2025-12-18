@@ -88,7 +88,7 @@ export class Cannon {
         this.firingAnimation = 0;
     }
 
-    update(player, canvasWidth) {
+    update(player, canvasWidth, cameraX = 0) {
         if (!this.active) return;
 
         // Only fire when player is within range
@@ -112,8 +112,14 @@ export class Cannon {
         for (let i = this.bullets.length - 1; i >= 0; i--) {
             const bullet = this.bullets[i];
             bullet.update();
-            // Remove if off screen
-            if (bullet.x < -100 || bullet.x > canvasWidth + 1000) {
+
+            // Increment lifetime and remove old bullets
+            if (bullet.lifetime === undefined) bullet.lifetime = 0;
+            bullet.lifetime++;
+
+            // Remove bullet if it has traveled too far (about 10 seconds at speed 4)
+            // This is more reliable than camera-based removal
+            if (bullet.lifetime > 600 || !bullet.alive) {
                 this.bullets.splice(i, 1);
             }
         }
@@ -195,7 +201,10 @@ export class Cannon {
         this.bullets.forEach(bullet => bullet.draw(ctx, camera));
     }
 
-    getBulletHitboxes() {
+    getBulletHitboxes(cameraX = 0, canvasWidth = 800) {
+        // Return hitboxes for ALL alive bullets
+        // The update() function handles removal of off-screen bullets
+        // We should NOT filter by screen position here, as that causes invisible bullet collisions
         return this.bullets.filter(b => b.alive).map(b => ({
             x: b.x,
             y: b.y,

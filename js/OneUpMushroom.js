@@ -1,22 +1,26 @@
 // 1UP Mushroom - Gives an extra life when collected
 export class OneUpMushroom {
-    constructor(x, y) {
+    constructor(x, y, groundY = 350) {
         this.x = x;
         this.y = y;
         this.width = 28;
         this.height = 28;
-        this.velX = 2;
+        this.velX = 1; // Slower horizontal speed (was 2)
         this.velY = 0;
         this.active = true;
         this.collected = false;
         this.spawning = true;
         this.spawnProgress = 0;
         this.originalY = y;
-        this.gravity = 0.5;
+        this.gravity = 0.4; // Slightly lower gravity
+        this.groundY = groundY; // Ground level to prevent falling off screen
     }
 
-    update(platforms, canvasWidth) {
+    update(platforms, canvasWidth, groundY = null) {
         if (!this.active) return;
+
+        // Use provided groundY or fallback
+        const effectiveGroundY = groundY || this.groundY;
 
         // Spawning animation (rise from block)
         if (this.spawning) {
@@ -33,8 +37,14 @@ export class OneUpMushroom {
         this.velY += this.gravity;
         this.y += this.velY;
 
-        // Horizontal movement
+        // Horizontal movement (slower)
         this.x += this.velX;
+
+        // Ground collision - prevent falling off screen
+        if (this.y + this.height > effectiveGroundY) {
+            this.y = effectiveGroundY - this.height;
+            this.velY = 0;
+        }
 
         // Platform collision
         let onPlatform = false;
@@ -48,7 +58,7 @@ export class OneUpMushroom {
                 onPlatform = true;
             }
 
-            // Side collision
+            // Side collision - bounce off platforms
             if (this.y + this.height > platform.y && this.y < platform.y + platform.height) {
                 if (this.x + this.width > platform.x && this.x < platform.x + 10) {
                     this.velX = -Math.abs(this.velX);
@@ -58,9 +68,14 @@ export class OneUpMushroom {
             }
         }
 
-        // Screen bounds
-        if (this.x < 0) this.velX = Math.abs(this.velX);
-        if (this.x + this.width > canvasWidth) this.velX = -Math.abs(this.velX);
+        // Screen bounds - bounce at edges instead of continuing off screen
+        if (this.x < 0) {
+            this.x = 0;
+            this.velX = Math.abs(this.velX);
+        }
+        if (this.x + this.width > canvasWidth * 10) { // Allow moving far right
+            this.velX = -Math.abs(this.velX);
+        }
     }
 
     draw(ctx, camera) {
