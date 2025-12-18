@@ -609,11 +609,31 @@ export class Player {
             ctx.restore();
         }
 
-        // Flashing effect when invincible
-        if (this.invincible) {
-            // Flash every 4 frames
-            if (Math.floor(this.flashTimer / 4) % 2 === 0) {
-                ctx.globalAlpha = 0.5;
+        // Enhanced Flashing effect when invincible
+        if (this.invincible && !this.starPower) {
+            // Faster flash rate for better visibility (every 3 frames instead of 4)
+            const flashRate = 3;
+            const flashPhase = Math.floor(this.flashTimer / flashRate) % 2;
+
+            if (flashPhase === 0) {
+                ctx.globalAlpha = 0.3; // More transparent for visibility
+            } else {
+                ctx.globalAlpha = 1.0;
+            }
+
+            // Add white outline glow effect
+            const screenX = this.x - camera.x + this.width / 2;
+            const screenY = this.y + this.height / 2;
+
+            if (flashPhase === 1) {
+                ctx.save();
+                ctx.translate(screenX, screenY);
+                ctx.strokeStyle = `rgba(255, 255, 255, ${0.5 + Math.sin(this.flashTimer * 0.3) * 0.3})`;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, this.width * 0.6, this.height * 0.5, 0, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
             }
         }
 
@@ -621,6 +641,16 @@ export class Player {
         const drawY = this.y + this.height; // Pivot at bottom
 
         ctx.translate(drawX, drawY);
+
+        // Death spin effect
+        if (this.isDead && this.deathSpinAngle) {
+            ctx.rotate(this.deathSpinAngle);
+            // Flash effect during death
+            if (this.deathFlashPhase === 1) {
+                ctx.globalAlpha = 0.5;
+            }
+        }
+
         // Apply powerScale to visual drawing as well
         ctx.scale(this.direction * this.scaleX * this.powerScale, this.scaleY * this.powerScale);
 

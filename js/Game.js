@@ -27,6 +27,7 @@ import { LightingSystem } from './LightingSystem.js?v=2.2.0';
 import { WeatherSystem } from './WeatherSystem.js?v=2.3.0';
 import { Camera } from './Camera.js?v=2.3.0';
 import { BonusLevelGenerator } from './BonusLevelGenerator.js?v=2.5.0';
+import { Tutorial } from './Tutorial.js?v=2.6.0';
 
 export class Game {
     constructor(canvas, uiElements, assetLoader) {
@@ -201,6 +202,10 @@ export class Game {
     initGame() {
         this.player = new Player(this, 50, this.GROUND_Y, this.images.player);
         this.player.setGroundY(this.GROUND_Y);
+
+        // Initialize Tutorial System
+        this.tutorial = new Tutorial(this);
+
         this.platforms = [];
         this.enemyManager.reset();
         if (this.coins) this.coins.forEach(c => this.coinPool.release(c));
@@ -280,6 +285,11 @@ export class Game {
 
     update() {
         if (!this.gameRunning || !this.player) return;
+
+        // Update Tutorial System
+        if (this.tutorial && !this.tutorial.isCompleted()) {
+            this.tutorial.update();
+        }
 
         if (this.gameState === 'OVERWORLD' && !this.player.isEnteringPipe && !this.player.isExitingPipe) {
             if (this.player.grounded && (this.input.keys['ArrowDown'] || this.input.keys['KeyS'])) {
@@ -932,6 +942,11 @@ export class Game {
         this.ctx.strokeText(livesText, 15, 30);
         this.ctx.fillText(livesText, 15, 30);
 
+        // Draw Tutorial Overlay (on top of everything)
+        if (this.tutorial && !this.tutorial.isCompleted()) {
+            this.tutorial.draw(this.ctx, this.width, this.height);
+        }
+
         this.ctx.restore();
     }
 
@@ -1278,6 +1293,12 @@ export class Game {
     }
 
     handleCanvasClick(e) {
+        // Skip tutorial on click
+        if (this.tutorial && !this.tutorial.isCompleted()) {
+            this.tutorial.skip();
+            return;
+        }
+
         if (!this.gameRunning || this.isPaused) return;
         if (this.gameState !== 'OVERWORLD' && this.gameState !== 'BONUS') return;
 
@@ -1358,7 +1379,20 @@ export class Game {
     }
 
     getDifficultyMultiplier() {
-        const multiplier = 1 + (this.score / 500) * 0.1;
+        // Gradual difficulty curve - starts easier, increases over time
+        // Based on both score and distance traveled
+
+        // Distance-based difficulty (main factor)
+        const playerDistance = this.player ? this.player.x : 0;
+        const distanceFactor = Math.min(1.0, playerDistance / 5000); // 0 to 1 over first 5000 pixels
+
+        // Score-based difficulty (secondary factor)
+        const scoreFactor = Math.min(0.5, this.score / 2000); // 0 to 0.5 based on score
+
+        // Combine: starts at 0.5 (easy), max 2.5 (hard)
+        const baseDifficulty = 0.5;
+        const multiplier = baseDifficulty + (distanceFactor * 1.5) + scoreFactor;
+
         return Math.min(2.5, multiplier);
     }
 

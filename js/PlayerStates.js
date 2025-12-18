@@ -165,13 +165,32 @@ export class Falling extends State {
 export class Dead extends State {
     constructor(player) {
         super(states.DEAD, player);
+        this.spinAngle = 0;
+        this.spinSpeed = 0.3;
+        this.deathFlashTimer = 0;
     }
 
     enter() {
         this.player.isDead = true;
         this.player.velX = 0;
-        this.player.velY = -12; // Death hop
+        this.player.velY = -15; // Higher death hop for drama
+        this.spinAngle = 0;
+        this.deathFlashTimer = 0;
         this.player.game.playSound('death');
+
+        // Death particle burst
+        if (this.player.game && this.player.game.addParticles) {
+            this.player.game.addParticles(
+                this.player.x + this.player.width / 2,
+                this.player.y + this.player.height / 2,
+                15, '#FF4444'
+            );
+            this.player.game.addParticles(
+                this.player.x + this.player.width / 2,
+                this.player.y + this.player.height / 2,
+                10, '#FFFFFF'
+            );
+        }
     }
 
     handleInput(input) {
@@ -182,6 +201,14 @@ export class Dead extends State {
         // Physics for death hop
         this.player.velY += this.player.GRAVITY;
         this.player.y += this.player.velY;
+
+        // Spin animation
+        this.spinAngle += this.spinSpeed;
+        this.player.deathSpinAngle = this.spinAngle;
+
+        // Death flash timer
+        this.deathFlashTimer++;
+        this.player.deathFlashPhase = Math.floor(this.deathFlashTimer / 4) % 2;
     }
 }
 

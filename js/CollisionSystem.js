@@ -218,7 +218,10 @@ export class CollisionSystem {
 
                 this.game.score += 10;
                 this.game.addScorePopup(coin.x, coin.y, 10);
-                this.game.addParticles(coin.x + 10, coin.y + 12, 5, '#FFD700', 'sparkle');
+
+                // Enhanced coin collection burst effect
+                this.game.addParticles(coin.x + 10, coin.y + 12, 10, '#FFD700', 'sparkle'); // Gold burst
+                this.game.addParticles(coin.x + 10, coin.y + 12, 6, '#FFFFFF', 'sparkle');  // White flash
                 this.game.updateScore();
                 this.game.playSound('coin');
                 this.game.achievementSystem.trackCoinCollect();
