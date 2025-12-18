@@ -108,7 +108,7 @@ export class Game {
         this.bossArenaStartX = 0;
 
         // Life System
-        this.lives = 1;
+        this.lives = 3;
         this.maxLives = 99;
         this.lastCheckpointX = 0;
         this.checkpoints = [];
@@ -218,7 +218,7 @@ export class Game {
         this.cannons = [];
         this.oneUpMushrooms = [];
         this.checkpoints = [];
-        this.lives = 1;
+        this.lives = 3;
         this.lastCheckpointX = 0;
         const biomeKeys = Object.keys(Biomes);
         this.currentBiome = biomeKeys[Math.floor(Math.random() * biomeKeys.length)];

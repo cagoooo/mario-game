@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mario-game-v2.5.1';
+const CACHE_NAME = 'mario-game-v2.5.2';
 const urlsToCache = [
     './',
     './index.html',
