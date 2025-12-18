@@ -77,38 +77,18 @@
   </div>
 
   <!-- Touch Controls -->
-  <div id="controlButtons">
-    <div id="leftButton" class="controlButton">◀</div>
-    <div id="jumpButton" class="controlButton">↑</div>
-    <div id="rightButton" class="controlButton">▶</div>
-  </div>
-
-  <script type="module" src="js/main.js?v=2.7.0"></script>
-  <script>
-    // Unregister Service Worker to prevent caching issues during development/debugging
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function (registrations) {
-        for (let registration of registrations) {
-          registration.unregister();
-          console.log('Service Worker unregistered');
-        }
-      });
-    }
-
-    window.onerror = function (message, source, lineno, colno, error) {
-      const errorDiv = document.createElement('div');
-      errorDiv.style.position = 'fixed';
-      errorDiv.style.top = '0';
-      errorDiv.style.left = '0';
-      errorDiv.style.width = '100%';
-      errorDiv.style.backgroundColor = 'red';
-      errorDiv.style.color = 'white';
-      errorDiv.style.padding = '10px';
-      errorDiv.style.zIndex = '9999';
-      errorDiv.textContent = `Error: ${message} at ${source}:${lineno}:${colno}`;
-      document.body.appendChild(errorDiv);
-      console.error(error);
-    };
+  errorDiv.style.position = 'fixed';
+  errorDiv.style.top = '0';
+  errorDiv.style.left = '0';
+  errorDiv.style.width = '100%';
+  errorDiv.style.backgroundColor = 'red';
+  errorDiv.style.color = 'white';
+  errorDiv.style.padding = '10px';
+  errorDiv.style.zIndex = '9999';
+  errorDiv.textContent = `Error: ${message} at ${source}:${lineno}:${colno}`;
+  document.body.appendChild(errorDiv);
+  console.error(error);
+  };
   </script>
 </body>
 

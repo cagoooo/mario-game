@@ -80,6 +80,18 @@ export class Player {
         this.isMega = false;
         this.megaTimer = 0;
 
+        // Time Freeze Power
+        this.isTimeFrozen = false;
+        this.timeFreezeTimer = 0;
+
+        // Invisibility Power
+        this.isInvisible = false;
+        this.invisibleTimer = 0;
+
+        // Magnet Upgrade (enhanced range)
+        this.magnetUpgraded = false;
+        this.magnetUpgradeTimer = 0;
+
         // Dust particles for landing and running
         this.dustParticles = [];
         this.justLanded = false;
@@ -239,6 +251,34 @@ export class Player {
                 this.height = this.baseHeight * this.powerScale;
                 this.y += (oldHeight - this.height); // Keep feet on ground
 
+                if (this.game) this.game.playSound('powerdown');
+            }
+        }
+
+        // Update Time Freeze Power
+        if (this.isTimeFrozen) {
+            this.timeFreezeTimer--;
+            if (this.timeFreezeTimer <= 0) {
+                this.isTimeFrozen = false;
+                if (this.game) this.game.playSound('powerdown');
+            }
+        }
+
+        // Update Invisibility Power
+        if (this.isInvisible) {
+            this.invisibleTimer--;
+            if (this.invisibleTimer <= 0) {
+                this.isInvisible = false;
+                this.invincible = false;
+                if (this.game) this.game.playSound('powerdown');
+            }
+        }
+
+        // Update Magnet Upgrade
+        if (this.magnetUpgraded) {
+            this.magnetUpgradeTimer--;
+            if (this.magnetUpgradeTimer <= 0) {
+                this.magnetUpgraded = false;
                 if (this.game) this.game.playSound('powerdown');
             }
         }

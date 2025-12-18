@@ -48,6 +48,12 @@ export class QuestionBlock {
             return { type: 'mega_mushroom' };
         } else if (this.content === 'oneup') {
             return { type: 'oneup' };
+        } else if (this.content === 'time_freeze') {
+            return { type: 'time_freeze' };
+        } else if (this.content === 'invisibility_cloak') {
+            return { type: 'invisibility_cloak' };
+        } else if (this.content === 'magnet_upgrade') {
+            return { type: 'magnet_upgrade' };
         }
 
         return null;
@@ -167,12 +173,15 @@ export function generateQuestionBlocks(startX, endX, groundY) {
             let content = 'coin';
 
             if (rand < 0.05) content = 'oneup';         // 5% - 1UP
-            else if (rand < 0.12) content = 'star';        // 7%
-            else if (rand < 0.25) content = 'fireflower'; // 13%
-            else if (rand < 0.48) content = 'mushroom';   // 23%
-            else if (rand < 0.60) content = 'magnet';     // 12%
-            else if (rand < 0.70) content = 'mega_mushroom'; // 10%
-            // else coin (30%)
+            else if (rand < 0.10) content = 'star';        // 5%
+            else if (rand < 0.20) content = 'fireflower'; // 10%
+            else if (rand < 0.35) content = 'mushroom';   // 15%
+            else if (rand < 0.45) content = 'magnet';     // 10%
+            else if (rand < 0.52) content = 'mega_mushroom'; // 7%
+            else if (rand < 0.59) content = 'time_freeze'; // 7%
+            else if (rand < 0.66) content = 'invisibility_cloak'; // 7%
+            else if (rand < 0.73) content = 'magnet_upgrade'; // 7%
+            // else coin (27%)
 
             blocks.push(new QuestionBlock(x + Math.random() * 100, blockY, content));
         }
