@@ -22,7 +22,7 @@ body {
     width: 100%;
     height: auto;
     max-width: 100vw;
-    max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    max-height: 100svh;
     /* Dynamic viewport height for iOS */
 
     /* Centering & Object Fit */
@@ -664,18 +664,31 @@ body {
         font-size: 14px;
     }
 }
+
 /* ========== iOS Safari Landscape Fix ========== */
+/* Use svh (smallest viewport height) which accounts for browser UI */
 @media (pointer: coarse) and (orientation: landscape) {
     body {
-        padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+        /* Remove padding that might cause issues */
+        padding: 0;
+        margin: 0;
+        /* Use flex to center game area properly */
+        min-height: 100svh;
+        min-height: -webkit-fill-available;
     }
 
     #gameArea {
-        max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 10px);
-        margin-bottom: env(safe-area-inset-bottom, 5px);
+        /* Use svh which is the smallest possible viewport (accounts for all browser chrome) */
+        max-height: 85svh;
+        max-height: min(85svh, calc(100svh - 60px));
+        /* Fallback for browsers that don't support svh */
+        max-height: calc(100vh - 80px);
+        width: auto;
+        /* Let width be calculated from height via aspect-ratio */
     }
 
     #gameUI {
-        top: max(5px, env(safe-area-inset-top, 5px));
+        top: 5px;
+        padding-top: 5px;
     }
 }
