@@ -1,8 +1,8 @@
-import { Game } from './Game.js?v=2.12.0';
-import { AssetLoader } from './AssetLoader.js?v=2.12.0';
+import { Game } from './Game.js?v=2.12.1';
+import { AssetLoader } from './AssetLoader.js?v=2.12.1';
 
 window.onload = async function () {
-    console.log('%c Game Version: 2.12.0 (Freeze Sound & Achievement UI) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 2.12.1 (Iceball Sound & Biome BGM) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements

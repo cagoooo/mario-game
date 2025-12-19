@@ -195,6 +195,16 @@ export class EnhancedAudioSystem {
                 decay: 0.05
             },
 
+            // 冰球發射音效 - 高音清脆
+            iceball: {
+                type: 'sine',
+                frequencies: [1200, 1600, 1000, 800],
+                durations: [0.04, 0.05, 0.06, 0.08],
+                volumes: [0.2, 0.22, 0.18, 0.12],
+                attack: 0.01,
+                decay: 0.03
+            },
+
             // 死亡音效
             death: {
                 type: 'square',

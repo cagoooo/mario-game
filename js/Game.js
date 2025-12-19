@@ -326,7 +326,7 @@ export class Game {
         const y = this.player.y + 10;
         const iceball = this.iceballPool.get(x, y, this.player.direction);
         this.iceballs.push(iceball);
-        this.playSound('fireball'); // Reuse sound for now
+        this.playSound('iceball'); // Dedicated ice sound
     }
 
     update() {
