@@ -20,6 +20,7 @@ export class UIManager {
     draw() {
         this.drawLivesUI();
         this.drawCoinCounter();
+        this.drawAchievementBadges();
         this.drawScorePopups();
 
         if (this.game.bossBattleActive && this.game.boss?.alive) {
@@ -28,6 +29,52 @@ export class UIManager {
 
         if (this.game.isNewHighScore && this.game.gameRunning) {
             this.drawNewHighScoreIndicator();
+        }
+    }
+
+    /**
+     * Draw achievement badges in top-right corner
+     */
+    drawAchievementBadges() {
+        if (!this.game.achievementSystem) return;
+
+        const unlocked = this.game.achievementSystem.getUnlockedCount();
+        const total = this.game.achievementSystem.getTotalCount();
+        const achievements = this.game.achievementSystem.getAllAchievements();
+
+        const x = this.game.width - 15;
+        const y = 25;
+
+        // Badge count
+        this.ctx.font = 'bold 12px Arial';
+        this.ctx.textAlign = 'right';
+        this.ctx.fillStyle = '#FFD700';
+        this.ctx.strokeStyle = '#000';
+        this.ctx.lineWidth = 2;
+
+        const countText = `🏅 ${unlocked}/${total}`;
+        this.ctx.strokeText(countText, x, y);
+        this.ctx.fillText(countText, x, y);
+
+        // Display unlocked achievement icons (max 5 visible)
+        const unlockedAchievements = achievements.filter(a => a.unlocked);
+        const displayCount = Math.min(unlockedAchievements.length, 5);
+
+        if (displayCount > 0) {
+            this.ctx.font = '16px Arial';
+            let iconX = x;
+
+            for (let i = 0; i < displayCount; i++) {
+                const achievement = unlockedAchievements[unlockedAchievements.length - 1 - i];
+                this.ctx.fillText(achievement.icon, iconX - (i * 22), y + 22);
+            }
+
+            // Show +N if more achievements
+            if (unlockedAchievements.length > 5) {
+                this.ctx.font = 'bold 10px Arial';
+                this.ctx.fillStyle = '#FFF';
+                this.ctx.fillText(`+${unlockedAchievements.length - 5}`, iconX - (5 * 22), y + 22);
+            }
         }
     }
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mario-game-v2.12.1-iceballsound';
+const CACHE_NAME = 'mario-game-v2.13.0-badges';
 const urlsToCache = [
     './',
     './index.html',
