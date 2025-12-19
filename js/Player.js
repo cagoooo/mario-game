@@ -540,7 +540,7 @@ export class Player {
         this.starTimer = this.starDuration;
         this.invincible = true; // Also invincible to damage
         this.invincibleTime = this.starDuration;
-        this.maxSpeed = 6; // Speed boost!
+        this.maxSpeed = 7.5; // Major speed boost! (normal=3.5, sprint=5.5)
     }
 
     getMagnetPower() {

@@ -642,24 +642,39 @@ export class EnhancedAudioSystem {
                 ]
             },
 
-            // 星星模式 - 更快更興奮
+            // 星星模式 - 超興奮！更快更華麗
             star: {
-                tempo: 180,
+                tempo: 200, // Even faster!
                 melody: [
-                    { note: 1047, duration: 0.1 }, // C6
-                    { note: 1175, duration: 0.1 }, // D6
-                    { note: 1319, duration: 0.1 }, // E6
-                    { note: 1397, duration: 0.1 }, // F6
-                    { note: 1568, duration: 0.1 }, // G6
-                    { note: 1760, duration: 0.1 }, // A6
-                    { note: 1976, duration: 0.1 }, // B6
-                    { note: 2093, duration: 0.2 }, // C7
+                    // Exciting ascending arpeggio
+                    { note: 784, duration: 0.08 },  // G5
+                    { note: 988, duration: 0.08 },  // B5
+                    { note: 1175, duration: 0.08 }, // D6
+                    { note: 1568, duration: 0.12 }, // G6
+                    { note: 1760, duration: 0.08 }, // A6
+                    { note: 1976, duration: 0.08 }, // B6
+                    { note: 2093, duration: 0.15 }, // C7
+                    // Descending sparkle
+                    { note: 1976, duration: 0.08 }, // B6
+                    { note: 1760, duration: 0.08 }, // A6
+                    { note: 1568, duration: 0.08 }, // G6
+                    { note: 1397, duration: 0.08 }, // F6
+                    { note: 1319, duration: 0.15 }, // E6
+                    // Power notes
+                    { note: 1568, duration: 0.1 },  // G6
+                    { note: 2093, duration: 0.1 },  // C7
+                    { note: 1568, duration: 0.1 },  // G6
+                    { note: 2093, duration: 0.2 },  // C7
                 ],
                 bass: [
-                    { note: 262, duration: 0.2 }, // C4
-                    { note: 330, duration: 0.2 }, // E4
-                    { note: 392, duration: 0.2 }, // G4
-                    { note: 523, duration: 0.2 }, // C5
+                    { note: 262, duration: 0.15 }, // C4
+                    { note: 330, duration: 0.15 }, // E4
+                    { note: 392, duration: 0.15 }, // G4
+                    { note: 523, duration: 0.15 }, // C5
+                    { note: 392, duration: 0.15 }, // G4
+                    { note: 330, duration: 0.15 }, // E4
+                    { note: 262, duration: 0.15 }, // C4
+                    { note: 196, duration: 0.15 }, // G3
                 ]
             },
 
