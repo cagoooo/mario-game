@@ -1,12 +1,13 @@
-import { checkCollision } from './utils.js?v=2.11.0';
-import { Mushroom } from './Mushroom.js?v=2.11.0';
-import { Star } from './Star.js?v=2.11.0';
-import { FireFlower } from './FireFlower.js?v=2.11.0';
-import { IceFlower } from './IceFlower.js?v=2.11.0';
-import { Magnet } from './Magnet.js?v=2.9.0';
-import { MegaMushroom } from './MegaMushroom.js?v=2.9.0';
-import { OneUpMushroom } from './OneUpMushroom.js?v=2.9.0';
-import { SpatialGrid } from './SpatialGrid.js?v=2.9.0';
+import { checkCollision } from './utils.js?v=2.17.0';
+import { Mushroom } from './Mushroom.js?v=2.17.0';
+import { Star } from './Star.js?v=2.17.0';
+import { FireFlower } from './FireFlower.js?v=2.17.0';
+import { IceFlower } from './IceFlower.js?v=2.17.0';
+import { Magnet } from './Magnet.js?v=2.17.0';
+import { MegaMushroom } from './MegaMushroom.js?v=2.17.0';
+import { OneUpMushroom } from './OneUpMushroom.js?v=2.17.0';
+import { Cape } from './Cape.js?v=2.17.0';
+import { SpatialGrid } from './SpatialGrid.js?v=2.17.0';
 
 export class CollisionSystem {
     constructor(game) {
@@ -217,6 +218,10 @@ export class CollisionSystem {
                         const oneUp = new OneUpMushroom(block.x, block.y);
                         this.game.oneUpMushrooms.push(oneUp);
                         this.game.playSound('block');
+                    } else if (result.type === 'cape') {
+                        const cape = new Cape(block.x, block.y);
+                        this.game.capes.push(cape);
+                        this.game.playSound('block');
                     }
                     this.game.triggerScreenShake(3);
 
@@ -420,6 +425,22 @@ export class CollisionSystem {
                 this.game.addLife();
                 this.game.addParticles(oneUp.x + oneUp.width / 2, oneUp.y + oneUp.height / 2, 12, '#32CD32');
                 this.game.oneUpMushrooms.splice(i, 1);
+            }
+        }
+
+        // Capes
+        for (let i = this.game.capes.length - 1; i >= 0; i--) {
+            const cape = this.game.capes[i];
+            if (!cape.collected && checkCollision(this.game.player, cape)) {
+                cape.collected = true;
+                this.game.score += 1000;
+                this.game.addScorePopup(cape.x, cape.y, 1000);
+                this.game.updateScore();
+                this.game.playSound('powerup_mushroom');
+                this.game.addParticles(cape.x + cape.width / 2, cape.y + cape.height / 2, 15, '#FFD700');
+                this.game.addParticles(cape.x + cape.width / 2, cape.y + cape.height / 2, 10, '#FFA500');
+                if (this.game.player.getCape) this.game.player.getCape();
+                this.game.capes.splice(i, 1);
             }
         }
 

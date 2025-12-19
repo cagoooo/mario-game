@@ -143,6 +143,7 @@ export class Game {
         this.fireballs = [];
         this.pipes = [];
         this.lava = [];
+        this.capes = [];
 
         this.ui.restartBtn.addEventListener('click', () => this.restart());
 
@@ -283,6 +284,7 @@ export class Game {
         this.lava = [];
         this.cannons = [];
         this.oneUpMushrooms = [];
+        this.capes = [];
         this.checkpoints = [];
         this.lives = 3;
         this.lastCheckpointX = 0;
@@ -340,6 +342,88 @@ export class Game {
             localStorage.setItem('marioTotalCoins', this.totalCoins.toString());
         } catch (e) {
             console.warn('Could not save total coins');
+        }
+    }
+
+    /**
+     * Save game progress to localStorage
+     * Includes: current level distance, biome, lives, unlocked levels, stats
+     */
+    saveProgress() {
+        try {
+            const progress = {
+                version: '2.17.0',
+                timestamp: Date.now(),
+                // Core progress
+                highScore: this.highScore,
+                totalCoins: this.totalCoins,
+                lives: this.lives,
+                // Level progress
+                currentBiome: this.currentBiome,
+                lastCheckpointX: this.lastCheckpointX,
+                maxDistanceReached: Math.max(this.player?.x || 0, this.maxDistanceReached || 0),
+                // Unlocked content
+                unlockedBiomes: this.unlockedBiomes || ['PLAINS'],
+                bossesDefeated: this.bossesDefeated || 0,
+                // Achievement stats
+                achievementStats: this.achievementSystem?.stats || {}
+            };
+            localStorage.setItem('marioProgress', JSON.stringify(progress));
+            console.log('Progress saved:', progress);
+        } catch (e) {
+            console.warn('Could not save progress:', e);
+        }
+    }
+
+    /**
+     * Load game progress from localStorage
+     * @returns {Object|null} Saved progress or null if none exists
+     */
+    loadProgress() {
+        try {
+            const saved = localStorage.getItem('marioProgress');
+            if (saved) {
+                const progress = JSON.parse(saved);
+                console.log('Progress loaded:', progress);
+                return progress;
+            }
+        } catch (e) {
+            console.warn('Could not load progress:', e);
+        }
+        return null;
+    }
+
+    /**
+     * Apply loaded progress to game state
+     * @param {Object} progress - Progress object from loadProgress()
+     */
+    applyProgress(progress) {
+        if (!progress) return;
+
+        // Apply saved values
+        if (progress.highScore) this.highScore = progress.highScore;
+        if (progress.totalCoins) this.totalCoins = progress.totalCoins;
+        if (progress.lives) this.lives = Math.min(progress.lives, this.maxLives);
+        if (progress.unlockedBiomes) this.unlockedBiomes = progress.unlockedBiomes;
+        if (progress.bossesDefeated) this.bossesDefeated = progress.bossesDefeated;
+        if (progress.maxDistanceReached) this.maxDistanceReached = progress.maxDistanceReached;
+
+        // Update UI
+        this.ui.highScore.textContent = `🏆 ${this.highScore}`;
+    }
+
+    /**
+     * Clear saved progress (for new game)
+     */
+    clearProgress() {
+        try {
+            localStorage.removeItem('marioProgress');
+            this.unlockedBiomes = ['PLAINS'];
+            this.bossesDefeated = 0;
+            this.maxDistanceReached = 0;
+            console.log('Progress cleared');
+        } catch (e) {
+            console.warn('Could not clear progress:', e);
         }
     }
 
@@ -568,6 +652,16 @@ export class Game {
             flower.update(this.platforms, this.GROUND_Y, this.levelWidth);
             if (flower.collected) {
                 this.iceflowers.splice(i, 1);
+                continue;
+            }
+        }
+
+        // Update capes
+        for (let i = this.capes.length - 1; i >= 0; i--) {
+            const cape = this.capes[i];
+            cape.update(this.platforms, this.GROUND_Y, this.levelWidth);
+            if (cape.collected) {
+                this.capes.splice(i, 1);
                 continue;
             }
         }
@@ -1010,6 +1104,13 @@ export class Game {
         this.checkpoints.forEach(cp => {
             if (isEntityVisible(cp, this.camera, this.width, this.height)) {
                 cp.draw(this.ctx, this.camera);
+            }
+        });
+
+        // Draw Capes
+        this.capes.forEach(cape => {
+            if (isEntityVisible(cape, this.camera, this.width, this.height)) {
+                cape.draw(this.ctx, this.camera);
             }
         });
 

@@ -82,6 +82,12 @@ export class Player {
         this.isMega = false;
         this.megaTimer = 0;
 
+        // Cape Power
+        this.hasCape = false;
+        this.isGliding = false;
+        this.glideGravity = 0.1; // Reduced gravity while gliding
+        this.glideFallSpeed = 1.5; // Max fall speed while gliding
+
         // Wall Jump
         this.wallSliding = false;
         this.wallDirection = 0; // -1 = left wall, 1 = right wall
@@ -407,8 +413,20 @@ export class Player {
             this.jumpHeld = false;
         }
 
-        // === GRAVITY ===
-        this.velY += this.GRAVITY;
+        // === GRAVITY & GLIDING ===
+        // Check for gliding (Cape + falling + holding jump)
+        if (this.hasCape && !this.grounded && this.velY > 0 && input.keys['Space']) {
+            this.isGliding = true;
+            // Apply reduced gravity
+            this.velY += this.glideGravity;
+            // Cap fall speed
+            if (this.velY > this.glideFallSpeed) {
+                this.velY = this.glideFallSpeed;
+            }
+        } else {
+            this.isGliding = false;
+            this.velY += this.GRAVITY;
+        }
         this.y += this.velY;
 
         // === COYOTE TIME ===
@@ -553,6 +571,11 @@ export class Player {
     getIcePower() {
         this.icePower = true;
         this.firePower = false; // Can't have both
+        this.powerUp(); // Also grow if not already
+    }
+
+    getCape() {
+        this.hasCape = true;
         this.powerUp(); // Also grow if not already
     }
 

@@ -1,8 +1,8 @@
-import { Game } from './Game.js?v=2.16.1';
-import { AssetLoader } from './AssetLoader.js?v=2.16.1';
+import { Game } from './Game.js?v=2.17.0';
+import { AssetLoader } from './AssetLoader.js?v=2.17.0';
 
 window.onload = async function () {
-    console.log('%c Game Version: 2.16.1 (Pause Menu RWD Optimization) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 2.17.0 (Cape Power-up & Save System) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements

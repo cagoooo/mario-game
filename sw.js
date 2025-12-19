@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mario-game-v2.16.1-rwd';
+const CACHE_NAME = 'mario-game-v2.17.0-cape-save';
 const urlsToCache = [
     './',
     './index.html',
@@ -46,6 +46,7 @@ const urlsToCache = [
     './js/LevelLoader.js',
     './js/IceFlower.js',
     './js/Iceball.js',
+    './js/Cape.js',
     './levels/world-1-1.json',
     './assets/player.png',
     './assets/enemy.png',
