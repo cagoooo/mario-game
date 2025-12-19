@@ -373,6 +373,26 @@ export class EnhancedAudioSystem {
                 volumes: [0.3, 0.32, 0.3, 0.35, 0.35, 0.25],
                 attack: 0.05,
                 decay: 0.15
+            },
+
+            // 凍結音效 (Freeze) - 冰晶音效
+            freeze: {
+                type: 'triangle',
+                frequencies: [2000, 1500, 2500, 1800, 2200],
+                durations: [0.05, 0.05, 0.08, 0.08, 0.15],
+                volumes: [0.2, 0.18, 0.22, 0.18, 0.15],
+                attack: 0.01,
+                decay: 0.05
+            },
+
+            // 冰球擊中音效 (Ice Hit)
+            iceHit: {
+                type: 'sine',
+                frequencies: [1200, 800, 1600, 600],
+                durations: [0.04, 0.06, 0.05, 0.1],
+                volumes: [0.25, 0.2, 0.22, 0.15],
+                attack: 0.01,
+                decay: 0.04
             }
         };
     }

@@ -164,7 +164,7 @@ export class AchievementSystem {
             this.currentNotification = this.pendingNotifications.shift();
             this.notificationTimer = 180; // Show for 3 seconds
             if (this.game.playSound) {
-                this.game.playSound('coin'); // Play unlock sound
+                this.game.playSound('achievement'); // Play unlock sound
             }
         }
     }

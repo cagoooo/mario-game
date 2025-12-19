@@ -465,7 +465,7 @@ export class Game {
                     this.addScorePopup(enemy.x, enemy.y, 100);
                     this.score += 100;
                     this.updateScore();
-                    this.playSound('stomp');
+                    this.playSound('freeze');
                     iceball.active = false;
                     break;
                 }
