@@ -555,3 +555,33 @@ body {
 #settingsButton {
     font-size: 18px;
 }
+/* ========== PAUSE STATS ========== */
+#pauseStats {
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 15px;
+    padding: 20px 30px;
+    margin-bottom: 25px;
+    min-width: 200px;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    color: white;
+    font-size: 18px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+.stat-row:last-child {
+    border-bottom: none;
+}
+
+.stat-row span:first-child {
+    color: #CCC;
+}
+
+.stat-row span:last-child {
+    font-weight: bold;
+    color: #FFD700;
+}

@@ -62,6 +62,11 @@ export class Game {
 
         this.camera = { x: 0, y: 0 };
 
+        // Screen shake effect
+        this.shakeIntensity = 0;
+        this.shakeDuration = 0;
+        this.shakeTimer = 0;
+
         this.score = 0;
         this.highScore = this.loadHighScore();
         this.totalCoins = this.loadTotalCoins(); // Persistent total coins
@@ -195,6 +200,41 @@ export class Game {
 
     playSound(type) {
         if (this.audioSystem) this.audioSystem.playSound(type);
+    }
+
+    /**
+     * Trigger screen shake effect
+     * @param {number} intensity - Shake amplitude in pixels (default 5)
+     * @param {number} duration - Shake duration in frames (default 15)
+     */
+    shake(intensity = 5, duration = 15) {
+        this.shakeIntensity = intensity;
+        this.shakeDuration = duration;
+        this.shakeTimer = duration;
+    }
+
+    /**
+     * Update screen shake effect
+     */
+    updateShake() {
+        if (this.shakeTimer > 0) {
+            this.shakeTimer--;
+        }
+    }
+
+    /**
+     * Get current shake offset for rendering
+     */
+    getShakeOffset() {
+        if (this.shakeTimer > 0) {
+            const progress = this.shakeTimer / this.shakeDuration;
+            const intensity = this.shakeIntensity * progress;
+            return {
+                x: (Math.random() - 0.5) * 2 * intensity,
+                y: (Math.random() - 0.5) * 2 * intensity
+            };
+        }
+        return { x: 0, y: 0 };
     }
 
     startBGM() {
@@ -1263,6 +1303,7 @@ export class Game {
 
         this.isProcessingDeath = true;
         this.player.die();
+        this.screenShake.intensity = 8; // Screen shake on death
         this.stopBGM();
         this.playSound('death');
 

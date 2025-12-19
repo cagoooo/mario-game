@@ -82,6 +82,12 @@ export class Player {
         this.isMega = false;
         this.megaTimer = 0;
 
+        // Wall Jump
+        this.wallSliding = false;
+        this.wallDirection = 0; // -1 = left wall, 1 = right wall
+        this.wallJumpForce = { x: 6, y: -14 }; // Horizontal and vertical force
+        this.wallSlideSpeed = 2; // Slower fall when sliding
+
         // Dust particles for landing and running
         this.dustParticles = [];
         this.justLanded = false;
@@ -421,8 +427,31 @@ export class Player {
         });
 
         // === BOUNDS ===
-        if (this.x < 0) this.x = 0;
-        if (this.x + this.width > canvasWidth) this.x = canvasWidth - this.width;
+        let hitWall = false;
+        if (this.x < 0) {
+            this.x = 0;
+            if (!this.grounded && this.velY > 0) {
+                hitWall = true;
+                this.wallDirection = -1;
+            }
+        }
+        if (this.x + this.width > canvasWidth) {
+            this.x = canvasWidth - this.width;
+            if (!this.grounded && this.velY > 0) {
+                hitWall = true;
+                this.wallDirection = 1;
+            }
+        }
+
+        // === WALL SLIDE ===
+        if (hitWall && !this.grounded && this.velY > 0) {
+            this.wallSliding = true;
+            this.velY = Math.min(this.velY, this.wallSlideSpeed); // Slower fall
+            this.jumpCount = 1; // Allow one more jump (wall jump)
+        } else {
+            this.wallSliding = false;
+            if (this.grounded) this.wallDirection = 0;
+        }
 
         // Update jump animation state
         this.isJumping = !this.grounded; // Simplified for drawing logic
@@ -572,6 +601,27 @@ export class Player {
     }
 
     jump() {
+        // Wall jump - if sliding on wall, jump away from it
+        if (this.wallSliding && this.wallDirection !== 0) {
+            this.velY = this.wallJumpForce.y;
+            this.velX = -this.wallDirection * this.wallJumpForce.x; // Jump away from wall
+            this.direction = -this.wallDirection;
+            this.jumpHeld = true;
+            this.jumpHoldTime = 0;
+            this.jumpCount = 2; // Counts as double jump
+            this.wallSliding = false;
+            this.grounded = false;
+
+            // Stretch on wall jump
+            this.scaleX = 0.8;
+            this.scaleY = 1.2;
+
+            // Spawn dust effect on wall
+            this.spawnDust('skid');
+
+            return true;
+        }
+
         // Can jump if grounded OR within coyote time window OR has jumps remaining (double jump)
         if (this.grounded || this.coyoteTime > 0 || this.jumpCount < this.maxJumps) {
             this.velY = this.JUMP_FORCE;

@@ -1,8 +1,8 @@
-import { Game } from './Game.js?v=2.14.0';
-import { AssetLoader } from './AssetLoader.js?v=2.14.0';
+import { Game } from './Game.js?v=2.15.0';
+import { AssetLoader } from './AssetLoader.js?v=2.15.0';
 
 window.onload = async function () {
-    console.log('%c Game Version: 2.14.0 (Sprint, Stats Panel, Touch Optimization) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 2.15.0 (Wall Jump, Screen Shake, Pause Menu) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements
@@ -97,6 +97,15 @@ window.onload = async function () {
     uiElements.pauseBtn.addEventListener('click', () => {
         if (game && game.gameRunning) {
             game.pause();
+            // Update pause stats
+            if (game.achievementSystem) {
+                const stats = game.achievementSystem.stats;
+                document.getElementById('pauseKills').textContent = stats.enemiesKilled;
+                document.getElementById('pauseCoins').textContent = stats.totalCoins;
+                document.getElementById('pauseScore').textContent = game.score;
+                document.getElementById('pauseAchievements').textContent =
+                    `${game.achievementSystem.getUnlockedCount()}/${game.achievementSystem.getTotalCount()}`;
+            }
         }
     });
 
