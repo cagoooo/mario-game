@@ -1,8 +1,8 @@
-import { Game } from './Game.js?v=2.10.4';
-import { AssetLoader } from './AssetLoader.js?v=2.10.4';
+import { Game } from './Game.js?v=2.11.0';
+import { AssetLoader } from './AssetLoader.js?v=2.11.0';
 
 window.onload = async function () {
-    console.log('%c Game Version: 2.10.4 (Bug Fix Release) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 2.11.0 (Ice Flower & Scene Transitions) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements

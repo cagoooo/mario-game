@@ -42,6 +42,8 @@ export class QuestionBlock {
             return { type: 'star' };
         } else if (this.content === 'fireflower') {
             return { type: 'fireflower' };
+        } else if (this.content === 'iceflower') {
+            return { type: 'iceflower' };
         } else if (this.content === 'magnet') {
             return { type: 'magnet' };
         } else if (this.content === 'mega_mushroom') {
@@ -168,8 +170,9 @@ export function generateQuestionBlocks(startX, endX, groundY) {
 
             if (rand < 0.05) content = 'oneup';         // 5% - 1UP
             else if (rand < 0.12) content = 'star';        // 7%
-            else if (rand < 0.25) content = 'fireflower'; // 13%
-            else if (rand < 0.48) content = 'mushroom';   // 23%
+            else if (rand < 0.20) content = 'fireflower'; // 8%
+            else if (rand < 0.28) content = 'iceflower';  // 8% - NEW ICE FLOWER
+            else if (rand < 0.48) content = 'mushroom';   // 20%
             else if (rand < 0.60) content = 'magnet';     // 12%
             else if (rand < 0.70) content = 'mega_mushroom'; // 10%
             // else coin (30%)

@@ -63,8 +63,7 @@ export class Player {
         this.starTimer = 0;
         this.starDuration = 600; // 10 seconds
 
-        // Fire Power
-        this.firePower = false;
+        // Fire Power\n        this.firePower = false;\n\n        // Ice Power\n        this.icePower = false;
 
         // Invincibility frames (when hit)
         this.invincible = false;
@@ -475,6 +474,13 @@ export class Player {
 
     getFirePower() {
         this.firePower = true;
+        this.icePower = false; // Can't have both
+        this.powerUp(); // Also grow if not already
+    }
+
+    getIcePower() {
+        this.icePower = true;
+        this.firePower = false; // Can't have both
         this.powerUp(); // Also grow if not already
     }
 

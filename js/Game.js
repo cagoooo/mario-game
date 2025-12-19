@@ -9,8 +9,10 @@ import { Coin } from './Coin.js?v=2.10.4';
 import { QuestionBlock } from './QuestionBlock.js?v=2.10.4';
 import { Mushroom } from './Mushroom.js?v=2.10.4';
 import { Star } from './Star.js?v=2.10.4';
-import { FireFlower } from './FireFlower.js?v=2.10.4';
-import { Fireball } from './Fireball.js?v=2.10.4';
+import { FireFlower } from './FireFlower.js?v=2.11.0';
+import { Fireball } from './Fireball.js?v=2.11.0';
+import { IceFlower } from './IceFlower.js?v=2.11.0';
+import { Iceball } from './Iceball.js?v=2.11.0';
 import { MegaMushroom } from './MegaMushroom.js?v=2.10.4';
 import { Pipe } from './Pipe.js?v=2.10.4';
 import { Magnet } from './Magnet.js?v=2.10.4';
@@ -62,6 +64,8 @@ export class Game {
 
         this.score = 0;
         this.highScore = this.loadHighScore();
+        this.totalCoins = this.loadTotalCoins(); // Persistent total coins
+        this.sessionCoins = 0; // Coins collected this session
         this.gameRunning = false;
         this.isNewHighScore = false;
         this.isGameOverSequence = false;
@@ -79,6 +83,11 @@ export class Game {
         this.fireballPool = new ObjectPool(
             () => new Fireball(0, 0, 1),
             (f, x, y, direction) => f.reset(x, y, direction)
+        );
+
+        this.iceballPool = new ObjectPool(
+            () => new Iceball(0, 0, 1),
+            (i, x, y, direction) => i.reset(x, y, direction)
         );
 
         this.particleSystem = new ParticleSystem();
@@ -223,8 +232,11 @@ export class Game {
         this.mushrooms = [];
         this.stars = [];
         this.fireflowers = [];
+        this.iceflowers = [];
         if (this.fireballs) this.fireballs.forEach(f => this.fireballPool.release(f));
         this.fireballs = [];
+        if (this.iceballs) this.iceballs.forEach(i => this.iceballPool.release(i));
+        this.iceballs = [];
         this.magnets = [];
         this.megaMushrooms = [];
         this.pipes = [];
@@ -275,6 +287,22 @@ export class Game {
         }
     }
 
+    loadTotalCoins() {
+        try {
+            return parseInt(localStorage.getItem('marioTotalCoins')) || 0;
+        } catch (e) {
+            return 0;
+        }
+    }
+
+    saveTotalCoins() {
+        try {
+            localStorage.setItem('marioTotalCoins', this.totalCoins.toString());
+        } catch (e) {
+            console.warn('Could not save total coins');
+        }
+    }
+
     onJump() {
         this.initAudio();
         if (!this.gameRunning) return;
@@ -292,12 +320,27 @@ export class Game {
         this.playSound('fireball');
     }
 
+    shootIceball() {
+        if (!this.gameRunning || !this.player || !this.player.icePower) return;
+        const x = this.player.direction === 1 ? this.player.x + this.player.width : this.player.x;
+        const y = this.player.y + 10;
+        const iceball = this.iceballPool.get(x, y, this.player.direction);
+        this.iceballs.push(iceball);
+        this.playSound('fireball'); // Reuse sound for now
+    }
+
     update() {
         if (!this.gameRunning || !this.player) return;
 
         // Update Tutorial System
         if (this.tutorial && !this.tutorial.isCompleted()) {
             this.tutorial.update();
+        }
+
+        // Update scene transitions
+        if (this.transitionManager.update()) {
+            // If transition is active, skip most game logic
+            return;
         }
 
         // Prevent bonus level entry during boss battle or death
@@ -338,6 +381,12 @@ export class Game {
             this.autoFireTimer++;
             if (this.autoFireTimer > 45) {
                 this.shootFireball();
+                this.autoFireTimer = 0;
+            }
+        } else if (this.player.icePower) {
+            this.autoFireTimer++;
+            if (this.autoFireTimer > 50) { // Slightly slower than fire
+                this.shootIceball();
                 this.autoFireTimer = 0;
             }
         } else {
@@ -398,6 +447,31 @@ export class Game {
             }
         }
 
+        // Update ice balls and check enemy collision
+        for (let i = this.iceballs.length - 1; i >= 0; i--) {
+            const iceball = this.iceballs[i];
+            iceball.update(this.platforms, this.GROUND_Y);
+            if (!iceball.active) {
+                this.iceballPool.release(iceball);
+                this.iceballs.splice(i, 1);
+                continue;
+            }
+
+            // Check collision with enemies
+            for (const enemy of this.enemies) {
+                if (!enemy.frozen && checkCollision(iceball, enemy)) {
+                    iceball.freezeEnemy(enemy);
+                    this.addParticles(enemy.x + enemy.width / 2, enemy.y, 8, '#00BFFF');
+                    this.addScorePopup(enemy.x, enemy.y, 100);
+                    this.score += 100;
+                    this.updateScore();
+                    this.playSound('stomp');
+                    iceball.active = false;
+                    break;
+                }
+            }
+        }
+
         for (let i = this.coins.length - 1; i >= 0; i--) {
             const coin = this.coins[i];
             coin.update(this.player);
@@ -444,6 +518,16 @@ export class Game {
             flower.update(this.platforms, this.GROUND_Y, this.levelWidth);
             if (flower.collected) {
                 this.fireflowers.splice(i, 1);
+                continue;
+            }
+        }
+
+        // Update ice flowers
+        for (let i = this.iceflowers.length - 1; i >= 0; i--) {
+            const flower = this.iceflowers[i];
+            flower.update(this.platforms, this.GROUND_Y, this.levelWidth);
+            if (flower.collected) {
+                this.iceflowers.splice(i, 1);
                 continue;
             }
         }
@@ -910,6 +994,30 @@ export class Game {
             this.player.draw(this.ctx, this.camera);
         }
 
+        // Draw fireballs and iceballs
+        for (const fb of this.fireballs) {
+            if (isEntityVisible(fb, this.camera, this.width, this.height)) {
+                fb.draw(this.ctx, this.camera);
+            }
+        }
+        for (const ib of this.iceballs) {
+            if (isEntityVisible(ib, this.camera, this.width, this.height)) {
+                ib.draw(this.ctx, this.camera);
+            }
+        }
+
+        // Draw power-up flowers
+        for (const ff of this.fireflowers) {
+            if (isEntityVisible(ff, this.camera, this.width, this.height)) {
+                ff.draw(this.ctx, this.camera);
+            }
+        }
+        for (const ice of this.iceflowers) {
+            if (isEntityVisible(ice, this.camera, this.width, this.height)) {
+                ice.draw(this.ctx, this.camera);
+            }
+        }
+
         // Score popups are now drawn by UIManager
         // Update popup positions and lifetimes
         for (let i = this.scorePopups.length - 1; i >= 0; i--) {
@@ -1232,6 +1340,7 @@ export class Game {
         this.player.isPowered = false;
         this.player.powerScale = 1.0;
         this.player.firePower = false;
+        this.player.icePower = false;
         this.player.starPower = false;
         this.player.starTimer = 0;
         this.player.isMega = false;
@@ -1249,6 +1358,9 @@ export class Game {
         this.isProcessingDeath = false; // Reset so player can die again
         this.gameRunning = true;
         this.startBGM();
+
+        // Fade in after respawn
+        this.transitionManager.fadeIn();
     }
 
     showLivesScreen() {
@@ -1298,6 +1410,9 @@ export class Game {
         this.boss = null;
         this.gameState = 'OVERWORLD';
         this.renderDistance = 2000;
+
+        // Save total coins to localStorage
+        this.saveTotalCoins();
 
         this.ui.gameOverOverlay.style.display = 'flex';
         this.ui.finalScore.textContent = `最終分數: ${this.score}`;

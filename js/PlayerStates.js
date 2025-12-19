@@ -239,21 +239,27 @@ export class PipeState extends State {
             this.player.y += 1; // Move down
             this.player.pipeTimer++;
             if (this.player.pipeTimer > 60) {
-                // Trigger level transition
+                // Trigger level transition with fade effect
                 if (this.player.game && typeof this.player.game.loadBonusLevel === 'function') {
-                    if (this.player.game.gameState === 'BONUS') {
-                        // Returning to Overworld
-                        this.player.game.unloadBonusLevel();
-                        this.player.isEnteringPipe = false;
-                        this.player.setState(states.IDLE);
-                    } else if (this.player.autoMovePipe) {
-                        // Entering Bonus Level
-                        this.player.game.loadBonusLevel();
-                        this.player.autoMovePipe = null;
-                        this.player.isEnteringPipe = false;
+                    const game = this.player.game;
+                    const player = this.player;
 
-                        // Force falling state so physics resume
-                        this.player.setState(states.FALLING);
+                    if (game.gameState === 'BONUS') {
+                        // Returning to Overworld - use fade transition
+                        game.transitionManager.fadeOut(() => {
+                            game.unloadBonusLevel();
+                            player.isEnteringPipe = false;
+                            player.setState(states.IDLE);
+                        });
+                    } else if (player.autoMovePipe) {
+                        // Entering Bonus Level - use fade transition
+                        game.transitionManager.fadeOut(() => {
+                            game.loadBonusLevel();
+                            player.autoMovePipe = null;
+                            player.isEnteringPipe = false;
+                            // Force falling state so physics resume
+                            player.setState(states.FALLING);
+                        });
                     }
                 }
             }

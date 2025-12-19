@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mario-game-v2.10.4-bugfix';
+const CACHE_NAME = 'mario-game-v2.11.0-iceflower';
 const urlsToCache = [
     './',
     './index.html',

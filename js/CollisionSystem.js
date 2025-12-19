@@ -1,7 +1,8 @@
-import { checkCollision } from './utils.js?v=2.9.0';
-import { Mushroom } from './Mushroom.js?v=2.9.0';
-import { Star } from './Star.js?v=2.9.0';
-import { FireFlower } from './FireFlower.js?v=2.9.0';
+import { checkCollision } from './utils.js?v=2.11.0';
+import { Mushroom } from './Mushroom.js?v=2.11.0';
+import { Star } from './Star.js?v=2.11.0';
+import { FireFlower } from './FireFlower.js?v=2.11.0';
+import { IceFlower } from './IceFlower.js?v=2.11.0';
 import { Magnet } from './Magnet.js?v=2.9.0';
 import { MegaMushroom } from './MegaMushroom.js?v=2.9.0';
 import { OneUpMushroom } from './OneUpMushroom.js?v=2.9.0';
@@ -197,6 +198,11 @@ export class CollisionSystem {
                         flower.spawn();
                         this.game.fireflowers.push(flower);
                         this.game.playSound('block');
+                    } else if (result.type === 'iceflower') {
+                        const iceflower = new IceFlower(block.x, block.y);
+                        iceflower.spawn();
+                        this.game.iceflowers.push(iceflower);
+                        this.game.playSound('block');
                     } else if (result.type === 'magnet') {
                         const magnet = new Magnet(block.x, block.y);
                         magnet.spawn();
@@ -274,6 +280,8 @@ export class CollisionSystem {
                 this.game.coins.splice(i, 1);
 
                 this.game.score += 10;
+                this.game.sessionCoins++; // Track session coins
+                this.game.totalCoins++;    // Track total coins
                 this.game.addScorePopup(coin.x, coin.y, 10);
 
                 // Enhanced coin collection burst effect
@@ -340,6 +348,30 @@ export class CollisionSystem {
                     }
                 }
                 this.game.fireflowers.splice(i, 1);
+            }
+        }
+
+        // IceFlowers
+        for (let i = this.game.iceflowers.length - 1; i >= 0; i--) {
+            const flower = this.game.iceflowers[i];
+            if (checkCollision(this.game.player, flower) && flower.active && !flower.spawning) {
+                flower.collected = true;
+                this.game.score += 1000;
+                this.game.addScorePopup(flower.x, flower.y, 1000);
+                this.game.updateScore();
+
+                if (this.game.player.getIcePower) {
+                    const changed = !this.game.player.icePower;
+                    this.game.player.getIcePower();
+                    if (changed) {
+                        this.game.playSound('powerup_fire'); // Reuse sound
+                        this.game.triggerFreeze(20);
+                        this.game.addParticles(flower.x + 14, flower.y + 16, 15, '#00BFFF');
+                    } else {
+                        this.game.playSound('coin');
+                    }
+                }
+                this.game.iceflowers.splice(i, 1);
             }
         }
 
