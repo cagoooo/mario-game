@@ -102,6 +102,12 @@ export class Game {
         this.freezeFrames = 0;
         this.deathFlashTimer = 0;
 
+        // FPS Tracking for performance monitoring
+        this.fps = 60;
+        this.frameCount = 0;
+        this.lastFpsUpdate = performance.now();
+        this.showFps = true; // Set to false to hide FPS display
+
         this.audioSystem = new EnhancedAudioSystem();
         this.currentBGMMode = null;
 
@@ -1218,6 +1224,40 @@ export class Game {
         // Draw scene transition overlay (topmost layer)
         this.transitionManager.draw();
 
+        // FPS Counter and Performance Monitor
+        if (this.showFps) {
+            this.frameCount++;
+            const now = performance.now();
+            if (now - this.lastFpsUpdate >= 1000) {
+                this.fps = this.frameCount;
+                this.frameCount = 0;
+                this.lastFpsUpdate = now;
+            }
+
+            // Draw FPS (color-coded: green=good, yellow=ok, red=bad)
+            let fpsColor = '#00ff00';
+            if (this.fps < 30) fpsColor = '#ff0000';
+            else if (this.fps < 50) fpsColor = '#ffff00';
+
+            this.ctx.save();
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            this.ctx.fillRect(this.width - 95, 5, 90, 50);
+            this.ctx.font = 'bold 14px Arial';
+            this.ctx.fillStyle = fpsColor;
+            this.ctx.textAlign = 'right';
+            this.ctx.fillText(`FPS: ${this.fps}`, this.width - 10, 22);
+
+            // Object count
+            const objCount = this.enemies.length + this.coins.length +
+                this.particleSystem.activeParticles.length +
+                this.weatherSystem.particles.length;
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.font = '10px Arial';
+            this.ctx.fillText(`OBJ: ${objCount}`, this.width - 10, 38);
+            this.ctx.fillText(`P: ${this.particleSystem.activeParticles.length}`, this.width - 10, 50);
+            this.ctx.restore();
+        }
+
         this.ctx.restore();
     }
 
@@ -1271,6 +1311,67 @@ export class Game {
                 this.pipes.splice(i, 1);
             }
         }
+
+        // === Additional cleanup for performance ===
+        for (let i = this.iceflowers.length - 1; i >= 0; i--) {
+            if (this.iceflowers[i].x + this.iceflowers[i].width < minX) {
+                this.iceflowers.splice(i, 1);
+            }
+        }
+
+        for (let i = this.magnets.length - 1; i >= 0; i--) {
+            if (this.magnets[i].x + this.magnets[i].width < minX) {
+                this.magnets.splice(i, 1);
+            }
+        }
+
+        for (let i = this.megaMushrooms.length - 1; i >= 0; i--) {
+            if (this.megaMushrooms[i].x + this.megaMushrooms[i].width < minX) {
+                this.megaMushrooms.splice(i, 1);
+            }
+        }
+
+        for (let i = this.oneUpMushrooms.length - 1; i >= 0; i--) {
+            if (this.oneUpMushrooms[i].x + this.oneUpMushrooms[i].width < minX) {
+                this.oneUpMushrooms.splice(i, 1);
+            }
+        }
+
+        for (let i = this.capes.length - 1; i >= 0; i--) {
+            if (this.capes[i].x + this.capes[i].width < minX) {
+                this.capes.splice(i, 1);
+            }
+        }
+
+        for (let i = this.cannons.length - 1; i >= 0; i--) {
+            if (this.cannons[i].x + this.cannons[i].width < minX) {
+                this.cannons.splice(i, 1);
+            }
+        }
+
+        for (let i = this.checkpoints.length - 1; i >= 0; i--) {
+            if (this.checkpoints[i].x + this.checkpoints[i].width < minX) {
+                this.checkpoints.splice(i, 1);
+            }
+        }
+
+        // Clean up projectiles
+        for (let i = this.fireballs.length - 1; i >= 0; i--) {
+            if (this.fireballs[i].x < minX || !this.fireballs[i].active) {
+                this.fireballPool.release(this.fireballs[i]);
+                this.fireballs.splice(i, 1);
+            }
+        }
+
+        for (let i = this.iceballs.length - 1; i >= 0; i--) {
+            if (this.iceballs[i].x < minX || !this.iceballs[i].active) {
+                this.iceballPool.release(this.iceballs[i]);
+                this.iceballs.splice(i, 1);
+            }
+        }
+
+        // Clean up particles behind camera
+        this.particleSystem.cleanup(minX);
     }
 
     enterBonusLevel(pipe) {

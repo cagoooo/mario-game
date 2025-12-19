@@ -73,6 +73,7 @@ const PARTICLE_PRESETS = {
 
 export class ParticleSystem {
     constructor() {
+        this.MAX_PARTICLES = 150; // Performance limit
         this.pool = new ObjectPool(
             () => ({
                 x: 0, y: 0, vx: 0, vy: 0, life: 0, maxLife: 0,
@@ -100,9 +101,14 @@ export class ParticleSystem {
     }
 
     emit(x, y, count, color, type = 'normal') {
+        // Limit total particles for performance
+        const availableSlots = this.MAX_PARTICLES - this.activeParticles.length;
+        const actualCount = Math.min(count, availableSlots);
+        if (actualCount <= 0) return;
+
         const preset = PARTICLE_PRESETS[type] || PARTICLE_PRESETS.normal;
 
-        for (let i = 0; i < count; i++) {
+        for (let i = 0; i < actualCount; i++) {
             let options = { color, type };
 
             switch (type) {

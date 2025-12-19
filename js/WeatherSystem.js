@@ -4,7 +4,7 @@ export class WeatherSystem {
         this.game = game;
         this.currentWeather = 'clear';
         this.particles = [];
-        this.maxParticles = 200;
+        this.maxParticles = 100; // Reduced from 200 for performance
         this.intensity = 0;
         this.targetIntensity = 0;
         this.transitionSpeed = 0.02;
@@ -56,7 +56,7 @@ export class WeatherSystem {
     spawnParticles() {
         if (this.particles.length >= this.maxParticles) return;
 
-        const spawnRate = this.intensity * 5;
+        const spawnRate = this.intensity * 3; // Reduced from 5 for performance
 
         for (let i = 0; i < spawnRate; i++) {
             if (this.particles.length >= this.maxParticles) break;
