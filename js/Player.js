@@ -88,6 +88,11 @@ export class Player {
         this.wallJumpForce = { x: 6, y: -14 }; // Horizontal and vertical force
         this.wallSlideSpeed = 2; // Slower fall when sliding
 
+        // Crouch
+        this.isCrouching = false;
+        this.crouchHeight = 30; // Reduced height when crouching
+        this.standingHeight = 50; // Normal height
+
         // Dust particles for landing and running
         this.dustParticles = [];
         this.justLanded = false;
@@ -301,6 +306,27 @@ export class Player {
         } else {
             this.isSprinting = false;
             this.maxSpeed = this.baseMaxSpeed;
+        }
+
+        // Crouch handling (ArrowDown or S key)
+        if ((input.keys['ArrowDown'] || input.keys['KeyS']) && this.grounded) {
+            if (!this.isCrouching) {
+                this.isCrouching = true;
+                const heightDiff = this.standingHeight - this.crouchHeight;
+                this.y += heightDiff; // Move down to keep feet on ground
+                this.height = this.crouchHeight;
+            }
+            // Slow down while crouching
+            this.velX *= 0.85;
+            this.isSprinting = false;
+            this.maxSpeed = this.baseMaxSpeed * 0.5;
+        } else {
+            if (this.isCrouching) {
+                this.isCrouching = false;
+                const heightDiff = this.standingHeight - this.crouchHeight;
+                this.y -= heightDiff; // Move up when standing
+                this.height = this.standingHeight;
+            }
         }
 
         if (moveInput !== 0) {

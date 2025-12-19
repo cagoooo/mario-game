@@ -15,7 +15,7 @@
   <link rel="icon" type="image/png" href="assets/icon-192.png">
   <link rel="shortcut icon" type="image/png" href="assets/icon-192.png">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="style.css?v=2.11.0">
+  <link rel="stylesheet" href="style.css?v=2.16.0">
 </head>
 
 <body>
@@ -53,6 +53,14 @@
       <div class="stat-row"><span>👑 分數</span><span id="pauseScore">0</span></div>
       <div class="stat-row"><span>🏅 成就</span><span id="pauseAchievements">0/0</span></div>
     </div>
+    <div id="controlGuide">
+      <div class="guide-title">🎮 操作說明</div>
+      <div class="guide-row"><span>⬅️➡️</span><span>移動</span></div>
+      <div class="guide-row"><span>空白鍵</span><span>跳躍</span></div>
+      <div class="guide-row"><span>⬇️ / S</span><span>蹲下</span></div>
+      <div class="guide-row"><span>Shift</span><span>衝刺</span></div>
+      <div class="guide-row"><span>牆壁+跳</span><span>蹬牆跳</span></div>
+    </div>
     <button id="resumeButton">繼續遊戲</button>
   </div>
 
@@ -89,7 +97,7 @@
     <div id="rightButton" class="controlButton">▶</div>
   </div>
 
-  <script type="module" src="js/main.js?v=2.15.0"></script>
+  <script type="module" src="js/main.js?v=2.16.0"></script>
   <script>
     // Unregister Service Worker to prevent caching issues during development/debugging
     if ('serviceWorker' in navigator) {
