@@ -21,6 +21,7 @@ export class UIManager {
         this.drawLivesUI();
         this.drawCoinCounter();
         this.drawAchievementBadges();
+        this.drawStatsPanel();
         this.drawScorePopups();
 
         if (this.game.bossBattleActive && this.game.boss?.alive) {
@@ -76,6 +77,29 @@ export class UIManager {
                 this.ctx.fillText(`+${unlockedAchievements.length - 5}`, iconX - (5 * 22), y + 22);
             }
         }
+    }
+
+    /**
+     * Draw mini stats panel (top center)
+     */
+    drawStatsPanel() {
+        if (!this.game.achievementSystem) return;
+
+        const stats = this.game.achievementSystem.stats;
+        const x = this.game.width / 2;
+        const y = 18;
+
+        this.ctx.font = 'bold 11px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.strokeStyle = '#000';
+        this.ctx.lineWidth = 2;
+
+        // Stats line: 💀 X | 🪙 Y | ⏱ Z
+        const statsText = `💀 ${stats.enemiesKilled} | 🪙 ${stats.totalCoins} | 👑 ${this.game.score}`;
+
+        this.ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        this.ctx.strokeText(statsText, x, y);
+        this.ctx.fillText(statsText, x, y);
     }
 
     /**

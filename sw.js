@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mario-game-v2.13.0-badges';
+const CACHE_NAME = 'mario-game-v2.14.0-sprint';
 const urlsToCache = [
     './',
     './index.html',

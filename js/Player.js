@@ -16,9 +16,12 @@ export class Player {
         // Movement physics
         this.velX = 0;
         this.velY = 0;
-        this.maxSpeed = 3.5; // Reduced from 5
+        this.baseMaxSpeed = 3.5; // Normal speed
+        this.sprintMaxSpeed = 5.5; // Sprint speed (1.5x)
+        this.maxSpeed = this.baseMaxSpeed;
         this.acceleration = 0.3; // Reduced from 0.5
         this.friction = 0.9; // Increased from 0.85 (less slippery)
+        this.isSprinting = false;
 
         // Jump physics
         this.GRAVITY = 0.6;
@@ -285,10 +288,24 @@ export class Player {
             this.direction = 1;
         }
 
+        // Sprint handling (Shift key)
+        if (input.keys['ShiftLeft'] || input.keys['ShiftRight']) {
+            this.isSprinting = true;
+            this.maxSpeed = this.sprintMaxSpeed;
+        } else {
+            this.isSprinting = false;
+            this.maxSpeed = this.baseMaxSpeed;
+        }
+
         if (moveInput !== 0) {
             // Check for skid (moving opposite to velocity)
             if (this.grounded && Math.abs(this.velX) > 2 && Math.sign(moveInput) !== Math.sign(this.velX)) {
                 this.spawnDust('skid');
+            }
+
+            // Spawn running dust when sprinting
+            if (this.isSprinting && this.grounded && Math.random() < 0.1) {
+                this.spawnDust('run');
             }
 
             // Accelerate
