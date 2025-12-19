@@ -19,6 +19,7 @@ export class UIManager {
      */
     draw() {
         this.drawLivesUI();
+        this.drawCoinCounter();
         this.drawScorePopups();
 
         if (this.game.bossBattleActive && this.game.boss?.alive) {
@@ -45,6 +46,50 @@ export class UIManager {
         const livesText = `❤️ × ${this.game.lives}`;
         this.ctx.strokeText(livesText, x, y);
         this.ctx.fillText(livesText, x, y);
+    }
+
+    /**
+     * Draw total coin counter in top-left (below lives)
+     * Shows progress towards next 1UP (every 100 coins)
+     */
+    drawCoinCounter() {
+        const x = 15;
+        const y = 55; // Below lives display
+
+        this.ctx.font = 'bold 14px Arial';
+        this.ctx.textAlign = 'left';
+        this.ctx.fillStyle = '#FFD700';
+        this.ctx.strokeStyle = '#000';
+        this.ctx.lineWidth = 3;
+
+        const sessionCoins = this.game.sessionCoins || 0;
+        const coinsToNextLife = sessionCoins % 100;
+        const coinText = `🪙 ${coinsToNextLife}/100 → 1UP`;
+        this.ctx.strokeText(coinText, x, y);
+        this.ctx.fillText(coinText, x, y);
+
+        // Draw progress bar
+        const barX = x;
+        const barY = y + 5;
+        const barWidth = 80;
+        const barHeight = 4;
+        const progress = coinsToNextLife / 100;
+
+        // Background
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        this.ctx.fillRect(barX, barY, barWidth, barHeight);
+
+        // Progress fill
+        const gradient = this.ctx.createLinearGradient(barX, 0, barX + barWidth, 0);
+        gradient.addColorStop(0, '#FFD700');
+        gradient.addColorStop(1, '#32CD32');
+        this.ctx.fillStyle = gradient;
+        this.ctx.fillRect(barX, barY, barWidth * progress, barHeight);
+
+        // Border
+        this.ctx.strokeStyle = '#000';
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeRect(barX, barY, barWidth, barHeight);
     }
 
     /**

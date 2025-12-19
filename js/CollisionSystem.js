@@ -282,7 +282,16 @@ export class CollisionSystem {
                 this.game.score += 10;
                 this.game.sessionCoins++; // Track session coins
                 this.game.totalCoins++;    // Track total coins
-                this.game.addScorePopup(coin.x, coin.y, 10);
+
+                // Check for 100-coin 1UP bonus
+                if (this.game.sessionCoins % 100 === 0) {
+                    this.game.addLife();
+                    this.game.addScorePopup(coin.x, coin.y - 30, '1UP', true);
+                    this.game.addParticles(coin.x + 10, coin.y, 20, '#32CD32', 'sparkle');
+                    this.game.addParticles(coin.x + 10, coin.y, 15, '#FFD700', 'sparkle');
+                } else {
+                    this.game.addScorePopup(coin.x, coin.y, 10);
+                }
 
                 // Enhanced coin collection burst effect
                 this.game.addParticles(coin.x + 10, coin.y + 12, 10, '#FFD700', 'sparkle'); // Gold burst

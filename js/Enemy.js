@@ -15,6 +15,12 @@ export class Enemy {
         this.frameHeight = 32;
         this.animationFrame = 0;
         this.animationTick = 0;
+
+        // Freeze state
+        this.frozen = false;
+        this.frozenTimer = 0;
+        this.frozenDuration = 180; // 3 seconds at 60fps
+        this.originalSpeed = speed;
     }
 
     reset(x, y, speed, direction) {
@@ -31,6 +37,16 @@ export class Enemy {
     update(canvasWidth) {
         if (!this.alive) return;
 
+        // Handle frozen state
+        if (this.frozen) {
+            this.frozenTimer--;
+            if (this.frozenTimer <= 0) {
+                this.frozen = false;
+                this.speed = this.originalSpeed;
+            }
+            return; // Don't move while frozen
+        }
+
         this.x += this.speed * this.direction;
         if (this.x <= 0 || this.x + this.width >= canvasWidth) {
             this.direction *= -1;
@@ -43,6 +59,13 @@ export class Enemy {
         }
     }
 
+    freeze() {
+        this.frozen = true;
+        this.frozenTimer = this.frozenDuration;
+        this.originalSpeed = this.speed;
+        this.speed = 0;
+    }
+
     draw(ctx, camera) {
         ctx.save();
         const drawX = this.x - camera.x + this.width / 2;
@@ -50,14 +73,20 @@ export class Enemy {
 
         ctx.translate(drawX, drawY);
 
+        // Apply frozen visual effect
+        if (this.frozen) {
+            ctx.globalAlpha = 0.9;
+            ctx.filter = 'hue-rotate(180deg) saturate(150%)';
+        }
+
         // Draw Goomba-like enemy
-        ctx.fillStyle = '#8B4513';
+        ctx.fillStyle = this.frozen ? '#87CEEB' : '#8B4513';
         ctx.beginPath();
         ctx.arc(0, 5, 15, 0, Math.PI * 2);
         ctx.fill();
 
         // Head (tan mushroom cap)
-        ctx.fillStyle = '#D2691E';
+        ctx.fillStyle = this.frozen ? '#ADD8E6' : '#D2691E';
         ctx.beginPath();
         ctx.ellipse(0, -8, 18, 12, 0, Math.PI, 0);
         ctx.fill();
@@ -86,10 +115,29 @@ export class Enemy {
         ctx.stroke();
 
         // Feet
-        ctx.fillStyle = '#000000';
-        const footOffset = this.animationFrame === 0 ? -2 : 2;
+        ctx.fillStyle = this.frozen ? '#4682B4' : '#000000';
+        const footOffset = this.frozen ? 0 : (this.animationFrame === 0 ? -2 : 2);
         ctx.fillRect(-12 + footOffset, 15, 8, 5);
         ctx.fillRect(4 - footOffset, 15, 8, 5);
+
+        // Ice crystal overlay when frozen
+        if (this.frozen) {
+            ctx.filter = 'none';
+            ctx.globalAlpha = 0.4;
+            ctx.fillStyle = '#00BFFF';
+            ctx.beginPath();
+            ctx.arc(0, 0, 20, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Ice sparkles
+            ctx.globalAlpha = 0.8;
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(-8, -10, 2, 0, Math.PI * 2);
+            ctx.arc(10, -5, 2, 0, Math.PI * 2);
+            ctx.arc(-5, 8, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
 
         ctx.restore();
     }
@@ -190,6 +238,9 @@ export class FlyingEnemy extends Enemy {
     update(canvasWidth) {
         super.update(canvasWidth);
 
+        // Skip floating motion if frozen
+        if (this.frozen) return;
+
         // Floating motion
         this.floatOffset += this.floatSpeed;
         this.y = this.baseY + Math.sin(this.floatOffset) * this.floatAmplitude;
@@ -203,8 +254,13 @@ export class FlyingEnemy extends Enemy {
         ctx.translate(drawX, drawY);
         ctx.scale(this.direction, 1);
 
-        // Body (dark red)
-        ctx.fillStyle = '#8B0000';
+        // Frozen effect
+        if (this.frozen) {
+            ctx.globalAlpha = 0.9;
+        }
+
+        // Body - change color if frozen
+        ctx.fillStyle = this.frozen ? '#87CEEB' : '#8B0000';
         ctx.beginPath();
         ctx.arc(0, 0, 14, 0, Math.PI * 2);
         ctx.fill();
@@ -222,9 +278,9 @@ export class FlyingEnemy extends Enemy {
         ctx.arc(6, -3, 3, 0, Math.PI * 2);
         ctx.fill();
 
-        // Wings
-        const wingFlap = Math.sin(this.floatOffset * 10) * 10;
-        ctx.fillStyle = '#FFD700';
+        // Wings - stop flapping if frozen
+        const wingFlap = this.frozen ? 0 : Math.sin(this.floatOffset * 10) * 10;
+        ctx.fillStyle = this.frozen ? '#ADD8E6' : '#FFD700';
 
         // Left wing
         ctx.beginPath();
@@ -235,6 +291,15 @@ export class FlyingEnemy extends Enemy {
         ctx.beginPath();
         ctx.ellipse(18, -5 - wingFlap, 12, 6, 0.3, 0, Math.PI * 2);
         ctx.fill();
+
+        // Ice overlay when frozen
+        if (this.frozen) {
+            ctx.globalAlpha = 0.3;
+            ctx.fillStyle = '#00BFFF';
+            ctx.beginPath();
+            ctx.arc(0, 0, 18, 0, Math.PI * 2);
+            ctx.fill();
+        }
 
         ctx.restore();
     }
@@ -320,6 +385,9 @@ export class Yeti extends Enemy {
     update(canvasWidth) {
         super.update(canvasWidth);
 
+        // Skip jump logic if frozen
+        if (this.frozen) return;
+
         // Jump logic
         if (!this.isJumping) {
             this.jumpTimer++;
@@ -394,6 +462,15 @@ export class Ghost extends Enemy {
     }
 
     update(canvasWidth, player) {
+        // Handle frozen state
+        if (this.frozen) {
+            this.frozenTimer--;
+            if (this.frozenTimer <= 0) {
+                this.frozen = false;
+            }
+            return; // Don't move while frozen
+        }
+
         // Ghost ignores normal movement and follows player if close
         this.floatOffset += 0.05;
         this.y = this.baseY + Math.sin(this.floatOffset) * 10;
@@ -428,8 +505,13 @@ export class Ghost extends Enemy {
         ctx.translate(drawX, drawY);
         if (this.direction !== 0) ctx.scale(this.direction, 1);
 
-        // Ghost Body
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        // Frozen effect
+        if (this.frozen) {
+            ctx.globalAlpha = 0.9;
+        }
+
+        // Ghost Body - change color if frozen
+        ctx.fillStyle = this.frozen ? 'rgba(135, 206, 235, 0.9)' : 'rgba(255, 255, 255, 0.8)';
         ctx.beginPath();
         ctx.arc(0, -5, 15, Math.PI, 0); // Head
         ctx.lineTo(15, 15);
@@ -449,11 +531,30 @@ export class Ghost extends Enemy {
         ctx.arc(5, -5, 3, 0, Math.PI * 2);
         ctx.fill();
 
-        // Tongue (Boo!)
-        ctx.fillStyle = '#FF5252';
-        ctx.beginPath();
-        ctx.arc(0, 2, 3, 0, Math.PI * 2);
-        ctx.fill();
+        // Tongue (Boo!) - hide when frozen
+        if (!this.frozen) {
+            ctx.fillStyle = '#FF5252';
+            ctx.beginPath();
+            ctx.arc(0, 2, 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Ice overlay when frozen
+        if (this.frozen) {
+            ctx.globalAlpha = 0.3;
+            ctx.fillStyle = '#00BFFF';
+            ctx.beginPath();
+            ctx.arc(0, 0, 18, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Ice sparkles
+            ctx.globalAlpha = 0.8;
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(-8, -8, 2, 0, Math.PI * 2);
+            ctx.arc(8, -3, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
 
         ctx.restore();
     }
@@ -490,6 +591,23 @@ export class HammerBro extends Enemy {
 
     update(canvasWidth, player) {
         if (!this.alive) return;
+
+        // Handle frozen state
+        if (this.frozen) {
+            this.frozenTimer--;
+            if (this.frozenTimer <= 0) {
+                this.frozen = false;
+            }
+            // Still update hammers even when frozen
+            for (let i = this.hammers.length - 1; i >= 0; i--) {
+                const h = this.hammers[i];
+                h.update();
+                if (h.y > this.groundY + 100 || h.x < -50 || h.x > canvasWidth + 50) {
+                    this.hammers.splice(i, 1);
+                }
+            }
+            return;
+        }
 
         // Face player
         if (player) {
@@ -700,6 +818,23 @@ export class Lakitu extends Enemy {
 
     update(canvasWidth, player, groundY) {
         if (!this.alive) return;
+
+        // Handle frozen state
+        if (this.frozen) {
+            this.frozenTimer--;
+            if (this.frozenTimer <= 0) {
+                this.frozen = false;
+            }
+            // Still update spinies even when frozen
+            for (let i = this.spinies.length - 1; i >= 0; i--) {
+                const spiny = this.spinies[i];
+                spiny.update(canvasWidth);
+                if (spiny.y > groundY + 50 || !spiny.alive) {
+                    this.spinies.splice(i, 1);
+                }
+            }
+            return;
+        }
 
         // Floating motion
         this.floatOffset += 0.03;
