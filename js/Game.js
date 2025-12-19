@@ -106,7 +106,7 @@ export class Game {
         this.fps = 60;
         this.frameCount = 0;
         this.lastFpsUpdate = performance.now();
-        this.showFps = true; // Set to false to hide FPS display
+        this.showFps = false; // Hidden by default (set to true for debugging)
 
         this.audioSystem = new EnhancedAudioSystem();
         this.currentBGMMode = null;
