@@ -19,6 +19,9 @@ export class InputHandler {
     }
 
     handleKeyDown(e) {
+        // Ignore key repeat events (when key is held down)
+        if (e.repeat) return;
+
         // Switch to KEYBOARD mode when movement keys are pressed
         if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyA', 'KeyD', 'KeyW', 'KeyS'].includes(e.code)) {
             this.inputMode = 'KEYBOARD';

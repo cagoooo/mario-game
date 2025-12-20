@@ -1,6 +1,6 @@
-import { Player } from './Player.js?v=2.10.4';
+import { Player } from './Player.js?v=2.23.0';
 import { Background, Biomes } from './Background.js?v=2.10.4';
-import { InputHandler } from './InputHandler.js?v=2.10.4';
+import { InputHandler } from './InputHandler.js?v=2.23.0';
 import { checkCollision, isEntityVisible } from './utils.js?v=2.10.4';
 import { LevelGenerator } from './LevelGenerator.js?v=2.10.4';
 import { CollisionSystem } from './CollisionSystem.js?v=2.10.4';
@@ -192,6 +192,18 @@ export class Game {
 
     triggerFreeze(frames) {
         this.freezeFrames = frames;
+    }
+
+    /**
+     * Show a power-up hint message on screen
+     * @param {string} text - Hint message to display
+     */
+    showPowerUpHint(text) {
+        this.powerUpHint = {
+            text: text,
+            timer: 180, // 3 seconds at 60fps
+            alpha: 1.0
+        };
     }
 
     triggerDeathEffect() {
@@ -1215,6 +1227,23 @@ export class Game {
 
         // Draw UI elements via UIManager (Phase 3)
         this.uiManager.draw();
+
+        // Draw Power-Up Hint (e.g., Cape glide instructions)
+        if (this.powerUpHint && this.powerUpHint.timer > 0) {
+            this.powerUpHint.timer--;
+            this.powerUpHint.alpha = Math.min(1, this.powerUpHint.timer / 30); // Fade out
+
+            this.ctx.save();
+            this.ctx.globalAlpha = this.powerUpHint.alpha;
+            this.ctx.font = 'bold 24px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.strokeStyle = '#000000';
+            this.ctx.lineWidth = 4;
+            this.ctx.strokeText(this.powerUpHint.text, this.width / 2, 100);
+            this.ctx.fillStyle = '#FFD700';
+            this.ctx.fillText(this.powerUpHint.text, this.width / 2, 100);
+            this.ctx.restore();
+        }
 
         // Draw Tutorial Overlay (on top of everything)
         if (this.tutorial && !this.tutorial.isCompleted()) {

@@ -306,8 +306,11 @@ export class Player {
             this.direction = 1;
         }
 
-        // Sprint handling (Shift key)
-        if (input.keys['ShiftLeft'] || input.keys['ShiftRight']) {
+        // Sprint handling (Shift key) - starPower overrides!
+        if (this.starPower) {
+            // Star power grants major speed boost (7.5)
+            this.maxSpeed = 7.5;
+        } else if (input.keys['ShiftLeft'] || input.keys['ShiftRight']) {
             this.isSprinting = true;
             this.maxSpeed = this.sprintMaxSpeed;
         } else {
@@ -323,10 +326,12 @@ export class Player {
                 this.y += heightDiff; // Move down to keep feet on ground
                 this.height = this.crouchHeight;
             }
-            // Slow down while crouching
+            // Slow down while crouching (but starPower maintains speed)
             this.velX *= 0.85;
             this.isSprinting = false;
-            this.maxSpeed = this.baseMaxSpeed * 0.5;
+            if (!this.starPower) {
+                this.maxSpeed = this.baseMaxSpeed * 0.5;
+            }
         } else {
             if (this.isCrouching) {
                 this.isCrouching = false;
@@ -599,9 +604,12 @@ export class Player {
     }
 
     shrink() {
+        // Remove fire/ice power first
         if (this.firePower) {
             this.firePower = false;
-            // Fall through to shrink logic (Fire -> Small)
+        }
+        if (this.icePower) {
+            this.icePower = false;
         }
 
         if (!this.isPowered) return false; // Already small
@@ -623,7 +631,7 @@ export class Player {
         if (this.starPower) return 'kill'; // Kill enemy if star power
         if (this.invincible) return 'invincible';
 
-        if (this.firePower || this.isPowered) {
+        if (this.firePower || this.icePower || this.isPowered) {
             this.shrink();
             return 'shrink';
         }
@@ -683,7 +691,14 @@ export class Player {
                 this.jumpCount = 1; // First jump
             } else {
                 this.jumpCount++; // Double jump
-                this.spawnDust('run'); // Small effect for double jump
+                // Enhanced double jump effect - more visible!
+                this.spawnDust('land'); // Bigger dust burst
+                this.spawnDust('run');  // Extra particles
+                // Add colorful particles via game
+                if (this.game && this.game.addParticles) {
+                    this.game.addParticles(this.x + this.width / 2, this.y + this.height, 10, '#FFD700'); // Gold
+                    this.game.addParticles(this.x + this.width / 2, this.y + this.height, 8, '#FFFFFF');  // White
+                }
             }
 
             this.grounded = false;
@@ -826,6 +841,13 @@ export class Player {
             shirtColor = '#FFFFFF'; // White
             hatColor = '#FFFFFF';   // White
             overallColor = '#FF2020'; // Red overalls
+        }
+
+        if (this.icePower) {
+            pantsColor = '#FFFFFF'; // White
+            shirtColor = '#87CEEB'; // Light blue
+            hatColor = '#00BFFF';   // Deep sky blue
+            overallColor = '#4169E1'; // Royal blue overalls
         }
 
         if (this.starPower) {

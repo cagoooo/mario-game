@@ -169,36 +169,42 @@ export class Koopa extends Enemy {
         ctx.translate(drawX, drawY);
         ctx.scale(this.direction, 1);
 
+        // Frozen effect
+        if (this.frozen) {
+            ctx.globalAlpha = 0.9;
+            ctx.filter = 'hue-rotate(180deg) saturate(150%)';
+        }
+
         if (this.isShell) {
-            // Shell
-            ctx.fillStyle = '#228B22';
+            // Shell - change color if frozen
+            ctx.fillStyle = this.frozen ? '#87CEEB' : '#228B22';
             ctx.beginPath();
             ctx.ellipse(0, 0, 15, 10, 0, 0, Math.PI * 2);
             ctx.fill();
 
             // Shell pattern
-            ctx.strokeStyle = '#006400';
+            ctx.strokeStyle = this.frozen ? '#4682B4' : '#006400';
             ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.moveTo(-8, 0);
             ctx.lineTo(8, 0);
             ctx.stroke();
         } else {
-            // Body (green shell)
-            ctx.fillStyle = '#228B22';
+            // Body (green shell) - change color if frozen
+            ctx.fillStyle = this.frozen ? '#87CEEB' : '#228B22';
             ctx.beginPath();
             ctx.ellipse(0, 5, 15, 12, 0, 0, Math.PI * 2);
             ctx.fill();
 
             // Shell pattern
-            ctx.strokeStyle = '#006400';
+            ctx.strokeStyle = this.frozen ? '#4682B4' : '#006400';
             ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.arc(0, 5, 8, 0, Math.PI * 2);
             ctx.stroke();
 
-            // Head (yellow)
-            ctx.fillStyle = '#FFEB3B';
+            // Head (yellow) - change color if frozen
+            ctx.fillStyle = this.frozen ? '#ADD8E6' : '#FFEB3B';
             ctx.beginPath();
             ctx.arc(10, -5, 10, 0, Math.PI * 2);
             ctx.fill();
@@ -213,11 +219,30 @@ export class Koopa extends Enemy {
             ctx.arc(14, -6, 2, 0, Math.PI * 2);
             ctx.fill();
 
-            // Feet
-            ctx.fillStyle = '#FFEB3B';
-            const footOffset = this.animationFrame === 0 ? -2 : 2;
+            // Feet - freeze animation
+            ctx.fillStyle = this.frozen ? '#4682B4' : '#FFEB3B';
+            const footOffset = this.frozen ? 0 : (this.animationFrame === 0 ? -2 : 2);
             ctx.fillRect(-10 + footOffset, 15, 8, 6);
             ctx.fillRect(2 - footOffset, 15, 8, 6);
+        }
+
+        // Ice overlay when frozen
+        if (this.frozen) {
+            ctx.filter = 'none';
+            ctx.globalAlpha = 0.4;
+            ctx.fillStyle = '#00BFFF';
+            ctx.beginPath();
+            ctx.arc(0, 0, 22, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Ice sparkles
+            ctx.globalAlpha = 0.8;
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(-10, -12, 2, 0, Math.PI * 2);
+            ctx.arc(12, -3, 2, 0, Math.PI * 2);
+            ctx.arc(-6, 10, 2, 0, Math.PI * 2);
+            ctx.fill();
         }
 
         ctx.restore();
@@ -328,8 +353,14 @@ export class Cactus extends Enemy {
 
         ctx.translate(drawX, drawY);
 
-        // Main body (Green)
-        ctx.fillStyle = '#2E7D32';
+        // Frozen effect
+        if (this.frozen) {
+            ctx.globalAlpha = 0.9;
+            ctx.filter = 'hue-rotate(180deg) saturate(150%)';
+        }
+
+        // Main body (Green or ice blue if frozen)
+        ctx.fillStyle = this.frozen ? '#87CEEB' : '#2E7D32';
         ctx.beginPath();
         ctx.roundRect(-10, -20, 20, 40, 5);
         ctx.fill();
@@ -340,12 +371,12 @@ export class Cactus extends Enemy {
         ctx.roundRect(10, -15, 8, 8, 2);  // Right arm
         ctx.fill();
 
-        // Spikes
-        ctx.fillStyle = '#FFF';
+        // Spikes (turn to ice crystals if frozen)
+        ctx.fillStyle = this.frozen ? '#00BFFF' : '#FFF';
         const spikes = [[-10, -15], [10, -5], [0, -20], [-10, 5], [10, 10]];
         spikes.forEach(([sx, sy]) => {
             ctx.beginPath();
-            ctx.arc(sx, sy, 1, 0, Math.PI * 2);
+            ctx.arc(sx, sy, this.frozen ? 2 : 1, 0, Math.PI * 2);
             ctx.fill();
         });
 
@@ -355,6 +386,25 @@ export class Cactus extends Enemy {
         ctx.arc(-5, -5, 2, 0, Math.PI * 2);
         ctx.arc(5, -5, 2, 0, Math.PI * 2);
         ctx.fill();
+
+        // Ice overlay when frozen
+        if (this.frozen) {
+            ctx.filter = 'none';
+            ctx.globalAlpha = 0.4;
+            ctx.fillStyle = '#00BFFF';
+            ctx.beginPath();
+            ctx.arc(0, 0, 25, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Ice sparkles
+            ctx.globalAlpha = 0.8;
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(-12, -18, 2, 0, Math.PI * 2);
+            ctx.arc(12, -8, 2, 0, Math.PI * 2);
+            ctx.arc(-8, 12, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
 
         ctx.restore();
     }
