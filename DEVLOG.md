@@ -1,5 +1,27 @@
 # 開發日誌 (Development Log)
 
+## 2025-12-20 (v2.18.0)
+
+### 🚀 效能優化：空間分割碰撞檢測
+
+將已存在的 `SpatialGrid.js` 整合至 `CollisionSystem.js`，使所有碰撞檢測從 O(N) 降為 O(1) 平均複雜度。
+
+**優化範圍：**
+- 敵人碰撞 (`handleEnemyCollisions`)
+- 問號磚塊 (`handleBlockCollisions`)
+- 平台碰撞 (`handlePlatformCollisions`)
+- 金幣收集 (`handleItemCollisions`)
+- 水管碰撞 (`handleEnvironmentCollisions`)
+
+### 📁 修改檔案
+
+| 檔案 | 狀態 |
+|------|------|
+| `js/CollisionSystem.js` | ✏️ 修改 |
+| `js/main.js` | ✏️ 修改 |
+
+---
+
 ## 2025-12-19 (v2.17.0 ~ v2.17.4)
 
 ### 🎯 本次更新重點

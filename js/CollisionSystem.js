@@ -79,15 +79,17 @@ export class CollisionSystem {
         // Skip if player is already dead or in death sequence
         if (this.game.player.isDead || this.game.isProcessingDeath) return;
 
-        for (let i = this.game.enemies.length - 1; i >= 0; i--) {
-            const enemy = this.game.enemies[i];
+        // Use spatial grid to get only nearby enemies
+        const nearbyEnemies = this.getNearbyEntities(this.game.enemies);
+        for (const enemy of nearbyEnemies) {
 
             if (checkCollision(this.game.player, enemy)) {
                 // Mega Mario Destruction
                 if (this.game.player.isMega) {
                     this.game.addScorePopup(enemy.x, enemy.y, 100);
                     this.game.addParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 8, '#FFD700');
-                    this.game.enemies.splice(i, 1);
+                    const idx = this.game.enemies.indexOf(enemy);
+                    if (idx > -1) this.game.enemies.splice(idx, 1);
                     this.game.score += 100;
                     this.game.updateScore();
                     this.game.playSound('stomp'); // Or kick
@@ -104,7 +106,8 @@ export class CollisionSystem {
 
                     this.game.addScorePopup(enemy.x, enemy.y, 100);
                     this.game.addParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 8, '#FFD700');
-                    this.game.enemies.splice(i, 1);
+                    const idx = this.game.enemies.indexOf(enemy);
+                    if (idx > -1) this.game.enemies.splice(idx, 1);
                     this.game.player.velY = -12 * 0.7;
                     this.game.score += 100;
                     this.game.updateScore();
@@ -116,7 +119,8 @@ export class CollisionSystem {
                     if (result === 'kill') {
                         this.game.addScorePopup(enemy.x, enemy.y, 100);
                         this.game.addParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 8, '#FFD700');
-                        this.game.enemies.splice(i, 1);
+                        const idx = this.game.enemies.indexOf(enemy);
+                        if (idx > -1) this.game.enemies.splice(idx, 1);
                         this.game.score += 100;
                         this.game.updateScore();
                         this.game.playSound('stomp');
@@ -137,8 +141,9 @@ export class CollisionSystem {
     }
 
     handleBlockCollisions() {
-        for (let i = this.game.questionBlocks.length - 1; i >= 0; i--) {
-            const block = this.game.questionBlocks[i];
+        // Use spatial grid to get only nearby blocks
+        const nearbyBlocks = this.getNearbyEntities(this.game.questionBlocks);
+        for (const block of nearbyBlocks) {
 
             // Mega Mario Destruction - destroy blocks on any contact
             if (this.game.player.isMega && checkCollision(this.game.player, block)) {
@@ -150,7 +155,8 @@ export class CollisionSystem {
                 this.game.updateScore();
                 this.game.playSound('bump');
                 this.game.triggerScreenShake(8);
-                this.game.questionBlocks.splice(i, 1);
+                const idx = this.game.questionBlocks.indexOf(block);
+                if (idx > -1) this.game.questionBlocks.splice(idx, 1);
                 continue;
             }
 
@@ -237,8 +243,9 @@ export class CollisionSystem {
         // Mega Mario Destruction - destroy platforms on side/bottom contact
         if (!this.game.player.isMega) return;
 
-        for (let i = this.game.platforms.length - 1; i >= 0; i--) {
-            const platform = this.game.platforms[i];
+        // Use spatial grid to get only nearby platforms
+        const nearbyPlatforms = this.getNearbyEntities(this.game.platforms);
+        for (const platform of nearbyPlatforms) {
 
             // Skip ground platforms (very wide or at GROUND_Y)
             if (platform.width > 500 || platform.y >= this.game.GROUND_Y - 10) continue;
@@ -267,22 +274,24 @@ export class CollisionSystem {
                     this.game.updateScore();
                     this.game.playSound('bump');
                     this.game.triggerScreenShake(6);
-                    this.game.platforms.splice(i, 1);
+                    const idx = this.game.platforms.indexOf(platform);
+                    if (idx > -1) this.game.platforms.splice(idx, 1);
                 }
             }
         }
     }
 
     handleItemCollisions() {
-        // Coins
-        for (let i = this.game.coins.length - 1; i >= 0; i--) {
-            const coin = this.game.coins[i];
+        // Coins - use spatial grid for performance (many coins exist)
+        const nearbyCoins = this.getNearbyEntities(this.game.coins);
+        for (const coin of nearbyCoins) {
             if (!coin.collected && checkCollision(this.game.player, coin)) {
                 coin.collected = true;
 
                 // Release to pool
                 this.game.coinPool.release(coin);
-                this.game.coins.splice(i, 1);
+                const idx = this.game.coins.indexOf(coin);
+                if (idx > -1) this.game.coins.splice(idx, 1);
 
                 this.game.score += 10;
                 this.game.sessionCoins++; // Track session coins
@@ -476,9 +485,9 @@ export class CollisionSystem {
     }
 
     handleEnvironmentCollisions() {
-        // Pipes (Piranha Plants)
-        for (let i = this.game.pipes.length - 1; i >= 0; i--) {
-            const pipe = this.game.pipes[i];
+        // Pipes (Piranha Plants) - use spatial grid for performance
+        const nearbyPipes = this.getNearbyEntities(this.game.pipes);
+        for (const pipe of nearbyPipes) {
 
             // Skip collision if entering/exiting pipe
             if (this.game.player.isEnteringPipe || this.game.player.isExitingPipe) continue;
@@ -517,7 +526,8 @@ export class CollisionSystem {
                 this.game.updateScore();
                 this.game.playSound('bump');
                 this.game.triggerScreenShake(10);
-                this.game.pipes.splice(i, 1);
+                const idx = this.game.pipes.indexOf(pipe);
+                if (idx > -1) this.game.pipes.splice(idx, 1);
                 continue;
             }
 

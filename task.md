@@ -60,6 +60,14 @@
 - [x] 星星 BGM 優化 (tempo 180→200, 更華麗旋律)
 - [x] iOS Safari 橫向模式修復 (svh + safe-area-inset)
 
+## 第十階段：碰撞檢測效能優化 (v2.18.0) ⭐ 2025-12-20
+- [x] 整合 SpatialGrid 至 CollisionSystem.js
+- [x] 敵人碰撞使用空間過濾
+- [x] 問號磚塊碰撞使用空間過濾
+- [x] 金幣收集使用空間過濾
+- [x] 水管碰撞使用空間過濾
+- [x] 平台碰撞使用空間過濾
+
 ---
 
 ## 📋 待辦事項 (未來開發)
@@ -79,5 +87,6 @@
 - [ ] 教學引導優化
 
 ### 效能
-- [ ] Off-screen canvas 進一步優化
+- [x] 空間分割碰撞檢測 (SpatialGrid)
+- [x] Off-screen canvas 背景快取
 - [ ] 敵人 AI 效能優化
