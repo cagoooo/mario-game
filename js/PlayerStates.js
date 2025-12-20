@@ -31,7 +31,9 @@ export class Idle extends State {
 
     handleInput(input) {
         // Horizontal movement
-        if (input.keys['ArrowLeft'] || input.keys['ArrowRight'] || input.touchDirection !== 0 || (input.mouseX !== null && Math.abs(input.mouseX - (this.player.x - this.player.game.camera.x + this.player.width / 2)) > 30)) {
+        // Only use mouseX when in MOUSE mode to avoid keyboard/mouse interference
+        const mouseMoving = input.inputMode === 'MOUSE' && input.mouseX !== null && Math.abs(input.mouseX - (this.player.x - this.player.game.camera.x + this.player.width / 2)) > 30;
+        if (input.keys['ArrowLeft'] || input.keys['ArrowRight'] || input.touchDirection !== 0 || mouseMoving) {
             this.player.setState(states.RUNNING);
         }
         // Jump
@@ -71,7 +73,8 @@ export class Running extends State {
         let isMoving = false;
         if (input.keys['ArrowLeft'] || input.keys['ArrowRight'] || input.touchDirection !== 0) {
             isMoving = true;
-        } else if (input.mouseX !== null && Math.abs(input.mouseX - (this.player.x - this.player.game.camera.x + this.player.width / 2)) > 30) {
+        } else if (input.inputMode === 'MOUSE' && input.mouseX !== null && Math.abs(input.mouseX - (this.player.x - this.player.game.camera.x + this.player.width / 2)) > 30) {
+            // Only use mouseX when in MOUSE mode to avoid keyboard/mouse interference
             isMoving = true;
         }
 

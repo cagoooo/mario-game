@@ -5,6 +5,10 @@ export class InputHandler {
         this.jumpCallback = jumpCallback;
         this.canvasWidth = 800;
 
+        // Input mode: 'KEYBOARD' or 'MOUSE'
+        // Automatically switches based on user input
+        this.inputMode = 'MOUSE';
+
         // Touch direction: -1 = left, 0 = none, 1 = right
         this.touchDirection = 0;
         this.isTouching = false;
@@ -15,6 +19,10 @@ export class InputHandler {
     }
 
     handleKeyDown(e) {
+        // Switch to KEYBOARD mode when movement keys are pressed
+        if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyA', 'KeyD', 'KeyW', 'KeyS'].includes(e.code)) {
+            this.inputMode = 'KEYBOARD';
+        }
         this.keys[e.code] = true;
         if (e.code === 'Space') {
             this.jumpCallback();
@@ -30,9 +38,15 @@ export class InputHandler {
 
         // Mouse move for position tracking - use window to track even outside canvas/over UI
         window.addEventListener('mousemove', e => {
+            const oldMouseX = this.mouseX;
             const rect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / rect.width;
             this.mouseX = (e.clientX - rect.left) * scaleX;
+
+            // Switch to MOUSE mode when mouse moves significantly
+            if (oldMouseX !== null && Math.abs(this.mouseX - oldMouseX) > 10) {
+                this.inputMode = 'MOUSE';
+            }
         });
 
         // Mouse down handler - jump and set direction (replaces click for better responsiveness and to avoid conflicts)
