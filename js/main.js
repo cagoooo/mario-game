@@ -1,8 +1,8 @@
-import { Game } from './Game.js?v=2.24.0';
-import { AssetLoader } from './AssetLoader.js?v=2.24.0';
+import { Game } from './Game.js?v=2.25.0';
+import { AssetLoader } from './AssetLoader.js?v=2.25.0';
 
 window.onload = async function () {
-    console.log('%c Game Version: 2.24.0 (Double Jump, Star Speed, Ice Costume) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: 2.25.0 (Portrait Mode Support, Orientation Unlock) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements
@@ -189,26 +189,12 @@ window.onload = async function () {
         checkOrientation();
     });
 
-    // Orientation Warning
+    // Orientation Check (不阻擋直立遊玩，僅移除此功能)
     const checkOrientation = () => {
-        const warningId = 'orientationWarning';
-        let warning = document.getElementById(warningId);
-
-        if (window.innerHeight > window.innerWidth && (isTouchDevice || isSmallScreen)) {
-            if (!warning) {
-                warning = document.createElement('div');
-                warning.id = warningId;
-                warning.innerHTML = '<div class="rotate-icon">📱</div><p>請將裝置轉為橫向<br>以獲得最佳體驗</p>';
-                document.body.appendChild(warning);
-            }
-            warning.style.display = 'flex';
-            if (game && game.gameRunning && !game.isPaused) {
-                game.pause();
-            }
-        } else {
-            if (warning) {
-                warning.style.display = 'none';
-            }
+        // 直立模式現已開放遊玩，無需顯示旋轉警告
+        const warning = document.getElementById('orientationWarning');
+        if (warning) {
+            warning.style.display = 'none';
         }
     };
 
