@@ -1,6 +1,6 @@
 // Bump CACHE_NAME on every release to invalidate old caches.
 // Single source of truth: js/version.js (GAME_VERSION) — keep in sync.
-const CACHE_NAME = 'mario-game-v2.26.0';
+const CACHE_NAME = 'mario-game-v2.27.0';
 const urlsToCache = [
     './',
     './index.html',
@@ -14,6 +14,7 @@ const urlsToCache = [
     './js/main.js',
     './js/Game.js',
     './js/version.js',
+    './js/Levels.js',
     './js/Player.js',
     './js/PlayerStates.js',
     './js/Background.js',

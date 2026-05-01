@@ -33,14 +33,20 @@ import { Tutorial } from './Tutorial.js';
 import { CONFIG } from './Config.js';
 import { UIManager } from './UIManager.js';
 import { TransitionManager } from './TransitionManager.js';
+import { unlockLevel, getNextLevelId } from './Levels.js';
 
 export class Game {
-    constructor(canvas, uiElements, assetLoader) {
+    constructor(canvas, uiElements, assetLoader, levelConfig = null) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.ui = uiElements;
         this.assetLoader = assetLoader;
         this.images = assetLoader.images;
+
+        // Level mode: { id, biome, name, ... } from Levels.js, or null for Endless Mode
+        this.levelConfig = levelConfig;
+        this.levelMode = !!levelConfig;
+        this.levelCleared = false;
 
         this.width = 800;
         this.height = 400;
@@ -306,9 +312,19 @@ export class Game {
         this.checkpoints = [];
         this.lives = 3;
         this.lastCheckpointX = 0;
-        const biomeKeys = Object.keys(Biomes);
-        this.currentBiome = biomeKeys[Math.floor(Math.random() * biomeKeys.length)];
+        if (this.levelMode && this.levelConfig && Biomes[this.levelConfig.biome]) {
+            this.currentBiome = this.levelConfig.biome;
+        } else {
+            const biomeKeys = Object.keys(Biomes);
+            this.currentBiome = biomeKeys[Math.floor(Math.random() * biomeKeys.length)];
+        }
         this.background.setBiome(this.currentBiome);
+        this.levelCleared = false;
+        this._levelClearedDispatched = false;
+        // Reset boss trigger to default distance for fresh level/restart
+        this.bossTriggerDistance = 5000;
+        this.boss = null;
+        this.bossBattleActive = false;
         this.biomeDistance = 0;
         this.lastGeneratedX = 0;
         this.generateChunk(0, this.CHUNK_SIZE * 2);
@@ -810,6 +826,17 @@ export class Game {
             this.bossBattleActive = false;
             this.boss = null;
             this.gameState = 'OVERWORLD';
+            if (this.levelMode && this.levelCleared && !this._levelClearedDispatched) {
+                this._levelClearedDispatched = true;
+                this.canvas.dispatchEvent(new CustomEvent('marioLevelCleared', {
+                    detail: {
+                        current: this.levelConfig.id,
+                        next: getNextLevelId(this.levelConfig.id),
+                        score: this.score
+                    }
+                }));
+                this.pause();
+            }
             return;
         }
         if (this.boss.alive) {
@@ -984,8 +1011,19 @@ export class Game {
         this.addParticles(this.boss.x, this.boss.y, 50, '#FFD700');
         this.addParticles(this.boss.x, this.boss.y, 30, '#FF4500');
         this.renderDistance = 2000;
-        this.bossTriggerDistance = this.player.x + 5000;
         this.achievementSystem.trackBossKill();
+
+        if (this.levelMode && this.levelConfig && !this.levelCleared) {
+            // Level Mode: first boss defeat = level cleared. Don't queue more bosses.
+            this.levelCleared = true;
+            const nextId = getNextLevelId(this.levelConfig.id);
+            unlockLevel(this.levelConfig.id);  // Mark current as cleared/replayable
+            if (nextId) unlockLevel(nextId);   // Unlock the next level
+            this.onLevelCleared = { current: this.levelConfig.id, next: nextId };
+        } else {
+            // Endless Mode: queue another boss further ahead
+            this.bossTriggerDistance = this.player.x + 5000;
+        }
     }
 
     addScorePopup(x, y, value, isCritical = false) {

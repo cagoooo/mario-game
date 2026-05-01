@@ -15,7 +15,7 @@
   <link rel="icon" type="image/png" href="assets/icon-192.png">
   <link rel="shortcut icon" type="image/png" href="assets/icon-192.png">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="style.css?v=2.26.0">
+  <link rel="stylesheet" href="style.css?v=2.27.0">
 </head>
 
 <body>
@@ -29,6 +29,26 @@
       <p>📱 觸控螢幕：點擊移動 | 點擊跳躍</p>
     </div>
     <button id="startButton">開始遊戲</button>
+  </div>
+
+  <!-- Level Select Screen (NES retro style text menu) -->
+  <div id="levelSelectScreen">
+    <div class="lsTitle">SELECT WORLD</div>
+    <div class="lsSubtitle">↑↓ 選擇 ｜ Enter / 點擊 進入</div>
+    <ul id="levelSelectList"></ul>
+    <button id="levelSelectBack" class="lsBack">← 返回</button>
+  </div>
+
+  <!-- Level Cleared Overlay -->
+  <div id="levelClearedOverlay">
+    <div class="lcTitle">★ STAGE CLEAR ★</div>
+    <div id="lcLevelName" class="lcLevelName">World 1-1</div>
+    <div id="lcScore" class="lcScore">SCORE: 0</div>
+    <div id="lcUnlockMessage" class="lcUnlock"></div>
+    <div class="lcButtons">
+      <button id="lcNextLevelBtn">下一關 ▶</button>
+      <button id="lcMenuBtn">回選單</button>
+    </div>
   </div>
 
   <!-- Game Canvas -->
@@ -99,7 +119,7 @@
     <div id="rightButton" class="controlButton">▶</div>
   </div>
 
-  <script type="module" src="js/main.js?v=2.26.0"></script>
+  <script type="module" src="js/main.js?v=2.27.0"></script>
   <script>
     // Register Service Worker (PWA offline support).
     // CACHE_NAME bump in sw.js handles cache invalidation between versions.

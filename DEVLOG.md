@@ -1,5 +1,36 @@
 # 開發日誌 (Development Log)
 
+## 2026-05-01 (v2.27.0)
+
+### 🎮 關卡選擇系統 + 4 個世界
+
+新玩家流程改成：開始遊戲 → NES 風格選單（World 1-1 ~ 1-4 / Endless Mode）→ 進入關卡。打贏第一隻 Boss 即解鎖下一關，進度寫入 localStorage 持久化。
+
+**設計取捨：**
+- MVP 不動 streaming chunk 架構，關卡 = 鎖定 biome + 顯示名稱
+- World 1-1 PLAINS 草原 ／ 1-2 DESERT 沙漠 ／ 1-3 SNOW 雪地 ／ 1-4 SPOOKY 鬼屋
+- Endless Mode 保留為獨立入口（biome 隨機，原本行為）
+- 真正的 JSON-loaded 固定關卡推遲到 v3.0 build pipeline 之後做
+
+**新增能力：**
+- `js/Levels.js` — LEVELS 常數 + `getUnlockedLevels` / `unlockLevel` / `getNextLevelId`
+- `Game` constructor 新增第 4 參數 `levelConfig`，`levelMode` 為 true 時 `currentBiome` 從隨機改成鎖定
+- `handleBossDefeat` 在 level mode 不再持續刷 boss，改為 dispatch `marioLevelCleared` event
+- `levelClearedOverlay` UI（NES 黃字 + STAGE CLEAR 跳動）
+- 鍵盤導航 ↑↓ Enter Esc，觸控直接點卡片
+
+### 📁 新增/修改檔案
+
+| 檔案 | 狀態 |
+|------|------|
+| `js/Levels.js` | 🆕 新增 |
+| `js/Game.js` | ✏️ levelConfig / levelMode / 通關 event |
+| `js/main.js` | ✏️ 關卡選擇流程接管 |
+| `index.html` | ✏️ 關卡選擇 + 通關 overlay DOM |
+| `style.css` | ✏️ NES retro menu 樣式 |
+
+---
+
 ## 2026-05-01 (v2.26.0)
 
 ### 🧹 技術債三連發

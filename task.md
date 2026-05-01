@@ -1,7 +1,7 @@
 # 🎮 Mario Game 開發進度與優化路線圖
 
-> 最後更新：2026-05-01 ｜ 目前版本：**v2.26.0**
-> 專案規模：45 個 JS 模組、約 13,500 行（含註解）
+> 最後更新：2026-05-01 ｜ 目前版本：**v2.27.0**
+> 專案規模：46 個 JS 模組、約 13,800 行（含註解）
 
 ---
 
@@ -113,6 +113,17 @@
   - 已完成項目（空間分割、JSON 關卡、IceFlower/Cape、Lakitu/Thwomp）標記 done
   - 未完成項目（虛擬搖桿、觸覺回饋、TS 遷移、單元測試）併入下方未來路線
 - [x] **`index.html` style.css / main.js 版本字串 → 2.26.0**
+
+### 第十五階段：關卡選擇 + 4 個世界 (v2.27.0) ⭐ 2026-05-01
+> **痛點**：玩家進遊戲 = 隨機 biome 永久 streaming，沒有「破關」成就感。
+
+- [x] **`js/Levels.js`** — LEVELS 常數 + 解鎖管理 API
+- [x] **NES 風格關卡選擇選單**（黑底黃字、↑↓ Enter 導航）
+- [x] **4 個世界**：World 1-1 PLAINS / 1-2 DESERT / 1-3 SNOW / 1-4 SPOOKY
+- [x] **Endless Mode** 保留為獨立入口（biome 隨機）
+- [x] **`Game` 接受 levelConfig**：levelMode 鎖定 biome + 通關偵測
+- [x] **STAGE CLEAR overlay** + 自動解鎖下一關 + 進度持久化
+- [x] **觸控支援**：直接點卡片進入
 
 ---
 

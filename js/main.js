@@ -1,8 +1,10 @@
 import { Game } from './Game.js';
 import { AssetLoader } from './AssetLoader.js';
+import { GAME_VERSION } from './version.js';
+import { LEVELS, getUnlockedLevels, getLevelById } from './Levels.js';
 
 window.onload = async function () {
-    console.log('%c Game Version: 2.25.0 (Portrait Mode Support, Orientation Unlock) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: ' + GAME_VERSION + ' (Level Select + 4 Worlds) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements
@@ -85,12 +87,190 @@ window.onload = async function () {
 
     let game = null;
 
-    // Start button
+    // ========== Level Select (v2.27.0) ==========
+    const levelSelectScreen = document.getElementById('levelSelectScreen');
+    const levelSelectList = document.getElementById('levelSelectList');
+    const levelSelectBack = document.getElementById('levelSelectBack');
+    const levelClearedOverlay = document.getElementById('levelClearedOverlay');
+    const lcLevelName = document.getElementById('lcLevelName');
+    const lcScore = document.getElementById('lcScore');
+    const lcUnlockMessage = document.getElementById('lcUnlockMessage');
+    const lcNextLevelBtn = document.getElementById('lcNextLevelBtn');
+    const lcMenuBtn = document.getElementById('lcMenuBtn');
+
+    // Defensive: if any level-select DOM element is missing (e.g. stale cached HTML),
+    // skip wiring up the level-select feature and fall back to direct Endless start.
+    const levelSelectDomReady = !!(levelSelectScreen && levelSelectList && levelSelectBack
+        && levelClearedOverlay && lcNextLevelBtn && lcMenuBtn);
+    if (!levelSelectDomReady) {
+        console.warn('[v2.27.0] Level-select DOM not found — likely stale cached index.html. ' +
+            'Hard-refresh (Ctrl+Shift+R) or clear Service Worker to load the new menu.');
+    }
+
+    let selectedIndex = 0;
+    let menuItems = [];
+
+    function buildMenuItems() {
+        const unlocked = getUnlockedLevels();
+        const items = LEVELS.map(lvl => ({
+            type: 'level',
+            level: lvl,
+            unlocked: unlocked.includes(lvl.id)
+        }));
+        items.push({ type: 'endless' });
+        return items;
+    }
+
+    function renderLevelSelect() {
+        menuItems = buildMenuItems();
+        levelSelectList.innerHTML = '';
+        if (selectedIndex >= menuItems.length) selectedIndex = 0;
+        // Default selection: highest unlocked level (or Endless if all cleared)
+        if (selectedIndex === 0) {
+            for (let i = 0; i < menuItems.length; i++) {
+                if (menuItems[i].type === 'level' && menuItems[i].unlocked) {
+                    selectedIndex = i;
+                }
+            }
+        }
+        menuItems.forEach((item, i) => {
+            const li = document.createElement('li');
+            if (item.type === 'level') {
+                li.className = item.unlocked ? 'unlocked' : 'locked';
+                li.innerHTML = `
+                    <span class="lsEmoji">${item.level.emoji}</span>
+                    <span class="lsName">${item.level.name}</span>
+                    <span class="lsSub">${item.level.subtitle}</span>
+                    ${item.unlocked ? '' : '<span class="lsLock">🔒</span>'}
+                `;
+                if (item.unlocked) {
+                    li.addEventListener('click', () => startGame(i));
+                }
+            } else {
+                li.className = 'endless unlocked';
+                li.innerHTML = `
+                    <span class="lsEmoji">∞</span>
+                    <span class="lsName">Endless Mode</span>
+                    <span class="lsSub">無限挑戰</span>
+                `;
+                li.addEventListener('click', () => startGame(i));
+            }
+            if (i === selectedIndex) li.classList.add('selected');
+            levelSelectList.appendChild(li);
+        });
+    }
+
+    function moveSelection(dir) {
+        const start = selectedIndex;
+        do {
+            selectedIndex = (selectedIndex + dir + menuItems.length) % menuItems.length;
+        } while (
+            menuItems[selectedIndex].type === 'level' &&
+            !menuItems[selectedIndex].unlocked &&
+            selectedIndex !== start
+        );
+        renderLevelSelect();
+    }
+
+    function startGame(index) {
+        const item = menuItems[index];
+        if (!item) return;
+        if (item.type === 'level' && !item.unlocked) return;
+
+        levelSelectScreen.classList.remove('active');
+        levelClearedOverlay.classList.remove('active');
+        uiElements.gameOverOverlay.style.display = 'none';
+        uiElements.pauseOverlay.style.display = 'none';
+
+        const levelConfig = (item.type === 'level') ? item.level : null;
+
+        if (game) {
+            // Reuse existing instance to avoid listener accumulation on canvas
+            game.levelConfig = levelConfig;
+            game.levelMode = !!levelConfig;
+            game.levelCleared = false;
+            game._levelClearedDispatched = false;
+            game.restart();
+        } else {
+            game = new Game(canvas, uiElements, assetLoader, levelConfig);
+            window.game = game;
+        }
+
+        canvas.addEventListener('marioLevelCleared', onLevelCleared, { once: true });
+    }
+
+    function onLevelCleared(e) {
+        const { current, next, score } = e.detail;
+        const cleared = getLevelById(current);
+        lcLevelName.textContent = cleared ? `${cleared.name} ${cleared.emoji}` : current;
+        lcScore.textContent = `SCORE: ${score}`;
+        if (next) {
+            const nextLvl = getLevelById(next);
+            lcUnlockMessage.textContent = `🎉 已解鎖 ${nextLvl.name} ${nextLvl.subtitle}！`;
+            lcNextLevelBtn.disabled = false;
+            lcNextLevelBtn.dataset.nextId = next;
+        } else {
+            lcUnlockMessage.textContent = '🏆 全部關卡通關！恭喜大師！';
+            lcNextLevelBtn.disabled = true;
+            lcNextLevelBtn.dataset.nextId = '';
+        }
+        levelClearedOverlay.classList.add('active');
+    }
+
+    function showLevelSelect() {
+        if (game) {
+            game.gameRunning = false;
+            game = null;
+        }
+        uiElements.startScreen.style.display = 'none';
+        uiElements.gameOverOverlay.style.display = 'none';
+        uiElements.pauseOverlay.style.display = 'none';
+        levelClearedOverlay.classList.remove('active');
+        selectedIndex = 0;
+        renderLevelSelect();
+        levelSelectScreen.classList.add('active');
+    }
+
+    if (levelSelectDomReady) {
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (!levelSelectScreen.classList.contains('active')) return;
+            if (e.key === 'ArrowDown') { e.preventDefault(); moveSelection(1); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); moveSelection(-1); }
+            else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startGame(selectedIndex); }
+            else if (e.key === 'Escape') { e.preventDefault(); levelSelectBack.click(); }
+        });
+
+        levelSelectBack.addEventListener('click', () => {
+            levelSelectScreen.classList.remove('active');
+            uiElements.startScreen.style.display = 'flex';
+        });
+
+        lcNextLevelBtn.addEventListener('click', () => {
+            const nextId = lcNextLevelBtn.dataset.nextId;
+            if (!nextId) return;
+            const idx = menuItems.findIndex(it => it.type === 'level' && it.level.id === nextId);
+            if (idx >= 0) {
+                selectedIndex = idx;
+                startGame(idx);
+            }
+        });
+
+        lcMenuBtn.addEventListener('click', () => {
+            showLevelSelect();
+        });
+    }
+
+    // Start button → open level select (or fallback to direct Endless if menu unavailable)
     uiElements.startBtn.addEventListener('click', () => {
         if (!loadedImages) return;
-        uiElements.startScreen.style.display = 'none';
-        game = new Game(canvas, uiElements, assetLoader);
-        window.game = game; // Expose for testing
+        if (levelSelectDomReady) {
+            showLevelSelect();
+        } else {
+            uiElements.startScreen.style.display = 'none';
+            game = new Game(canvas, uiElements, assetLoader, null);
+            window.game = game;
+        }
     });
 
     // Pause button
