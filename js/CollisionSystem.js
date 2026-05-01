@@ -191,41 +191,41 @@ export class CollisionSystem {
                         this.game.updateScore();
                         this.game.playSound('coin');
                     } else if (result.type === 'mushroom') {
-                        const mushroom = new Mushroom(block.x, block.y);
+                        const mushroom = this.game.mushroomPool.get(block.x, block.y);
                         mushroom.spawn();
                         this.game.mushrooms.push(mushroom);
                         this.game.playSound('block');
                     } else if (result.type === 'star') {
-                        const star = new Star(block.x, block.y);
+                        const star = this.game.starPool.get(block.x, block.y);
                         star.spawn();
                         this.game.stars.push(star);
                         this.game.playSound('block');
                     } else if (result.type === 'fireflower') {
-                        const flower = new FireFlower(block.x, block.y);
+                        const flower = this.game.fireFlowerPool.get(block.x, block.y);
                         flower.spawn();
                         this.game.fireflowers.push(flower);
                         this.game.playSound('block');
                     } else if (result.type === 'iceflower') {
-                        const iceflower = new IceFlower(block.x, block.y);
+                        const iceflower = this.game.iceFlowerPool.get(block.x, block.y);
                         iceflower.spawn();
                         this.game.iceflowers.push(iceflower);
                         this.game.playSound('block');
                     } else if (result.type === 'magnet') {
-                        const magnet = new Magnet(block.x, block.y);
+                        const magnet = this.game.magnetPool.get(block.x, block.y);
                         magnet.spawn();
                         this.game.magnets.push(magnet);
                         this.game.playSound('block');
                     } else if (result.type === 'mega_mushroom') {
-                        const mega = new MegaMushroom(block.x, block.y);
+                        const mega = this.game.megaMushroomPool.get(block.x, block.y);
                         mega.spawn();
                         this.game.megaMushrooms.push(mega);
                         this.game.playSound('block');
                     } else if (result.type === 'oneup') {
-                        const oneUp = new OneUpMushroom(block.x, block.y);
+                        const oneUp = this.game.oneUpMushroomPool.get(block.x, block.y);
                         this.game.oneUpMushrooms.push(oneUp);
                         this.game.playSound('block');
                     } else if (result.type === 'cape') {
-                        const cape = new Cape(block.x, block.y);
+                        const cape = this.game.capePool.get(block.x, block.y);
                         this.game.capes.push(cape);
                         this.game.playSound('block');
                     }
@@ -333,6 +333,7 @@ export class CollisionSystem {
                 this.game.addScorePopup(mushroom.x, mushroom.y, 1000);
                 this.game.updateScore();
                 this.game.mushrooms.splice(i, 1);
+                this.game.mushroomPool.release(mushroom);
             }
         }
 
@@ -350,6 +351,7 @@ export class CollisionSystem {
                 if (this.game.player.getStarPower) this.game.player.getStarPower();
                 this.game.firstTimePickupHint('star', '⭐ 無敵！短時間內碰到敵人會直接消滅他們');
                 this.game.stars.splice(i, 1);
+                this.game.starPool.release(star);
             }
         }
 
@@ -374,6 +376,7 @@ export class CollisionSystem {
                     }
                 }
                 this.game.fireflowers.splice(i, 1);
+                this.game.fireFlowerPool.release(flower);
             }
         }
 
@@ -399,6 +402,7 @@ export class CollisionSystem {
                     }
                 }
                 this.game.iceflowers.splice(i, 1);
+                this.game.iceFlowerPool.release(flower);
             }
         }
 
@@ -414,6 +418,7 @@ export class CollisionSystem {
                 if (this.game.player.getMagnetPower) this.game.player.getMagnetPower();
                 this.game.firstTimePickupHint('magnet', '🧲 磁鐵！自動吸附附近金幣');
                 this.game.magnets.splice(i, 1);
+                this.game.magnetPool.release(magnet);
             }
         }
 
@@ -429,6 +434,7 @@ export class CollisionSystem {
                 if (this.game.player.getMegaMushroom) this.game.player.getMegaMushroom();
                 this.game.firstTimePickupHint('mega', '🍄💥 巨大化！可破壞敵人、磚塊、水管！');
                 this.game.megaMushrooms.splice(i, 1);
+                this.game.megaMushroomPool.release(mega);
             }
         }
 
@@ -440,6 +446,7 @@ export class CollisionSystem {
                 this.game.addLife();
                 this.game.addParticles(oneUp.x + oneUp.width / 2, oneUp.y + oneUp.height / 2, 12, '#32CD32');
                 this.game.oneUpMushrooms.splice(i, 1);
+                this.game.oneUpMushroomPool.release(oneUp);
             }
         }
 
@@ -457,6 +464,7 @@ export class CollisionSystem {
                 if (this.game.player.getCape) this.game.player.getCape();
                 this.game.firstTimePickupHint('cape', '🦸 披風滑翔！空中按住空白鍵減緩下降');
                 this.game.capes.splice(i, 1);
+                this.game.capePool.release(cape);
             }
         }
 

@@ -1,10 +1,15 @@
 // 1UP Mushroom - Gives an extra life when collected
 export class OneUpMushroom {
     constructor(x, y, groundY = 350) {
-        this.x = x;
-        this.y = y;
         this.width = 28;
         this.height = 28;
+        this.gravity = 0.4; // Slightly lower gravity
+        this.reset(x, y, groundY);
+    }
+
+    reset(x, y, groundY = 350) {
+        this.x = x;
+        this.y = y;
         this.velX = 1; // Slower horizontal speed (was 2)
         this.velY = 0;
         this.active = true;
@@ -12,7 +17,6 @@ export class OneUpMushroom {
         this.spawning = true;
         this.spawnProgress = 0;
         this.originalY = y;
-        this.gravity = 0.4; // Slightly lower gravity
         this.groundY = groundY; // Ground level to prevent falling off screen
     }
 

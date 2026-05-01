@@ -6,7 +6,7 @@
 // ─────────────────────────────────────────────────────────────
 // Bumping rules (enforced by scripts/bump-version.js):
 //   js/version.js GAME_VERSION  ←→  sw.js CACHE_VERSION  ←→  version.json
-const CACHE_VERSION = '2.30.0';
+const CACHE_VERSION = '2.30.1';
 const STATIC_CACHE = `mario-static-v${CACHE_VERSION}`;
 const HTML_CACHE = `mario-html-v${CACHE_VERSION}`;
 

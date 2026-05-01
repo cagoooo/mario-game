@@ -107,6 +107,16 @@ export class Game {
             (i, x, y, direction) => i.reset(x, y, direction)
         );
 
+        // Power-up pools (v2.30.1) — block hits get from pool, pickup releases back
+        this.mushroomPool = new ObjectPool(() => new Mushroom(0, 0), (o, x, y) => o.reset(x, y));
+        this.starPool = new ObjectPool(() => new Star(0, 0), (o, x, y) => o.reset(x, y));
+        this.fireFlowerPool = new ObjectPool(() => new FireFlower(0, 0), (o, x, y) => o.reset(x, y));
+        this.iceFlowerPool = new ObjectPool(() => new IceFlower(0, 0), (o, x, y) => o.reset(x, y));
+        this.capePool = new ObjectPool(() => new Cape(0, 0), (o, x, y) => o.reset(x, y));
+        this.magnetPool = new ObjectPool(() => new Magnet(0, 0), (o, x, y) => o.reset(x, y));
+        this.megaMushroomPool = new ObjectPool(() => new MegaMushroom(0, 0), (o, x, y) => o.reset(x, y));
+        this.oneUpMushroomPool = new ObjectPool(() => new OneUpMushroom(0, 0), (o, x, y) => o.reset(x, y));
+
         this.particleSystem = new ParticleSystem();
         this.lightingSystem = new LightingSystem(this);
         this.weatherSystem = new WeatherSystem(this);
@@ -318,6 +328,15 @@ export class Game {
         if (this.coins) this.coins.forEach(c => this.coinPool.release(c));
         this.coins = [];
         this.questionBlocks = [];
+        // Release pooled power-ups before clearing arrays (v2.30.1)
+        if (this.mushrooms) this.mushrooms.forEach(o => this.mushroomPool.release(o));
+        if (this.stars) this.stars.forEach(o => this.starPool.release(o));
+        if (this.fireflowers) this.fireflowers.forEach(o => this.fireFlowerPool.release(o));
+        if (this.iceflowers) this.iceflowers.forEach(o => this.iceFlowerPool.release(o));
+        if (this.magnets) this.magnets.forEach(o => this.magnetPool.release(o));
+        if (this.megaMushrooms) this.megaMushrooms.forEach(o => this.megaMushroomPool.release(o));
+        if (this.oneUpMushrooms) this.oneUpMushrooms.forEach(o => this.oneUpMushroomPool.release(o));
+        if (this.capes) this.capes.forEach(o => this.capePool.release(o));
         this.mushrooms = [];
         this.stars = [];
         this.fireflowers = [];
@@ -1372,20 +1391,27 @@ export class Game {
             }
         }
 
+        // Offscreen cleanup of power-ups: release back to pool (v2.30.1)
         for (let i = this.mushrooms.length - 1; i >= 0; i--) {
-            if (this.mushrooms[i].x + this.mushrooms[i].width < minX) {
+            const m = this.mushrooms[i];
+            if (m.x + m.width < minX) {
+                this.mushroomPool.release(m);
                 this.mushrooms.splice(i, 1);
             }
         }
 
         for (let i = this.stars.length - 1; i >= 0; i--) {
-            if (this.stars[i].x + this.stars[i].width < minX) {
+            const s = this.stars[i];
+            if (s.x + s.width < minX) {
+                this.starPool.release(s);
                 this.stars.splice(i, 1);
             }
         }
 
         for (let i = this.fireflowers.length - 1; i >= 0; i--) {
-            if (this.fireflowers[i].x + this.fireflowers[i].width < minX) {
+            const f = this.fireflowers[i];
+            if (f.x + f.width < minX) {
+                this.fireFlowerPool.release(f);
                 this.fireflowers.splice(i, 1);
             }
         }
@@ -1396,33 +1422,42 @@ export class Game {
             }
         }
 
-        // === Additional cleanup for performance ===
         for (let i = this.iceflowers.length - 1; i >= 0; i--) {
-            if (this.iceflowers[i].x + this.iceflowers[i].width < minX) {
+            const f = this.iceflowers[i];
+            if (f.x + f.width < minX) {
+                this.iceFlowerPool.release(f);
                 this.iceflowers.splice(i, 1);
             }
         }
 
         for (let i = this.magnets.length - 1; i >= 0; i--) {
-            if (this.magnets[i].x + this.magnets[i].width < minX) {
+            const m = this.magnets[i];
+            if (m.x + m.width < minX) {
+                this.magnetPool.release(m);
                 this.magnets.splice(i, 1);
             }
         }
 
         for (let i = this.megaMushrooms.length - 1; i >= 0; i--) {
-            if (this.megaMushrooms[i].x + this.megaMushrooms[i].width < minX) {
+            const m = this.megaMushrooms[i];
+            if (m.x + m.width < minX) {
+                this.megaMushroomPool.release(m);
                 this.megaMushrooms.splice(i, 1);
             }
         }
 
         for (let i = this.oneUpMushrooms.length - 1; i >= 0; i--) {
-            if (this.oneUpMushrooms[i].x + this.oneUpMushrooms[i].width < minX) {
+            const m = this.oneUpMushrooms[i];
+            if (m.x + m.width < minX) {
+                this.oneUpMushroomPool.release(m);
                 this.oneUpMushrooms.splice(i, 1);
             }
         }
 
         for (let i = this.capes.length - 1; i >= 0; i--) {
-            if (this.capes[i].x + this.capes[i].width < minX) {
+            const c = this.capes[i];
+            if (c.x + c.width < minX) {
+                this.capePool.release(c);
                 this.capes.splice(i, 1);
             }
         }

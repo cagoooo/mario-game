@@ -1,4 +1,4 @@
 {
-    "version": "2.30.0",
-    "notes": "ScorePopup 池化 + 修重複 update 迴圈 + 物件池稽核"
+    "version": "2.30.1",
+    "notes": "Power-up 池化（8 種）：完成 v2.30.0 收尾"
 }

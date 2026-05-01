@@ -1,12 +1,15 @@
 export class FireFlower {
     constructor(x, y) {
-        this.x = x;
-        this.y = y;
         this.width = 40;
         this.height = 40;
+        this.reset(x, y);
+    }
+
+    reset(x, y) {
+        this.x = x;
+        this.y = y;
         this.active = true;
         this.collected = false;
-
         this.spawning = true;
         this.spawnY = y - 32;
         this.spawnTimer = 0;

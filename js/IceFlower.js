@@ -7,20 +7,20 @@
 
 export class IceFlower {
     constructor(x, y) {
-        this.x = x;
-        this.y = y;
         this.width = 28;
         this.height = 32;
+        this.reset(x, y);
+    }
+
+    reset(x, y) {
+        this.x = x;
+        this.y = y;
         this.active = true;
         this.collected = false;
-
-        // Spawn animation
         this.spawning = true;
         this.spawnY = y;
         this.targetY = y - 32;
         this.spawnProgress = 0;
-
-        // Animation
         this.animationFrame = 0;
         this.animationTimer = 0;
         this.glowPhase = 0;

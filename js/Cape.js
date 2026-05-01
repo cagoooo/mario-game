@@ -31,6 +31,8 @@ export class Cape {
         this.collected = false;
         this.velX = 2;
         this.velY = 0;
+        this.floatOffset = 0;
+        this.animationTick = 0;
         this.sparkles = [];
     }
 

@@ -1,9 +1,14 @@
 export class MegaMushroom {
     constructor(x, y) {
-        this.x = x;
-        this.y = y;
         this.width = 60; // Bigger than normal (40)
         this.height = 60;
+        this.GRAVITY = 0.4; // Heavier
+        this.reset(x, y);
+    }
+
+    reset(x, y) {
+        this.x = x;
+        this.y = y;
         this.velX = 1.5; // Slower
         this.velY = 0;
         this.collected = false;
@@ -11,7 +16,6 @@ export class MegaMushroom {
         this.spawnY = y;
         this.targetY = y - 50;
         this.spawning = true;
-        this.GRAVITY = 0.4; // Heavier
     }
 
     spawn() {

@@ -1,19 +1,20 @@
 export class Star {
     constructor(x, y) {
-        this.x = x;
-        this.y = y;
         this.width = 40;
         this.height = 40;
-        this.active = true;
-        this.collected = false;
-
-        // Physics
-        this.velX = 2;
-        this.velY = -5;
         this.gravity = 0.5;
         this.bounceForce = -8;
-        this.grounded = false;
+        this.reset(x, y);
+    }
 
+    reset(x, y) {
+        this.x = x;
+        this.y = y;
+        this.active = true;
+        this.collected = false;
+        this.velX = 2;
+        this.velY = -5;
+        this.grounded = false;
         this.spawning = true;
         this.spawnY = y - 32;
         this.spawnTimer = 0;

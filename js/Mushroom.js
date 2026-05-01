@@ -1,20 +1,21 @@
 export class Mushroom {
     constructor(x, y) {
-        this.x = x;
-        this.y = y;
         this.width = 40;
         this.height = 40;
+        this.GRAVITY = 0.3;
+        this.reset(x, y);
+    }
+
+    reset(x, y) {
+        this.x = x;
+        this.y = y;
         this.velX = 2;
         this.velY = 0;
         this.collected = false;
         this.active = false;
         this.spawnY = y;
         this.targetY = y - 30;
-
-        // Spawning animation
         this.spawning = true;
-
-        this.GRAVITY = 0.3;
     }
 
     spawn() {
