@@ -15,7 +15,7 @@
   <link rel="icon" type="image/png" href="assets/icon-192.png">
   <link rel="shortcut icon" type="image/png" href="assets/icon-192.png">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="style.css?v=2.25.0">
+  <link rel="stylesheet" href="style.css?v=2.26.0">
 </head>
 
 <body>
@@ -99,15 +99,15 @@
     <div id="rightButton" class="controlButton">▶</div>
   </div>
 
-  <script type="module" src="js/main.js?v=2.25.0"></script>
+  <script type="module" src="js/main.js?v=2.26.0"></script>
   <script>
-    // Unregister Service Worker to prevent caching issues during development/debugging
+    // Register Service Worker (PWA offline support).
+    // CACHE_NAME bump in sw.js handles cache invalidation between versions.
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function (registrations) {
-        for (let registration of registrations) {
-          registration.unregister();
-          console.log('Service Worker unregistered');
-        }
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('[SW] registered, scope:', reg.scope))
+          .catch(err => console.warn('[SW] registration failed:', err));
       });
     }
 

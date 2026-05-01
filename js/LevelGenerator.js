@@ -1,9 +1,9 @@
-import { generatePlatforms } from './Platform.js?v=1.6.22';
-import { createEnemies } from './Enemy.js?v=1.9.35';
-import { generateCoins } from './Coin.js?v=1.6.22';
-import { generateQuestionBlocks } from './QuestionBlock.js?v=1.6.22';
-import { generatePipes } from './Pipe.js?v=1.6.22';
-import { Cannon } from './Cannon.js?v=1.9.35';
+import { generatePlatforms } from './Platform.js';
+import { createEnemies } from './Enemy.js';
+import { generateCoins } from './Coin.js';
+import { generateQuestionBlocks } from './QuestionBlock.js';
+import { generatePipes } from './Pipe.js';
+import { Cannon } from './Cannon.js';
 
 export class LevelGenerator {
     constructor() {

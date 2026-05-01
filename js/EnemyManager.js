@@ -1,5 +1,5 @@
-import { ObjectPool } from './ObjectPool.js?v=1.8.0';
-import { Enemy, Koopa, FlyingEnemy, Cactus, Yeti, Ghost, HammerBro } from './Enemy.js?v=1.9.35';
+import { ObjectPool } from './ObjectPool.js';
+import { Enemy, Koopa, FlyingEnemy, Cactus, Yeti, Ghost, HammerBro } from './Enemy.js';
 
 export class EnemyManager {
     constructor() {

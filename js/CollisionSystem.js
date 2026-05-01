@@ -1,13 +1,13 @@
-import { checkCollision } from './utils.js?v=2.17.0';
-import { Mushroom } from './Mushroom.js?v=2.17.0';
-import { Star } from './Star.js?v=2.17.0';
-import { FireFlower } from './FireFlower.js?v=2.17.0';
-import { IceFlower } from './IceFlower.js?v=2.17.0';
-import { Magnet } from './Magnet.js?v=2.17.0';
-import { MegaMushroom } from './MegaMushroom.js?v=2.17.0';
-import { OneUpMushroom } from './OneUpMushroom.js?v=2.17.0';
-import { Cape } from './Cape.js?v=2.17.0';
-import { SpatialGrid } from './SpatialGrid.js?v=2.17.0';
+import { checkCollision } from './utils.js';
+import { Mushroom } from './Mushroom.js';
+import { Star } from './Star.js';
+import { FireFlower } from './FireFlower.js';
+import { IceFlower } from './IceFlower.js';
+import { Magnet } from './Magnet.js';
+import { MegaMushroom } from './MegaMushroom.js';
+import { OneUpMushroom } from './OneUpMushroom.js';
+import { Cape } from './Cape.js';
+import { SpatialGrid } from './SpatialGrid.js';
 
 export class CollisionSystem {
     constructor(game) {

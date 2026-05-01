@@ -1,4 +1,4 @@
-import { ObjectPool } from './ObjectPool.js?v=1.8.0';
+import { ObjectPool } from './ObjectPool.js';
 
 // Enhanced Particle Types with special effects
 const PARTICLE_PRESETS = {

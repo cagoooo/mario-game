@@ -1,4 +1,4 @@
-import { Enemy } from './Enemy.js?v=1.9.27';
+import { Enemy } from './Enemy.js';
 
 // Base Boss class with shared functionality
 export class Boss extends Enemy {

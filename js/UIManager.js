@@ -6,7 +6,7 @@
  * @version 2.8.0
  */
 
-import { CONFIG } from './Config.js?v=2.8.0';
+import { CONFIG } from './Config.js';
 
 export class UIManager {
     constructor(game) {

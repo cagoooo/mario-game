@@ -1,5 +1,62 @@
 # 開發日誌 (Development Log)
 
+## 2026-05-01 (v2.26.0)
+
+### 🧹 技術債三連發
+
+清理過去 13 版累積下來的快取機制腐朽 — 全程不影響玩家可見行為，但讓 PWA 真正能跑起來、未來改版不再每次手改 import 版本字串。
+
+**起因（已發現的隱藏 bug）：**
+- Game.js 等 13 個檔散落 `?v=1.6.22` ~ `?v=2.25.0` 共 13 種版本字串，許多版本根本不對應任何實際發版
+- sw.js 的 `urlsToCache` 寫了 3 個錯誤路徑：
+  - `./css/style.css` — 該資料夾根本不存在（實際在根目錄）
+  - `./icon-192.png` — 該檔案在 `./assets/` 底下
+  - `./icon-512.png` — 檔案不存在
+  - 漏掉 `./js/Platform.js`（被 LevelLoader / LevelGenerator import）
+- `cache.addAll()` 是原子操作，只要一個 fail 整批 fail — 等於 PWA 從未成功 install
+- index.html line 105 ~ 112 又把 SW 自動 unregister，所以這個 bug 從來沒被注意到
+
+**變更內容：**
+- 🆕 建立 `js/version.js` — `export const GAME_VERSION = '2.26.0'`，作為單一版本號真相
+- ✏️ 移除 11 個 JS 檔的 import `?v=X.Y.Z` 字串（共 80+ 處）
+  - 動機：ES 靜態 import 不能用模板字串；繼續硬編版本只會持續腐爛
+  - 改由 SW `CACHE_NAME` 與 index.html 的 `style.css?v=` / `main.js?v=` 兩個入口統一管控
+- ✏️ sw.js：修正 3 個錯誤路徑 + 補上漏掉的檔案 + `CACHE_NAME` 升至 `mario-game-v2.26.0`
+- ✏️ index.html：`style.css?v=2.25.0` 與 `main.js?v=2.25.0` → `2.26.0`
+- 🗑️ 刪除過期的 `docs/optimization_roadmap_v2.8.0.md`（內容多已實作完，殘餘項目已併入 task.md）
+
+**未處理（記錄於 task.md 技術債清單）：**
+- index.html 的 SW unregister hack 還在 — 真正部署時 PWA 還是不會生效，等下次穩定版再決定怎麼處理
+- sw.js cache list 仍需手動維護 — 待 v2.30.0 build pipeline 解
+
+### 📁 修改檔案
+
+| 檔案 | 狀態 |
+|------|------|
+| `js/version.js` | 🆕 新增 |
+| `js/Game.js` | ✏️ 修改（移除 35 個版本字串） |
+| `js/CollisionSystem.js` | ✏️ 修改（移除 10 個） |
+| `js/EnemyManager.js` | ✏️ 修改 |
+| `js/main.js` | ✏️ 修改 |
+| `js/Boss.js` | ✏️ 修改 |
+| `js/LevelLoader.js` | ✏️ 修改 |
+| `js/LevelGenerator.js` | ✏️ 修改 |
+| `js/ParticleSystem.js` | ✏️ 修改 |
+| `js/Player.js` | ✏️ 修改 |
+| `js/TransitionManager.js` | ✏️ 修改 |
+| `js/UIManager.js` | ✏️ 修改 |
+| `sw.js` | ✏️ 重寫 |
+| `index.html` | ✏️ 修改 |
+| `task.md` | ✏️ 大幅更新（新增第十四階段 + 階段重編號） |
+| `docs/optimization_roadmap_v2.8.0.md` | 🗑️ 刪除 |
+
+### 🔧 鐵則（v2.26.0 起）
+
+> **改版時 `js/version.js` 的 `GAME_VERSION` 與 `sw.js` 的 `CACHE_NAME` 必須同步。**
+> 這兩個是僅剩的版本號真相 — 之後就只改這兩處。
+
+---
+
 ## 2026-04-01 (v2.25.0)
 
 ### 📱 開放直立畫面遊玩

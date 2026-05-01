@@ -1,5 +1,5 @@
-import { Game } from './Game.js?v=2.25.0';
-import { AssetLoader } from './AssetLoader.js?v=2.25.0';
+import { Game } from './Game.js';
+import { AssetLoader } from './AssetLoader.js';
 
 window.onload = async function () {
     console.log('%c Game Version: 2.25.0 (Portrait Mode Support, Orientation Unlock) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');

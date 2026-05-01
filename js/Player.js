@@ -1,6 +1,6 @@
-import { checkCollision } from './utils.js?v=1.6.22';
-import { Idle, Running, Jumping, Falling, Dead, PipeState } from './PlayerStates.js?v=1.9.26';
-import { createMarioAnimator } from './SpriteAnimator.js?v=2.0.0';
+import { checkCollision } from './utils.js';
+import { Idle, Running, Jumping, Falling, Dead, PipeState } from './PlayerStates.js';
+import { createMarioAnimator } from './SpriteAnimator.js';
 
 export class Player {
     constructor(game, x, y, spriteSheet) {

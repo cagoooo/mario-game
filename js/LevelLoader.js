@@ -6,10 +6,10 @@
  * @version 2.9.0
  */
 
-import { Platform } from './Platform.js?v=2.9.0';
-import { Coin } from './Coin.js?v=2.9.0';
-import { QuestionBlock } from './QuestionBlock.js?v=2.9.0';
-import { Pipe } from './Pipe.js?v=2.9.0';
+import { Platform } from './Platform.js';
+import { Coin } from './Coin.js';
+import { QuestionBlock } from './QuestionBlock.js';
+import { Pipe } from './Pipe.js';
 
 export class LevelLoader {
     constructor(game) {
