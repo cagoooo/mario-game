@@ -1,5 +1,49 @@
 # 開發日誌 (Development Log)
 
+## 2026-05-01 (v2.30.0)
+
+### 🏊 物件池全面化（部分；含稽核）
+
+P1 第一發。原 task.md 計畫包含粒子/Fireball/Iceball/Coin 池化 — 但**稽核後發現它們早已在 v2.18 之前完成**。實際剩下的 unpooled 熱迴圈只剩 ScorePopup。
+
+**稽核結果（誰已經池化）：**
+
+| 物件 | 池化狀態 | 何時做的 |
+|---|---|---|
+| 粒子（150 上限） | ✓ | ParticleSystem.js 自帶 ObjectPool |
+| Coin | ✓ | 早期 |
+| Fireball / Iceball | ✓ | 早期 |
+| 7 種敵人 | ✓ | EnemyManager.js 早期 |
+| **ScorePopup** | ❌ → ✓ | **本版** |
+| 8 種 power-up | ❌ → 推遲 | 投入產出比太低（每關 ~30 次 vs ScorePopup 每秒 5+） |
+
+**ScorePopup 池化：**
+- 之前 `addScorePopup()` 每呼叫一次 `push({ x, y, value, life, velocity, isCritical })`
+- 在金幣/敵人/Boss 擊敗等 hot loop 內每秒 5+ 次 = 每分鐘 300+ 個 GC 物件
+- 現在用 `scorePopupPool.get()` 取池中物件 → 過期時 `release()` 回去
+
+**🐛 順手抓到的 bug：**
+- `Game.js` 內 `scorePopups` 被**同樣的 update loop 跑了兩遍**（line 606 與 1243），等於 popup 壽命減半 + CPU 浪費
+- 移除 line 1243 那段重複碼，留一份註解說明歷史
+
+**延遲到 v2.30.1：**
+- 8 種 power-up 池化（Mushroom/Star/FireFlower/IceFlower/Cape/Magnet/MegaMushroom/OneUpMushroom）
+- 需要為每個類別加 `reset(x, y)` 方法 — 大約 ~30 分鐘 refactor
+- 因為頻率低（每關 ~30 次）暫時不痛，等 build pipeline 後一併重構
+
+### 📁 修改檔案
+
+| 檔案 | 狀態 |
+|------|------|
+| `js/Game.js` | ✏️ scorePopupPool 實作；addScorePopup 用池；release 在 update + initGame；移除重複 update loop |
+| `js/version.js` / `sw.js` / `version.json` / `index.html` | ✏️ bump-version.js 同步 |
+
+### 📝 教訓
+
+**做之前先稽核** — 原 task.md 列了 4 個池化目標但 3 個其實做完了；如果直接動手會做白工。下次 P1 工作前都要先 grep + 讀現況。
+
+---
+
 ## 2026-05-01 (v2.29.0)
 
 ### 🏅 成就系統內容擴充

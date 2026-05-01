@@ -1,4 +1,4 @@
 {
-    "version": "2.29.0",
-    "notes": "成就系統內容擴充：10 個新成就 + 隱藏成就 + 成就頁 Modal"
+    "version": "2.30.0",
+    "notes": "ScorePopup 池化 + 修重複 update 迴圈 + 物件池稽核"
 }

@@ -84,7 +84,13 @@ export class Game {
         this.isMuted = localStorage.getItem('marioMuted') === 'true';
 
         this.scorePopups = [];
-        this.scorePopupPool = [];
+        this.scorePopupPool = new ObjectPool(
+            () => ({ x: 0, y: 0, value: 0, life: 0, velocity: 0, isCritical: false }),
+            (p, x, y, value, isCritical = false) => {
+                p.x = x; p.y = y; p.value = value;
+                p.life = 60; p.velocity = -2; p.isCritical = isCritical;
+            }
+        );
 
         this.coinPool = new ObjectPool(
             () => new Coin(0, 0),
@@ -356,6 +362,7 @@ export class Game {
         this.isNewHighScore = false;
         this.camera = { x: 0, y: 0 };
         this.screenShake = { x: 0, y: 0, intensity: 0 };
+        if (this.scorePopups) this.scorePopups.forEach(p => this.scorePopupPool.release(p));
         this.scorePopups = [];
         this.particleSystem.activeParticles = [];
         this.updateScore();
@@ -608,6 +615,7 @@ export class Game {
             popup.y += popup.velocity;
             popup.life--;
             if (popup.life <= 0) {
+                this.scorePopupPool.release(popup);
                 this.scorePopups.splice(i, 1);
             }
         }
@@ -1050,14 +1058,7 @@ export class Game {
     }
 
     addScorePopup(x, y, value, isCritical = false) {
-        this.scorePopups.push({
-            x: x,
-            y: y,
-            value: value,
-            life: 60,
-            velocity: -2,
-            isCritical: isCritical
-        });
+        this.scorePopups.push(this.scorePopupPool.get(x, y, value, isCritical));
     }
 
     draw() {
@@ -1238,15 +1239,8 @@ export class Game {
             }
         }
 
-        // Score popups are now drawn by UIManager
-        // Update popup positions and lifetimes
-        for (let i = this.scorePopups.length - 1; i >= 0; i--) {
-            this.scorePopups[i].y += this.scorePopups[i].velocity;
-            this.scorePopups[i].life--;
-            if (this.scorePopups[i].life <= 0) {
-                this.scorePopups.splice(i, 1);
-            }
-        }
+        // Score popups: update happens once in update() loop (was duplicated here pre-v2.30.0).
+        // UIManager draws them; we no longer mutate them in draw().
 
         this.mushrooms.forEach(mushroom => {
             if (isEntityVisible(mushroom, this.camera, this.width, this.height)) {
