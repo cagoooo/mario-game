@@ -1,7 +1,7 @@
 # 🎮 Mario Game 開發進度與優化路線圖
 
-> 最後更新：2026-05-01 ｜ 目前版本：**v2.32.0**
-> 專案規模：49 個 JS 模組、約 14,800 行（含註解）
+> 最後更新：2026-05-01 ｜ 目前版本：**v2.33.0**
+> 專案規模：50 個 JS 模組、約 14,800 行（含註解）
 
 ---
 
@@ -185,6 +185,18 @@
 - [x] **改造範圍**：AchievementSystem / Game / Levels 所有寫入走 idleSave
 - [x] **visibilitychange + pagehide**：關 tab 自動 flushSaves
 - [x] **Game.pause() 主動 save**：暫停就保存進度
+
+### 第二十三階段：敵人 AI 抽象化 (v2.33.0) ⭐ 2026-05-01
+> **動機**：稽核 1280 行 Enemy.js — 既有繼承設計已乾淨，行為樹是 over-engineering。但有真實重複碼可抽。
+
+- [x] **`js/EnemyBehaviors.js`**：drawFrozenOverlay / getPlayerDistance / getPlayerDirection / chasePlayerIfNear
+- [x] **3 處冰晶 overlay 抽出**（Goomba/Koopa/Cactus 各 17 行 → 1 行）
+- [x] **Ghost / Lakitu / Thwomp 用 chase helper**（去除 inline player tracking 重複）
+- [x] **約 50 行重複碼消除**
+
+### 待做（推遲到 v3.0+）
+- [ ] **完整 EnemyBehavior interface + 行為樹**：對 9 個敵人規模 over-engineering，等真有 30+ 敵人再做
+- [ ] **HammerBro 抽象化**：攻擊狀態 + hammer 投擲邏輯較複雜，獨立任務
 
 ---
 

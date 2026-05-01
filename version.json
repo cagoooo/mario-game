@@ -1,4 +1,4 @@
 {
-    "version": "2.32.0",
-    "notes": "Save 可靠性：idleSave + visibilitychange + pause 自動存"
+    "version": "2.33.0",
+    "notes": "敵人 AI 抽象化：抽出共用 frozen overlay + chase helpers，去除 ~50 行重複"
 }

@@ -1,3 +1,5 @@
+import { drawFrozenOverlay, getPlayerDistance, getPlayerDirection, chasePlayerIfNear } from './EnemyBehaviors.js';
+
 // Base Enemy class (Goomba)
 export class Enemy {
     constructor(x, y, speed, direction, spriteSheet) {
@@ -121,23 +123,7 @@ export class Enemy {
         ctx.fillRect(4 - footOffset, 15, 8, 5);
 
         // Ice crystal overlay when frozen
-        if (this.frozen) {
-            ctx.filter = 'none';
-            ctx.globalAlpha = 0.4;
-            ctx.fillStyle = '#00BFFF';
-            ctx.beginPath();
-            ctx.arc(0, 0, 20, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Ice sparkles
-            ctx.globalAlpha = 0.8;
-            ctx.fillStyle = '#FFFFFF';
-            ctx.beginPath();
-            ctx.arc(-8, -10, 2, 0, Math.PI * 2);
-            ctx.arc(10, -5, 2, 0, Math.PI * 2);
-            ctx.arc(-5, 8, 2, 0, Math.PI * 2);
-            ctx.fill();
-        }
+        if (this.frozen) drawFrozenOverlay(ctx, 20);
 
         ctx.restore();
     }
@@ -227,23 +213,7 @@ export class Koopa extends Enemy {
         }
 
         // Ice overlay when frozen
-        if (this.frozen) {
-            ctx.filter = 'none';
-            ctx.globalAlpha = 0.4;
-            ctx.fillStyle = '#00BFFF';
-            ctx.beginPath();
-            ctx.arc(0, 0, 22, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Ice sparkles
-            ctx.globalAlpha = 0.8;
-            ctx.fillStyle = '#FFFFFF';
-            ctx.beginPath();
-            ctx.arc(-10, -12, 2, 0, Math.PI * 2);
-            ctx.arc(12, -3, 2, 0, Math.PI * 2);
-            ctx.arc(-6, 10, 2, 0, Math.PI * 2);
-            ctx.fill();
-        }
+        if (this.frozen) drawFrozenOverlay(ctx, 22, [[-10, -12], [12, -3], [-6, 10]]);
 
         ctx.restore();
     }
@@ -388,23 +358,7 @@ export class Cactus extends Enemy {
         ctx.fill();
 
         // Ice overlay when frozen
-        if (this.frozen) {
-            ctx.filter = 'none';
-            ctx.globalAlpha = 0.4;
-            ctx.fillStyle = '#00BFFF';
-            ctx.beginPath();
-            ctx.arc(0, 0, 25, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Ice sparkles
-            ctx.globalAlpha = 0.8;
-            ctx.fillStyle = '#FFFFFF';
-            ctx.beginPath();
-            ctx.arc(-12, -18, 2, 0, Math.PI * 2);
-            ctx.arc(12, -8, 2, 0, Math.PI * 2);
-            ctx.arc(-8, 12, 2, 0, Math.PI * 2);
-            ctx.fill();
-        }
+        if (this.frozen) drawFrozenOverlay(ctx, 25, [[-12, -18], [12, -8], [-8, 12]]);
 
         ctx.restore();
     }
@@ -526,17 +480,8 @@ export class Ghost extends Enemy {
         this.y = this.baseY + Math.sin(this.floatOffset) * 10;
 
         if (player) {
-            const dx = player.x - this.x;
-            const dist = Math.abs(dx);
-
-            // Only chase if within range
-            if (dist < 400) {
-                this.x += Math.sign(dx) * 0.5; // Very slow chase
-                this.direction = Math.sign(dx);
-            } else {
-                // Idle wander
-                this.x += this.direction * 0.2;
-            }
+            const chased = chasePlayerIfNear(this, player, 0.5, 400);
+            if (!chased) this.x += this.direction * 0.2; // idle wander
         } else {
             this.x += this.direction * 0.5;
         }
@@ -890,14 +835,10 @@ export class Lakitu extends Enemy {
         this.floatOffset += 0.03;
         this.y = this.baseY + Math.sin(this.floatOffset) * 15;
 
-        // Follow player horizontally if nearby
+        // Follow player horizontally if nearby, else patrol within range
         if (player) {
-            const dx = player.x - this.x;
-            if (Math.abs(dx) < 400) {
-                this.x += Math.sign(dx) * this.speed * 0.5;
-                this.direction = Math.sign(dx);
-            } else {
-                // Patrol
+            const chased = chasePlayerIfNear(this, player, this.speed * 0.5, 400);
+            if (!chased) {
                 this.x += this.direction * this.speed;
                 if (Math.abs(this.x - this.startX) > this.patrolRange) {
                     this.direction *= -1;
@@ -1110,9 +1051,8 @@ export class Thwomp extends Enemy {
         if (this.state === 'waiting') {
             // Check if player is underneath
             if (player) {
-                const dx = Math.abs(player.x + player.width / 2 - (this.x + this.width / 2));
+                const dx = getPlayerDistance(this, player);
                 const isBelow = player.y > this.y;
-
                 if (dx < this.triggerDistance && isBelow) {
                     this.state = 'falling';
                 }

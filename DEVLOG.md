@@ -1,5 +1,48 @@
 # 開發日誌 (Development Log)
 
+## 2026-05-01 (v2.33.0)
+
+### 🤖 敵人 AI 抽象化（誠實版本）
+
+P1 第三項。原 task.md 規劃「行為樹 + EnemyBehavior interface + 狀態化敵人」— 但稽核 1280 行 Enemy.js 後發現 **既有的繼承設計已經是乾淨的抽象**：基底 Enemy 內建 Patrol，子類別 extend 自己的特化邏輯。「行為樹」對 9 個敵人的規模是 over-engineering。
+
+真實的重複程式碼：
+1. **冰晶 overlay 繪圖** — 4 個敵人類別（Goomba/Koopa/Cactus + Yeti，Ghost 因為視覺風格不同例外）各自寫了相同 17 行
+2. **追蹤玩家邏輯** — Ghost / Lakitu / HammerBro / Thwomp 各自 inline 計算 `Math.abs(player.x - this.x) < 400` 然後決定追或閒晃
+
+**新增 `js/EnemyBehaviors.js`：**
+- `drawFrozenOverlay(ctx, radius, sparklePositions)` — 共用冰晶 overlay
+- `getPlayerDistance(enemy, player)` — 中心對中心的水平距離
+- `getPlayerDirection(enemy, player)` — sign of player - enemy
+- `chasePlayerIfNear(enemy, player, speed, range)` — 追擊 helper，回傳是否觸發
+
+**Refactor 範圍：**
+- Goomba/Koopa/Cactus 的冰晶 overlay 簡化（每個從 17 行 → 1 行）
+- Ghost.update 用 chasePlayerIfNear（去除 13 行 inline 邏輯）
+- Lakitu.update 用 chasePlayerIfNear
+- Thwomp.update 用 getPlayerDistance
+
+**沒動：**
+- HammerBro 邏輯較複雜（攻擊狀態切換 + 投擲 hammer）— 留著
+- Spiny / Hammer / FlyingEnemy 不需要 player tracking，直接 patrol 就好
+- Ghost 冰晶 overlay 風格不同（alpha 0.3 + 2 sparkles）刻意保留
+
+**程式碼量：** 約 50 行重複程式碼消除。沒人會因此說「玩起來變好」，但下一個寫敵人的人會謝你。
+
+### 📁 新增/修改檔案
+
+| 檔案 | 狀態 |
+|------|------|
+| `js/EnemyBehaviors.js` | 🆕 新增 |
+| `js/Enemy.js` | ✏️ import 4 helpers；3 處冰晶 overlay 簡化；Ghost / Lakitu / Thwomp 改用 chase helper |
+| `sw.js` | ✏️ EnemyBehaviors.js 加進 PRECACHE |
+
+### 📝 為何不做完整行為樹
+
+行為樹值得做的場合是：**敵人會多到 30+ 種、不同 boss 有混合行為、需要設計工具產出 AI**。瑪利歐風格遊戲不需要這個，每個敵人就一兩個動作模式，用 method override 比 behavior tree 更好讀。誠實面對，省下複雜度。
+
+---
+
 ## 2026-05-01 (v2.32.0)
 
 ### 💾 Save 可靠性：idleSave + 自動 flush
