@@ -1,7 +1,7 @@
 # 🎮 Mario Game 開發進度與優化路線圖
 
-> 最後更新：2026-05-01 ｜ 目前版本：**v2.31.0**
-> 專案規模：48 個 JS 模組、約 14,700 行（含註解）
+> 最後更新：2026-05-01 ｜ 目前版本：**v2.32.0**
+> 專案規模：49 個 JS 模組、約 14,800 行（含註解）
 
 ---
 
@@ -176,6 +176,15 @@
 - [x] **5 個獎勵綁定**：MEGA_DESTROY → 巨大時間 +20% / CAPE_FLYER → 滑翔慢 -20% / FREEZE_MASTER → 凍時間 +30% / STREAK_10 → 連踩 1UP / HIGH_SCORE_5000 → 開局 +500 分
 - [x] **集中 modifier 模式**：`game.rewards.xxxMultiplier` → 各 effect site 讀取
 - [x] **成就 Modal 加 🎁 badge**：金色高亮已解鎖獎勵、灰色提示未解鎖目標
+
+### 第二十二階段：Save 可靠性 (v2.32.0) ⭐ 2026-05-01
+> **動機**：稽核發現渲染優化計畫多數已做完。真正的 ripe target 是 localStorage I/O 治理。
+
+- [x] **`js/saveHelper.js`**：idleSave / flushSaves / loadValue
+- [x] **修隱藏 bug**：AchievementSystem.stats 只在解鎖新成就時 save → 玩 30 分鐘沒新解鎖關 tab 全部丟失
+- [x] **改造範圍**：AchievementSystem / Game / Levels 所有寫入走 idleSave
+- [x] **visibilitychange + pagehide**：關 tab 自動 flushSaves
+- [x] **Game.pause() 主動 save**：暫停就保存進度
 
 ---
 

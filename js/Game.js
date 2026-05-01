@@ -35,6 +35,7 @@ import { UIManager } from './UIManager.js';
 import { TransitionManager } from './TransitionManager.js';
 import { unlockLevel, getNextLevelId } from './Levels.js';
 import { buildRewardModifiers } from './Rewards.js';
+import { idleSave, flushSaves } from './saveHelper.js';
 
 export class Game {
     constructor(canvas, uiElements, assetLoader, levelConfig = null) {
@@ -408,11 +409,7 @@ export class Game {
     }
 
     saveHighScore() {
-        try {
-            localStorage.setItem('marioHighScore', this.highScore.toString());
-        } catch (e) {
-            console.warn('Could not save high score');
-        }
+        idleSave('marioHighScore', this.highScore.toString());
     }
 
     loadTotalCoins() {
@@ -424,11 +421,7 @@ export class Game {
     }
 
     saveTotalCoins() {
-        try {
-            localStorage.setItem('marioTotalCoins', this.totalCoins.toString());
-        } catch (e) {
-            console.warn('Could not save total coins');
-        }
+        idleSave('marioTotalCoins', this.totalCoins.toString());
     }
 
     /**
@@ -436,29 +429,20 @@ export class Game {
      * Includes: current level distance, biome, lives, unlocked levels, stats
      */
     saveProgress() {
-        try {
-            const progress = {
-                version: '2.17.0',
-                timestamp: Date.now(),
-                // Core progress
-                highScore: this.highScore,
-                totalCoins: this.totalCoins,
-                lives: this.lives,
-                // Level progress
-                currentBiome: this.currentBiome,
-                lastCheckpointX: this.lastCheckpointX,
-                maxDistanceReached: Math.max(this.player?.x || 0, this.maxDistanceReached || 0),
-                // Unlocked content
-                unlockedBiomes: this.unlockedBiomes || ['PLAINS'],
-                bossesDefeated: this.bossesDefeated || 0,
-                // Achievement stats
-                achievementStats: this.achievementSystem?.stats || {}
-            };
-            localStorage.setItem('marioProgress', JSON.stringify(progress));
-            console.log('Progress saved:', progress);
-        } catch (e) {
-            console.warn('Could not save progress:', e);
-        }
+        const progress = {
+            version: '2.17.0',
+            timestamp: Date.now(),
+            highScore: this.highScore,
+            totalCoins: this.totalCoins,
+            lives: this.lives,
+            currentBiome: this.currentBiome,
+            lastCheckpointX: this.lastCheckpointX,
+            maxDistanceReached: Math.max(this.player?.x || 0, this.maxDistanceReached || 0),
+            unlockedBiomes: this.unlockedBiomes || ['PLAINS'],
+            bossesDefeated: this.bossesDefeated || 0,
+            achievementStats: this.achievementSystem?.stats || {}
+        };
+        idleSave('marioProgress', progress);
     }
 
     /**
@@ -1613,6 +1597,9 @@ export class Game {
         this.isPaused = true;
         this.ui.pauseOverlay.style.display = 'flex';
         this.stopBGM();
+        // v2.32.0: persist achievement stats on pause (was only saved on unlock)
+        if (this.achievementSystem) this.achievementSystem.save();
+        flushSaves();
     }
 
     resume() {

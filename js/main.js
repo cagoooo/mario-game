@@ -4,6 +4,7 @@ import { GAME_VERSION } from './version.js';
 import { LEVELS, getUnlockedLevels, getLevelById } from './Levels.js';
 import { resetTutorial } from './Tutorial.js';
 import { ACHIEVEMENT_REWARDS } from './Rewards.js';
+import { flushSaves } from './saveHelper.js';
 
 window.onload = async function () {
     console.log('%c Game Version: ' + GAME_VERSION + ' (Level Select + 4 Worlds) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
@@ -262,6 +263,20 @@ window.onload = async function () {
             showLevelSelect();
         });
     }
+
+    // ========== Persist on tab hide / unload (v2.32.0) ==========
+    // Belt-and-braces save: idleSave coalesces writes; this flushes them
+    // synchronously before the tab is hidden/unloaded so nothing is lost.
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+            if (game && game.achievementSystem) game.achievementSystem.save();
+            flushSaves();
+        }
+    });
+    window.addEventListener('pagehide', () => {
+        if (game && game.achievementSystem) game.achievementSystem.save();
+        flushSaves();
+    });
 
     // Start button → open level select (or fallback to direct Endless if menu unavailable)
     uiElements.startBtn.addEventListener('click', () => {

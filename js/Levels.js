@@ -42,6 +42,8 @@ export const LEVELS = [
     }
 ];
 
+import { idleSave } from './saveHelper.js';
+
 export const LEVELS_VERSION = 1;
 const STORAGE_KEY = 'marioUnlockedLevels';
 const STORAGE_VERSION_KEY = 'marioUnlockedLevelsVersion';
@@ -51,8 +53,8 @@ export function getUnlockedLevels() {
         const storedVersion = parseInt(localStorage.getItem(STORAGE_VERSION_KEY) || '0', 10);
         if (storedVersion !== LEVELS_VERSION) {
             // Schema bump — reset to defaults
-            localStorage.setItem(STORAGE_VERSION_KEY, String(LEVELS_VERSION));
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(['1-1']));
+            idleSave(STORAGE_VERSION_KEY, String(LEVELS_VERSION));
+            idleSave(STORAGE_KEY, ['1-1']);
             return ['1-1'];
         }
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -69,8 +71,8 @@ export function unlockLevel(levelId) {
         const unlocked = getUnlockedLevels();
         if (!unlocked.includes(levelId)) {
             unlocked.push(levelId);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(unlocked));
-            localStorage.setItem(STORAGE_VERSION_KEY, String(LEVELS_VERSION));
+            idleSave(STORAGE_KEY, unlocked);
+            idleSave(STORAGE_VERSION_KEY, String(LEVELS_VERSION));
         }
         return unlocked;
     } catch (e) {

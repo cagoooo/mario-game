@@ -1,5 +1,50 @@
 # 開發日誌 (Development Log)
 
+## 2026-05-01 (v2.32.0)
+
+### 💾 Save 可靠性：idleSave + 自動 flush
+
+P1 渲染優化階段 — 但稽核後發現「離屏 canvas 快取背景」**早已實作**（Background.js layerCanvases），sprite atlas 要等 build pipeline 才整齊，dirty rect 對動態相機 2D 遊戲是反模式。
+
+**真正的 ripe target：localStorage 寫入治理。**
+
+**動機（發現的隱藏問題）：**
+1. `localStorage.setItem` 是同步 I/O — 在 frame 內呼叫會掉幀（成就解鎖、收金幣、打 Boss 都會觸發）
+2. AchievementSystem.stats 只在「解鎖新成就」時 save — 玩 30 分鐘沒新解鎖就關 tab → stats 全部丟失（連踩數、金幣總數、滑翔幀數⋯⋯ 沒寫回）
+3. saveHighScore / saveTotalCoins / saveProgress 各自 try/catch，沒有統一 idle 排程
+
+**新增 `js/saveHelper.js`：**
+- `idleSave(key, value)` — 用 `requestIdleCallback` 把寫入排程到瀏覽器空閒時段
+- 同 key 多次寫入會自動 coalesce（最後一次值勝出）
+- `flushSaves()` — 同步強制寫出（給 visibilitychange / pagehide 用）
+- 沒有 RIC 的 Safari 自動 fallback 到 setTimeout(0)
+
+**改造範圍：**
+- AchievementSystem.save() → idleSave
+- Game.saveHighScore / saveTotalCoins / saveProgress → idleSave
+- Levels.unlockLevel / version key → idleSave
+- main.js: visibilitychange + pagehide → flushSaves()
+- Game.pause(): 主動 save stats + flushSaves（修「30分鐘無解鎖」資料丟失）
+
+### 📁 修改檔案
+
+| 檔案 | 狀態 |
+|------|------|
+| `js/saveHelper.js` | 🆕 新增（idleSave / flushSaves / loadValue） |
+| `js/AchievementSystem.js` | ✏️ save() 走 idleSave |
+| `js/Game.js` | ✏️ saveHighScore / saveTotalCoins / saveProgress 走 idleSave；pause 主動 save + flush |
+| `js/Levels.js` | ✏️ unlockLevel 走 idleSave |
+| `js/main.js` | ✏️ visibilitychange + pagehide flush |
+| `sw.js` | ✏️ saveHelper.js 加進 PRECACHE |
+
+### 🎯 為何這比「sprite atlas / dirty rect」更值得做
+
+- 沒人會抱怨 60fps 變 65fps（除非掉到 30fps），但 ❌ 30 分鐘玩家紀錄消失絕對會抱怨
+- idleSave 是低風險改動，sprite atlas 改動量大且要等 build pipeline
+- 真正的渲染瓶頸（如果有）需要 profiling 才知道，不是猜的
+
+---
+
 ## 2026-05-01 (v2.31.0)
 
 ### 🎁 成就獎勵綁定（Achievement Reward Binding）

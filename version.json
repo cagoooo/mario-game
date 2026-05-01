@@ -1,4 +1,4 @@
 {
-    "version": "2.31.0",
-    "notes": "成就獎勵綁定：5 個成就解鎖永久效果（巨大化+/滑翔慢/凍結+/連踩1UP/起始分+）"
+    "version": "2.32.0",
+    "notes": "Save 可靠性：idleSave + visibilitychange + pause 自動存"
 }

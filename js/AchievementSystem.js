@@ -1,3 +1,5 @@
+import { idleSave } from './saveHelper.js';
+
 // Achievement System for tracking player accomplishments
 //
 // Achievement schema:
@@ -341,12 +343,10 @@ export class AchievementSystem {
     }
 
     save() {
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify({
-                unlocked: Array.from(this.unlockedAchievements),
-                stats: this.stats
-            }));
-        } catch (e) { console.warn('save achievements failed', e); }
+        idleSave(STORAGE_KEY, {
+            unlocked: Array.from(this.unlockedAchievements),
+            stats: this.stats
+        });
     }
 
     load() {
