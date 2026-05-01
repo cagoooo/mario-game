@@ -34,6 +34,7 @@ import { CONFIG } from './Config.js';
 import { UIManager } from './UIManager.js';
 import { TransitionManager } from './TransitionManager.js';
 import { unlockLevel, getNextLevelId } from './Levels.js';
+import { buildRewardModifiers } from './Rewards.js';
 
 export class Game {
     constructor(canvas, uiElements, assetLoader, levelConfig = null) {
@@ -377,7 +378,13 @@ export class Game {
         this.lastTime = 0;
         this.gameRunning = true;
         this.isPaused = false;
-        this.score = 0;
+        // v2.31.0 — apply achievement-unlocked rewards
+        this.rewards = buildRewardModifiers(this.achievementSystem);
+        this.score = this.rewards.startingScoreBonus || 0;
+        if (this.player) {
+            // Apply glide-speed reward (multiplier <= 1 → slower fall)
+            this.player.glideFallSpeed = 1.5 * this.rewards.glideFallSpeedMultiplier;
+        }
         this.isNewHighScore = false;
         this.camera = { x: 0, y: 0 };
         this.screenShake = { x: 0, y: 0, intensity: 0 };
@@ -665,6 +672,10 @@ export class Game {
             for (const enemy of this.enemies) {
                 if (!enemy.frozen && checkCollision(iceball, enemy)) {
                     iceball.freezeEnemy(enemy);
+                    // v2.31.0 reward: FREEZE_MASTER → +30% freeze duration
+                    if (this.rewards && this.rewards.freezeDurationMultiplier !== 1) {
+                        enemy.frozenTimer = Math.floor(enemy.frozenTimer * this.rewards.freezeDurationMultiplier);
+                    }
                     if (this.achievementSystem) this.achievementSystem.trackFreeze();
                     this.addParticles(enemy.x + enemy.width / 2, enemy.y, 8, '#00BFFF');
                     this.addScorePopup(enemy.x, enemy.y, 100);

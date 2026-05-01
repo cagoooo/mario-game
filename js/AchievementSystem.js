@@ -210,6 +210,16 @@ export class AchievementSystem {
         if (this.stats.currentEnemyStreak > this.stats.maxEnemyStreak) {
             this.stats.maxEnemyStreak = this.stats.currentEnemyStreak;
         }
+        // v2.31.0 reward: STREAK_10 → auto-grant 1UP at threshold (once per streak)
+        const threshold = this.game?.rewards?.streakOneUpThreshold;
+        if (threshold && Number.isFinite(threshold)
+            && this.stats.currentEnemyStreak === threshold
+            && this.game?.addLife) {
+            this.game.addLife();
+            if (this.game.showPowerUpHint) {
+                this.game.showPowerUpHint(`🦘 連踩 ${threshold} 隻 — +1UP！`);
+            }
+        }
         this.checkAchievements();
     }
 

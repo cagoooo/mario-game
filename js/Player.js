@@ -560,9 +560,11 @@ export class Player {
 
     getMegaMushroom() {
         this.isMega = true;
-        this.megaTimer = 600; // 10 seconds
+        // Apply achievement reward (v2.31.0): MEGA_DESTROY → +20% duration
+        const megaMul = this.game?.rewards?.megaDurationMultiplier || 1;
+        this.megaTimer = Math.floor(600 * megaMul);
         this.invincible = true;
-        this.invincibleTime = 600;
+        this.invincibleTime = this.megaTimer;
 
         // Grow HUGE
         this.powerScale = 3.0;

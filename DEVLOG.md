@@ -1,5 +1,66 @@
 # 開發日誌 (Development Log)
 
+## 2026-05-01 (v2.31.0)
+
+### 🎁 成就獎勵綁定（Achievement Reward Binding）
+
+v2.29.0 的成就頁有展示但沒實質回饋，玩家解了也不痛不癢。本版讓 5 個成就解鎖永久 buff，給「拿成就 = 變強」的循環推進感。
+
+**5 個獎勵綁定：**
+
+| 成就 | 解鎖效果 | 實作位置 |
+|---|---|---|
+| 💪 破壞王（巨大化破壞 10 物件） | 巨大化時間 +20%（10s → 12s）| Player.getMegaMushroom 套乘數 |
+| 🦸 空中飛人（滑翔 10s） | 披風滑翔下降速度 -20%（更悠閒）| initGame 套到 player.glideFallSpeed |
+| ❄️ 冰凍大師（凍 30 隻敵人） | 凍結時間 +30%（3s → 3.9s）| Game.iceball 命中後乘到 frozenTimer |
+| 🦘 連跳王（連踩 10 隻） | 連踩 10 隻自動 +1UP | AchievementSystem.trackEnemyKill |
+| ✨ 五千分大師（單次 5000 分） | 遊戲開始時 +500 分 | initGame 設 score |
+
+**架構：**
+- 新增 `js/Rewards.js`：`ACHIEVEMENT_REWARDS` map + `buildRewardModifiers()`
+- 集中讀 unlocked achievements → 產生扁平 modifier 物件 `game.rewards`
+- 各 effect site 讀 `game.rewards.xxxMultiplier` 套用
+- 預設值都是中性（1.0 / 0 / Infinity），未解鎖的玩家行為不變
+
+**UI：成就 Modal 加 🎁 badge**
+- 已解鎖且綁定獎勵 → 金色高亮顯示「🎁 巨大化時間 +20%」
+- 未解鎖但有獎勵 → 灰色顯示讓玩家有目標推進
+
+### 📁 新增/修改檔案
+
+| 檔案 | 狀態 |
+|------|------|
+| `js/Rewards.js` | 🆕 新增 |
+| `js/Game.js` | ✏️ initGame 套 reward；iceball 凍結 +30%；import Rewards |
+| `js/Player.js` | ✏️ getMegaMushroom 套 mega 倍率 |
+| `js/AchievementSystem.js` | ✏️ trackEnemyKill 加連踩 1UP 觸發 |
+| `js/main.js` | ✏️ 成就 modal 渲染 🎁 reward badge |
+| `style.css` | ✏️ achReward / achRewardActive 樣式 |
+| `sw.js` | ✏️ Rewards.js 加進 PRECACHE |
+| `js/version.js` / `version.json` / `index.html` | ✏️ bump-version.js 同步 |
+
+---
+
+## 2026-05-01 (v2.30.1)
+
+### 🏊 Power-up 池化（8 種）— v2.30.0 收尾
+
+完成原 v2.30.0 推遲的「全面化」目標。為 8 個 power-up class 補上 reset(x, y) method 並建 ObjectPool。
+
+**新增 reset 方法的類別：**
+Mushroom / Star / FireFlower / IceFlower / Magnet / MegaMushroom / OneUpMushroom（Cape 已有，但補完整 floatOffset / animationTick）
+
+**Game.js：**
+- 新增 8 個 ObjectPool 實例
+- initGame 釋放現有 power-up 回池（避免換關後遺留）
+- offscreen cleanup 8 個迴圈 release 回池
+
+**CollisionSystem.js：**
+- 8 個 block-hit 點：`new XxX()` → `game.xxxPool.get()`
+- 8 個 player-pickup 點：splice 後 release 回池
+
+---
+
 ## 2026-05-01 (v2.30.0)
 
 ### 🏊 物件池全面化（部分；含稽核）

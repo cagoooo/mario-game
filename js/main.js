@@ -3,6 +3,7 @@ import { AssetLoader } from './AssetLoader.js';
 import { GAME_VERSION } from './version.js';
 import { LEVELS, getUnlockedLevels, getLevelById } from './Levels.js';
 import { resetTutorial } from './Tutorial.js';
+import { ACHIEVEMENT_REWARDS } from './Rewards.js';
 
 window.onload = async function () {
     console.log('%c Game Version: ' + GAME_VERSION + ' (Level Select + 4 Worlds) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
@@ -374,16 +375,23 @@ window.onload = async function () {
         const total = all.length;
         if (achievementsHeaderRate) achievementsHeaderRate.textContent = `(${unlocked}/${total})`;
         if (achievementCountSpan) achievementCountSpan.textContent = `${unlocked}/${total}`;
-        achievementsList.innerHTML = all.map(a => `
-            <div class="achievementItem ${a.unlocked ? 'unlocked' : 'locked'}">
-                <div class="achIcon">${a.icon}</div>
-                <div class="achText">
-                    <div class="achName">${a.name}</div>
-                    <div class="achDesc">${a.desc}</div>
+        achievementsList.innerHTML = all.map(a => {
+            const reward = ACHIEVEMENT_REWARDS[a.id];
+            const rewardHtml = reward
+                ? `<div class="achReward ${a.unlocked ? 'achRewardActive' : ''}">🎁 ${reward.desc}</div>`
+                : '';
+            return `
+                <div class="achievementItem ${a.unlocked ? 'unlocked' : 'locked'}">
+                    <div class="achIcon">${a.icon}</div>
+                    <div class="achText">
+                        <div class="achName">${a.name}</div>
+                        <div class="achDesc">${a.desc}</div>
+                        ${rewardHtml}
+                    </div>
+                    <div class="achStatus">${a.unlocked ? '✓' : ''}</div>
                 </div>
-                <div class="achStatus">${a.unlocked ? '✓' : ''}</div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
     if (achievementsBtn && achievementsModal) {

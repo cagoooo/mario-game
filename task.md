@@ -1,7 +1,7 @@
 # 🎮 Mario Game 開發進度與優化路線圖
 
-> 最後更新：2026-05-01 ｜ 目前版本：**v2.30.0**
-> 專案規模：47 個 JS 模組、約 14,500 行（含註解）
+> 最後更新：2026-05-01 ｜ 目前版本：**v2.31.0**
+> 專案規模：48 個 JS 模組、約 14,700 行（含註解）
 
 ---
 
@@ -162,7 +162,20 @@
 - [x] **稽核 ObjectPool 使用範圍**：粒子 / Coin / Fireball / Iceball / 7 種敵人皆已池化
 - [x] **ScorePopup 池化**：每秒 5+ 次熱迴圈，真實 GC win
 - [x] **修 bug**：`scorePopups` 被 update loop 重複跑兩遍（壽命減半）— 移除 line 1243 重複迴圈
-- [ ] **延遲到 v2.30.1**：8 種 power-up 池化（每關只觸發 ~30 次，投入產出比低，等 build pipeline 後一併做）
+
+### 第二十階段：Power-up 池化收尾 (v2.30.1) ⭐ 2026-05-01
+- [x] **8 個 power-up class 加 reset(x, y)**：Mushroom / Star / FireFlower / IceFlower / Cape / Magnet / MegaMushroom / OneUpMushroom
+- [x] **Game.js 8 個 ObjectPool**
+- [x] **CollisionSystem 改用池**：block-hit 用 `pool.get()`、pickup 後 `pool.release()`
+- [x] **offscreen cleanup release**：避免落出畫面物件無回收
+
+### 第二十一階段：成就獎勵綁定 (v2.31.0) ⭐ 2026-05-01
+> **動機**：v2.29.0 成就頁有展示但沒實質回饋，本版讓 5 個成就解鎖永久 buff。
+
+- [x] **`js/Rewards.js`**：ACHIEVEMENT_REWARDS map + buildRewardModifiers()
+- [x] **5 個獎勵綁定**：MEGA_DESTROY → 巨大時間 +20% / CAPE_FLYER → 滑翔慢 -20% / FREEZE_MASTER → 凍時間 +30% / STREAK_10 → 連踩 1UP / HIGH_SCORE_5000 → 開局 +500 分
+- [x] **集中 modifier 模式**：`game.rewards.xxxMultiplier` → 各 effect site 讀取
+- [x] **成就 Modal 加 🎁 badge**：金色高亮已解鎖獎勵、灰色提示未解鎖目標
 
 ---
 
