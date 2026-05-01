@@ -429,6 +429,10 @@ export class Player {
             if (this.velY > this.glideFallSpeed) {
                 this.velY = this.glideFallSpeed;
             }
+            // Track for "Cape Flyer" achievement (10 seconds = 600 frames)
+            if (this.game && this.game.achievementSystem) {
+                this.game.achievementSystem.trackGlideFrame();
+            }
         } else {
             this.isGliding = false;
             this.velY += this.GRAVITY;

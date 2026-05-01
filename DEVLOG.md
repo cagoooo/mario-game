@@ -1,5 +1,59 @@
 # 開發日誌 (Development Log)
 
+## 2026-05-01 (v2.29.0)
+
+### 🏅 成就系統內容擴充
+
+v2.13 已做基礎 9 個成就，但沒有**展示頁**也沒有**動力推進**，玩家拿到成就也只看到一個短暫通知就消失。本版補滿這兩塊。
+
+**新增 10 個成就（總計 19）：**
+
+| 類別 | 成就 | 條件 | 隱藏 |
+|---|---|---|---|
+| Combat | Boss 大師 | 擊敗 5 隻 Boss | ✅ |
+| Combat | 連跳王 | 連踩 10 隻敵人 | ✅ |
+| Coins | 連續豐收 | 1 秒內收集 10 枚金幣 | ✅ |
+| Skills | 變身達人 | 累計取得 10 個道具 | – |
+| Skills | 冰凍大師 | 凍結 30 隻敵人 | – |
+| Skills | 空中飛人 | 披風滑翔累計 10 秒 | – |
+| Score | 五千分大師 | 單次 ≥ 5,000 分 | – |
+| Score | 萬分傳奇 | 單次 ≥ 10,000 分 | ✅ |
+| Worlds | 初次通關 | 通關任一 World | – |
+| Worlds | 征服四方 | 通關全部 4 World | ✅ |
+| Worlds | 完美通關 | 一條命通關 | ✅ |
+
+**隱藏成就機制：**
+- `ACHIEVEMENTS[*].hidden = true` 屬性
+- 未解鎖時 `getAllAchievements()` 自動把 name/desc/icon 替換成 `???` / `🔒`
+- 解鎖後一切正常顯示
+
+**新追蹤維度：**
+- `frozenEnemies`（冰球凍敵 → Game.js iceball collision）
+- `glideFrames`（披風滑翔每幀 → Player.js gravity branch）
+- `powerUpsCollected`（道具拾取 → 整合進 firstTimePickupHint）
+- `worldsCleared` / `noDeathRuns`（Boss 通關 → handleBossDefeat）
+- `maxCoinRush`（1 秒內金幣 sliding window → trackCoinCollect）
+
+**成就展示頁 Modal：**
+- 暫停選單新增「🏅 成就 (5/19)」按鈕（即時顯示解鎖率）
+- Modal 列出全部成就 — 已解鎖金邊+陰影、未解鎖灰底
+- 響應式（手機字體縮小 + 高度限制）
+- 重用既存 `.modal-overlay` 樣式 + 新加 `#achievementsList` 滾動容器
+
+### 📁 修改檔案
+
+| 檔案 | 狀態 |
+|------|------|
+| `js/AchievementSystem.js` | ✏️ 擴充（19 個成就 + 新 trackers + hidden 機制） |
+| `js/Game.js` | ✏️ firstTimePickupHint 加 trackPowerUp、iceball 加 trackFreeze、handleBossDefeat 加 trackWorldClear、loseLife 設 _diedThisRun、initGame 重置 |
+| `js/Player.js` | ✏️ glide 分支加 trackGlideFrame |
+| `index.html` | ✏️ 暫停按鈕 + Achievements Modal |
+| `style.css` | ✏️ Achievements Modal 樣式 |
+| `js/main.js` | ✏️ wire up Modal（render、open、close） |
+| `js/version.js` / `sw.js` / `version.json` | ✏️ bump-version.js 同步 |
+
+---
+
 ## 2026-05-01 (v2.28.0)
 
 ### 📖 教學引導重做

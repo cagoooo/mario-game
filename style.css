@@ -1122,3 +1122,119 @@ body {
     #updateBannerText { font-size: 12px; }
     #updateBannerBtn { padding: 6px 12px; font-size: 12px; }
 }
+
+/* ============================================================ */
+/* Achievements Modal (v2.29.0)                                 */
+/* ============================================================ */
+
+#achievementsModal .achievementsContent {
+    width: min(560px, 92vw);
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#achievementsHeaderRate {
+    font-size: 16px;
+    color: #4CAF50;
+    font-weight: 600;
+}
+
+#achievementsList {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 8px;
+    margin: 12px 0 18px 0;
+    max-height: 56vh;
+}
+
+.achievementItem {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    margin: 6px 0;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 2px solid rgba(255, 255, 255, 0.05);
+    transition: border-color 0.15s;
+}
+
+.achievementItem.unlocked {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.15));
+    border-color: rgba(255, 215, 0, 0.5);
+}
+
+.achievementItem.locked {
+    opacity: 0.55;
+}
+
+.achievementItem .achIcon {
+    font-size: 32px;
+    flex-shrink: 0;
+    width: 44px;
+    text-align: center;
+}
+
+.achievementItem.unlocked .achIcon {
+    filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.6));
+}
+
+.achievementItem .achText {
+    flex: 1;
+    min-width: 0;
+}
+
+.achievementItem .achName {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 2px;
+}
+
+.achievementItem.unlocked .achName {
+    color: #FFD700;
+}
+
+.achievementItem.locked .achName {
+    color: #888;
+}
+
+.achievementItem .achDesc {
+    font-size: 13px;
+    color: #aaa;
+    line-height: 1.3;
+}
+
+.achievementItem .achStatus {
+    font-size: 14px;
+    flex-shrink: 0;
+    color: #4CAF50;
+    font-weight: 700;
+}
+
+#closeAchievementsBtn {
+    align-self: center;
+    padding: 10px 36px;
+    background: linear-gradient(135deg, #6e8efb, #a777e3);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s;
+}
+
+#closeAchievementsBtn:hover {
+    transform: translateY(-2px);
+}
+
+@media (max-width: 600px) {
+    #achievementsModal .achievementsContent {
+        padding: 18px 18px;
+    }
+    .achievementItem .achIcon { font-size: 26px; width: 36px; }
+    .achievementItem .achName { font-size: 14px; }
+    .achievementItem .achDesc { font-size: 12px; }
+}

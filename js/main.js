@@ -337,14 +337,17 @@ window.onload = async function () {
     uiElements.pauseBtn.addEventListener('click', () => {
         if (game && game.gameRunning) {
             game.pause();
-            // Update pause stats
+            // Update pause stats + achievements badge
             if (game.achievementSystem) {
                 const stats = game.achievementSystem.stats;
+                const unlocked = game.achievementSystem.getUnlockedCount();
+                const total = game.achievementSystem.getTotalCount();
                 document.getElementById('pauseKills').textContent = stats.enemiesKilled;
                 document.getElementById('pauseCoins').textContent = stats.totalCoins;
                 document.getElementById('pauseScore').textContent = game.score;
-                document.getElementById('pauseAchievements').textContent =
-                    `${game.achievementSystem.getUnlockedCount()}/${game.achievementSystem.getTotalCount()}`;
+                document.getElementById('pauseAchievements').textContent = `${unlocked}/${total}`;
+                const countSpan = document.getElementById('achievementCount');
+                if (countSpan) countSpan.textContent = `${unlocked}/${total}`;
             }
         }
     });
@@ -355,6 +358,52 @@ window.onload = async function () {
             game.resume();
         }
     });
+
+    // ========== Achievements Modal (v2.29.0) ==========
+    const achievementsBtn = document.getElementById('achievementsButton');
+    const achievementsModal = document.getElementById('achievementsModal');
+    const achievementsList = document.getElementById('achievementsList');
+    const achievementsHeaderRate = document.getElementById('achievementsHeaderRate');
+    const closeAchievementsBtn = document.getElementById('closeAchievementsBtn');
+    const achievementCountSpan = document.getElementById('achievementCount');
+
+    function renderAchievements() {
+        if (!achievementsList || !game || !game.achievementSystem) return;
+        const all = game.achievementSystem.getAllAchievements();
+        const unlocked = all.filter(a => a.unlocked).length;
+        const total = all.length;
+        if (achievementsHeaderRate) achievementsHeaderRate.textContent = `(${unlocked}/${total})`;
+        if (achievementCountSpan) achievementCountSpan.textContent = `${unlocked}/${total}`;
+        achievementsList.innerHTML = all.map(a => `
+            <div class="achievementItem ${a.unlocked ? 'unlocked' : 'locked'}">
+                <div class="achIcon">${a.icon}</div>
+                <div class="achText">
+                    <div class="achName">${a.name}</div>
+                    <div class="achDesc">${a.desc}</div>
+                </div>
+                <div class="achStatus">${a.unlocked ? '✓' : ''}</div>
+            </div>
+        `).join('');
+    }
+
+    if (achievementsBtn && achievementsModal) {
+        achievementsBtn.addEventListener('click', () => {
+            renderAchievements();
+            achievementsModal.classList.add('active');
+        });
+    }
+    if (closeAchievementsBtn && achievementsModal) {
+        closeAchievementsBtn.addEventListener('click', () => {
+            achievementsModal.classList.remove('active');
+        });
+    }
+    if (achievementsModal) {
+        achievementsModal.addEventListener('click', (e) => {
+            if (e.target === achievementsModal) {
+                achievementsModal.classList.remove('active');
+            }
+        });
+    }
 
     // Replay Tutorial button (v2.28.0) — clears the seen-flag and forces tutorial
     // to play again; if a game is running, replays it inline. Otherwise it'll fire

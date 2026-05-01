@@ -1,7 +1,7 @@
 # 🎮 Mario Game 開發進度與優化路線圖
 
-> 最後更新：2026-05-01 ｜ 目前版本：**v2.28.0**
-> 專案規模：47 個 JS 模組、約 14,200 行（含註解）
+> 最後更新：2026-05-01 ｜ 目前版本：**v2.29.0**
+> 專案規模：47 個 JS 模組、約 14,500 行（含註解）
 
 ---
 
@@ -143,6 +143,18 @@
 - [x] **道具首次拾取情境提示**：`game.firstTimePickupHint()` API 接入 7 種 power-up（mushroom/star/fire/ice/magnet/mega/cape）
 - [x] **暫停選單「重看教學」按鈕**：點下清 flag + dynamic import + 立即重播
 - [x] **`bump-version.js` 首次正式啟用**：4 檔同步成功
+
+### 第十八階段：成就系統內容擴充 (v2.29.0) ⭐ 2026-05-01
+> **動機**：v2.13 做基礎 9 個成就，但沒展示頁、沒推進感，玩家拿到只看到短暫通知就消失。
+
+- [x] **新增 10 個成就**（總計 19）：Boss 大師、連跳王、連續豐收、變身達人、冰凍大師、空中飛人、五千/萬分大師、初次通關、征服四方、完美通關
+- [x] **隱藏成就機制**：`hidden: true` 屬性 → 未解鎖顯示 ??? / 🔒
+- [x] **新追蹤維度**：frozenEnemies / glideFrames / powerUpsCollected / worldsCleared / noDeathRuns / maxCoinRush
+- [x] **成就頁 Modal**：暫停選單可進，列全部、即時解鎖率、響應式
+- [x] **完美通關偵測**：loseLife 設 `_diedThisRun`、initGame 重置、Boss 擊敗時判斷
+
+### 待做（推遲到 v2.29.1）
+- [ ] **解鎖獎勵 mapping**：成就 → 永久效果（5 BOSS → 困難模式、巨大破壞 → 巨大化時間 +20%⋯）
 
 ---
 

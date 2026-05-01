@@ -207,6 +207,9 @@ export class Game {
      * @param {string} text - hint message to display
      */
     firstTimePickupHint(type, text) {
+        // Always track the pickup for achievements (regardless of first-time state)
+        if (this.achievementSystem) this.achievementSystem.trackPowerUp();
+
         const key = `marioPowerUpSeen_${type}`;
         try {
             if (localStorage.getItem(key)) return;
@@ -336,6 +339,7 @@ export class Game {
         this.background.setBiome(this.currentBiome);
         this.levelCleared = false;
         this._levelClearedDispatched = false;
+        this._diedThisRun = false;
         // Reset boss trigger to default distance for fresh level/restart
         this.bossTriggerDistance = 5000;
         this.boss = null;
@@ -634,6 +638,7 @@ export class Game {
             for (const enemy of this.enemies) {
                 if (!enemy.frozen && checkCollision(iceball, enemy)) {
                     iceball.freezeEnemy(enemy);
+                    if (this.achievementSystem) this.achievementSystem.trackFreeze();
                     this.addParticles(enemy.x + enemy.width / 2, enemy.y, 8, '#00BFFF');
                     this.addScorePopup(enemy.x, enemy.y, 100);
                     this.score += 100;
@@ -1035,6 +1040,9 @@ export class Game {
             unlockLevel(this.levelConfig.id);  // Mark current as cleared/replayable
             if (nextId) unlockLevel(nextId);   // Unlock the next level
             this.onLevelCleared = { current: this.levelConfig.id, next: nextId };
+            // Track for achievements (worldsCleared / noDeathRuns)
+            const noDeath = !this._diedThisRun;
+            if (this.achievementSystem) this.achievementSystem.trackWorldClear(noDeath);
         } else {
             // Endless Mode: queue another boss further ahead
             this.bossTriggerDistance = this.player.x + 5000;
@@ -1600,6 +1608,8 @@ export class Game {
     }
 
     loseLife() {
+        // Mark this run as having a death (for "no_death_run" achievement)
+        this._diedThisRun = true;
         if (this.lives > 0) {
             this.lives--;
             // Show lives remaining briefly then respawn or game over

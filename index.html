@@ -15,7 +15,7 @@
   <link rel="icon" type="image/png" href="assets/icon-192.png">
   <link rel="shortcut icon" type="image/png" href="assets/icon-192.png">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="style.css?v=2.28.0">
+  <link rel="stylesheet" href="style.css?v=2.29.0">
 </head>
 
 <body>
@@ -85,7 +85,17 @@
     </div>
     <div id="pauseActions">
       <button id="resumeButton">繼續遊戲</button>
+      <button id="achievementsButton" class="pauseSecondaryBtn">🏅 成就 (<span id="achievementCount">0/0</span>)</button>
       <button id="replayTutorialButton" class="pauseSecondaryBtn">📖 重看教學</button>
+    </div>
+  </div>
+
+  <!-- Achievements Modal -->
+  <div id="achievementsModal" class="modal-overlay">
+    <div class="modal-content achievementsContent">
+      <h3>🏅 成就 <span id="achievementsHeaderRate">(0/0)</span></h3>
+      <div id="achievementsList"></div>
+      <button id="closeAchievementsBtn">關閉</button>
     </div>
   </div>
 
@@ -129,7 +139,7 @@
     <button id="updateBannerDismiss" aria-label="關閉">✕</button>
   </div>
 
-  <script type="module" src="js/main.js?v=2.28.0"></script>
+  <script type="module" src="js/main.js?v=2.29.0"></script>
   <script>
     // Register Service Worker + listen for new-version events.
     // Pairs with version.json polling (in main.js) for redundancy.
