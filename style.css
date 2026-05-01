@@ -1019,3 +1019,83 @@ body {
         font-size: 22px;
     }
 }
+
+/* ============================================================ */
+/* Update Banner — PWA new-version detection (v2.27.1)           */
+/* ============================================================ */
+
+#updateBanner {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1a1a1a;
+    color: #fff;
+    padding: 14px 20px;
+    border: 2px solid #FFD700;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Courier New', monospace;
+    animation: slideUp 0.4s ease;
+    max-width: 92vw;
+}
+
+#updateBanner.active {
+    display: flex;
+}
+
+#updateBannerText {
+    font-size: 14px;
+    color: #FFD700;
+    letter-spacing: 0.5px;
+}
+
+#updateBannerBtn {
+    padding: 8px 18px;
+    background: #FFD700;
+    color: #000;
+    border: none;
+    border-radius: 4px;
+    font-weight: 900;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    letter-spacing: 1px;
+}
+
+#updateBannerBtn:hover {
+    background: #FFA500;
+}
+
+#updateBannerDismiss {
+    background: transparent;
+    color: #888;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 8px;
+    line-height: 1;
+}
+
+#updateBannerDismiss:hover {
+    color: #fff;
+}
+
+@keyframes slideUp {
+    from { transform: translate(-50%, 100px); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+@media (max-width: 600px) {
+    #updateBanner {
+        bottom: 10px;
+        padding: 10px 14px;
+        font-size: 12px;
+    }
+    #updateBannerText { font-size: 12px; }
+    #updateBannerBtn { padding: 6px 12px; font-size: 12px; }
+}

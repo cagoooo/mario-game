@@ -15,7 +15,7 @@
   <link rel="icon" type="image/png" href="assets/icon-192.png">
   <link rel="shortcut icon" type="image/png" href="assets/icon-192.png">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="style.css?v=2.27.0">
+  <link rel="stylesheet" href="style.css?v=2.27.1">
 </head>
 
 <body>
@@ -119,15 +119,47 @@
     <div id="rightButton" class="controlButton">▶</div>
   </div>
 
-  <script type="module" src="js/main.js?v=2.27.0"></script>
+  <!-- Update Banner (PWA new-version detection) -->
+  <div id="updateBanner">
+    <span id="updateBannerText">🎉 新版本已就緒</span>
+    <button id="updateBannerBtn">立即更新</button>
+    <button id="updateBannerDismiss" aria-label="關閉">✕</button>
+  </div>
+
+  <script type="module" src="js/main.js?v=2.27.1"></script>
   <script>
-    // Register Service Worker (PWA offline support).
-    // CACHE_NAME bump in sw.js handles cache invalidation between versions.
+    // Register Service Worker + listen for new-version events.
+    // Pairs with version.json polling (in main.js) for redundancy.
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-          .then(reg => console.log('[SW] registered, scope:', reg.scope))
-          .catch(err => console.warn('[SW] registration failed:', err));
+        navigator.serviceWorker.register('./sw.js').then(reg => {
+          console.log('[SW] registered, scope:', reg.scope);
+
+          // A new SW is installing — wire up an updatefound listener
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            if (!newWorker) return;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // New SW is ready and an old one is in control → offer update
+                window.dispatchEvent(new CustomEvent('marioNewVersionReady', {
+                  detail: { source: 'sw-updatefound' }
+                }));
+              }
+            });
+          });
+
+          // Periodic update check (every 10 min)
+          setInterval(() => reg.update().catch(() => {}), 10 * 60 * 1000);
+        }).catch(err => console.warn('[SW] registration failed:', err));
+
+        // When the new SW takes control, suggest reload
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (refreshing) return;
+          refreshing = true;
+          window.location.reload();
+        });
       });
     }
 

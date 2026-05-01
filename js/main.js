@@ -273,6 +273,65 @@ window.onload = async function () {
         }
     });
 
+    // ========== PWA Update Banner (v2.27.1) ==========
+    // Two redundant signals trigger the banner:
+    //   (1) Service Worker fires `marioNewVersionReady` event (from index.html)
+    //   (2) version.json polling detects a different version
+    const updateBanner = document.getElementById('updateBanner');
+    const updateBannerText = document.getElementById('updateBannerText');
+    const updateBannerBtn = document.getElementById('updateBannerBtn');
+    const updateBannerDismiss = document.getElementById('updateBannerDismiss');
+
+    let bannerShownThisSession = false;
+    function showUpdateBanner(detail = {}) {
+        if (!updateBanner || bannerShownThisSession) return;
+        bannerShownThisSession = true;
+        if (detail.version && updateBannerText) {
+            updateBannerText.textContent = `🎉 新版本 v${detail.version} 已就緒`;
+        }
+        updateBanner.classList.add('active');
+    }
+
+    if (updateBanner && updateBannerBtn && updateBannerDismiss) {
+        updateBannerBtn.addEventListener('click', async () => {
+            // Tell waiting SW to take over, then reload (controllerchange handler in index.html)
+            if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+                try {
+                    const reg = await navigator.serviceWorker.getRegistration();
+                    if (reg && reg.waiting) {
+                        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+                        return; // controllerchange listener will trigger reload
+                    }
+                } catch (e) { /* fall through to manual reload */ }
+            }
+            window.location.reload();
+        });
+
+        updateBannerDismiss.addEventListener('click', () => {
+            updateBanner.classList.remove('active');
+        });
+
+        window.addEventListener('marioNewVersionReady', (e) => {
+            showUpdateBanner(e.detail || {});
+        });
+
+        // version.json polling — every 5 min + once on load (after 30s grace)
+        let knownVersion = GAME_VERSION;
+        async function checkVersion() {
+            try {
+                const res = await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.version && data.version !== knownVersion) {
+                    knownVersion = data.version;
+                    showUpdateBanner({ version: data.version, notes: data.notes });
+                }
+            } catch (e) { /* offline — silent */ }
+        }
+        setTimeout(checkVersion, 30 * 1000);
+        setInterval(checkVersion, 5 * 60 * 1000);
+    }
+
     // Pause button
     uiElements.pauseBtn.addEventListener('click', () => {
         if (game && game.gameRunning) {

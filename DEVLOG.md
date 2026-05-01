@@ -1,5 +1,61 @@
 # 開發日誌 (Development Log)
 
+## 2026-05-01 (v2.27.1)
+
+### 🔄 PWA 自動更新偵測機制
+
+套用 `pwa-cache-bust` skill 的最佳實踐，徹底解決「改了沒看到」問題。下次開始 v2.28.0 之後，玩家無須清快取就能自動拿到新版。
+
+**動機（剛踩到的真實雷）：**
+v2.27.0 部署後玩家 console 顯示混合版本「Game Version: 2.26.0 (Level Select + 4 Worlds)」— 新 main.js + 舊 version.js 同時被舊 SW cache 服務，造成 DOM 缺失與 null crash。
+
+**新策略：**
+1. **SW 分策略快取** — `sw.js` 重寫
+   - HTML / version.json：network-first（永遠抓最新入口）
+   - `?v=X.Y.Z` 版本化資源：cache-first（URL 帶版本自然當不同 key）
+   - JSON / 圖片：cache-first with network fallback
+2. **`version.json`** — 新建在根目錄，前端輪詢入口
+3. **更新 Banner** — 偵測到新版後 slide-up 提示，按「立即更新」呼叫 `SKIP_WAITING` + reload
+4. **雙重訊號**：
+   - SW `updatefound` event → 派發 `marioNewVersionReady` CustomEvent
+   - main.js 每 5 分鐘 polling `version.json?t=` (cache: no-store)
+5. **`scripts/bump-version.js`** — 一鍵同步 4 處版本號（version.js / sw.js / version.json / index.html）
+
+**Defensive code：** main.js 對 level-select DOM 加了 null check + warning，舊 HTML 不會再 crash 新 JS。
+
+### 📁 修改檔案
+
+| 檔案 | 狀態 |
+|------|------|
+| `sw.js` | ✏️ 重寫（strategy split） |
+| `version.json` | 🆕 新增 |
+| `index.html` | ✏️ SW register + update banner DOM + ?v=2.27.1 |
+| `style.css` | ✏️ 加 update banner 樣式 |
+| `js/main.js` | ✏️ version.json 輪詢 + banner 控制 + defensive null check |
+| `js/version.js` | ✏️ 2.27.0 → 2.27.1 |
+| `scripts/bump-version.js` | 🆕 新增（一鍵升版工具） |
+
+### 🔧 升版工作流程（v2.27.1 起的鐵則）
+
+```bash
+# 自動 patch bump (2.27.1 → 2.27.2)
+node scripts/bump-version.js
+
+# minor / major
+node scripts/bump-version.js minor "新增 Boss 多階段"
+node scripts/bump-version.js 2.30.0 "Build pipeline 重構"
+
+git diff      # review
+git commit -am "v2.27.2: ..."
+git push      # 客戶端 5 分鐘內自動偵測，跳更新 banner
+```
+
+### ⚠️ 關鍵理解
+
+**舊 cache 的玩家「最後一次手動清」之後**，未來改版完全不需要再請玩家清快取 — banner 會自動跳出來。
+
+---
+
 ## 2026-05-01 (v2.27.0)
 
 ### 🎮 關卡選擇系統 + 4 個世界

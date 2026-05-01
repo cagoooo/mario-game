@@ -1,7 +1,7 @@
 # 🎮 Mario Game 開發進度與優化路線圖
 
-> 最後更新：2026-05-01 ｜ 目前版本：**v2.27.0**
-> 專案規模：46 個 JS 模組、約 13,800 行（含註解）
+> 最後更新：2026-05-01 ｜ 目前版本：**v2.27.1**
+> 專案規模：47 個 JS 模組、約 14,000 行（含註解）
 
 ---
 
@@ -124,6 +124,16 @@
 - [x] **`Game` 接受 levelConfig**：levelMode 鎖定 biome + 通關偵測
 - [x] **STAGE CLEAR overlay** + 自動解鎖下一關 + 進度持久化
 - [x] **觸控支援**：直接點卡片進入
+
+### 第十六階段：PWA 自動更新偵測 (v2.27.1) ⭐ 2026-05-01
+> **動機**：v2.27.0 部署後玩家 console 顯示混合版本（新 main.js + 舊 version.js 被舊 SW 服務），證明「bump CACHE_NAME」不夠，需要積極推送機制。套用 `pwa-cache-bust` skill 最佳實踐。
+
+- [x] **SW 分策略快取**：HTML/version.json network-first；`?v=X.Y.Z` 資源 cache-first
+- [x] **`version.json`** 端點 — 前端輪詢入口
+- [x] **更新 Banner UI** — 偵測新版自動跳出，「立即更新」按鈕（NES 黃邊風格）
+- [x] **雙重訊號**：SW updatefound event + version.json polling（每 5 分鐘）
+- [x] **`scripts/bump-version.js`** — 一鍵同步 4 處版本號
+- [x] **defensive null check**：舊 HTML 不會再 crash 新 JS
 
 ---
 

@@ -1,7 +1,16 @@
-// Bump CACHE_NAME on every release to invalidate old caches.
-// Single source of truth: js/version.js (GAME_VERSION) — keep in sync.
-const CACHE_NAME = 'mario-game-v2.27.0';
-const urlsToCache = [
+// Service Worker — strategy-split caching (v2.27.1+)
+// ─────────────────────────────────────────────────────────────
+// HTML / version.json → network-first (always pick up fresh entry)
+// ?v=X.Y.Z assets    → cache-first (URL is the cache key)
+// JSON / images      → cache-first with network fallback
+// ─────────────────────────────────────────────────────────────
+// Bumping rules (enforced by scripts/bump-version.js):
+//   js/version.js GAME_VERSION  ←→  sw.js CACHE_VERSION  ←→  version.json
+const CACHE_VERSION = '2.27.1';
+const STATIC_CACHE = `mario-static-v${CACHE_VERSION}`;
+const HTML_CACHE = `mario-html-v${CACHE_VERSION}`;
+
+const PRECACHE = [
     './',
     './index.html',
     './style.css',
@@ -63,38 +72,104 @@ const urlsToCache = [
 self.addEventListener('install', event => {
     self.skipWaiting();
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => {
-                console.log('[SW] Caching game files for', CACHE_NAME);
-                return cache.addAll(urlsToCache);
-            })
-            .catch(err => console.error('[SW] cache.addAll failed:', err))
-    );
-});
-
-self.addEventListener('fetch', event => {
-    event.respondWith(
-        caches.match(event.request)
-            .then(response => {
-                return response || fetch(event.request).catch(error => {
-                    console.warn('[SW] Fetch failed for:', event.request.url, error);
-                    throw error;
-                });
-            })
+        caches.open(STATIC_CACHE).then(cache => {
+            console.log('[SW] Precaching for', CACHE_VERSION);
+            return Promise.allSettled(
+                PRECACHE.map(url => cache.add(url).catch(err => {
+                    console.warn('[SW] Skip precache fail:', url, err.message);
+                }))
+            );
+        })
     );
 });
 
 self.addEventListener('activate', event => {
     event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(
-                cacheNames.map(cacheName => {
-                    if (cacheName !== CACHE_NAME) {
-                        console.log('[SW] Deleting old cache:', cacheName);
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
-        }).then(() => self.clients.claim())
+        caches.keys()
+            .then(keys => Promise.all(
+                keys.filter(k => !k.endsWith(`v${CACHE_VERSION}`))
+                    .map(k => {
+                        console.log('[SW] Deleting old cache:', k);
+                        return caches.delete(k);
+                    })
+            ))
+            .then(() => self.clients.claim())
     );
+});
+
+function isVersionedAsset(url) {
+    return url.search.includes('v=');
+}
+
+function isHtmlNavigation(req, url) {
+    if (req.mode === 'navigate') return true;
+    if (url.pathname === '/' || url.pathname.endsWith('/')) return true;
+    if (url.pathname.endsWith('.html')) return true;
+    return false;
+}
+
+function isVersionJson(url) {
+    return url.pathname.endsWith('/version.json');
+}
+
+async function networkFirst(req, cacheName) {
+    try {
+        const fresh = await fetch(req);
+        if (fresh && fresh.ok) {
+            const cache = await caches.open(cacheName);
+            cache.put(req, fresh.clone()).catch(() => {});
+        }
+        return fresh;
+    } catch (err) {
+        const cached = await caches.match(req);
+        if (cached) return cached;
+        throw err;
+    }
+}
+
+async function cacheFirst(req, cacheName) {
+    const cached = await caches.match(req);
+    if (cached) return cached;
+    const fresh = await fetch(req);
+    if (fresh && fresh.ok && fresh.type !== 'opaque') {
+        const cache = await caches.open(cacheName);
+        cache.put(req, fresh.clone()).catch(() => {});
+    }
+    return fresh;
+}
+
+self.addEventListener('fetch', event => {
+    const req = event.request;
+    if (req.method !== 'GET') return;
+
+    const url = new URL(req.url);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+
+    // version.json: always network-first, never serve stale
+    if (isVersionJson(url)) {
+        event.respondWith(networkFirst(req, HTML_CACHE));
+        return;
+    }
+
+    // HTML / navigation: network-first so users get fresh entry point
+    if (isHtmlNavigation(req, url)) {
+        event.respondWith(networkFirst(req, HTML_CACHE));
+        return;
+    }
+
+    // Versioned assets (?v=X.Y.Z): cache-first (URL is unique per version)
+    if (isVersionedAsset(url)) {
+        event.respondWith(cacheFirst(req, STATIC_CACHE));
+        return;
+    }
+
+    // Everything else (precached files, images, level JSON): cache-first
+    event.respondWith(cacheFirst(req, STATIC_CACHE));
+});
+
+// Allow page to ping SW to skip waiting (used by update banner)
+self.addEventListener('message', event => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
 });
