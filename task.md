@@ -1,7 +1,7 @@
 # 🎮 Mario Game 開發進度與優化路線圖
 
-> 最後更新：2026-05-01 ｜ 目前版本：**v2.27.1**
-> 專案規模：47 個 JS 模組、約 14,000 行（含註解）
+> 最後更新：2026-05-01 ｜ 目前版本：**v2.28.0**
+> 專案規模：47 個 JS 模組、約 14,200 行（含註解）
 
 ---
 
@@ -134,6 +134,15 @@
 - [x] **雙重訊號**：SW updatefound event + version.json polling（每 5 分鐘）
 - [x] **`scripts/bump-version.js`** — 一鍵同步 4 處版本號
 - [x] **defensive null check**：舊 HTML 不會再 crash 新 JS
+
+### 第十七階段：教學引導重做 (v2.28.0) ⭐ 2026-05-01
+> **動機**：v2.13 ~ v2.17 累積的新技能（Sprint、Wall Jump、Cape）新玩家不知道存在；老玩家每次開遊戲都被迫看 cutscene 累積煩躁。
+
+- [x] **版本綁定 first-play 偵測**：`localStorage.marioTutorialSeenVersion` 對比 `TUTORIAL_VERSION` 常數，新版自動補課一次
+- [x] **教學步驟擴充**（6 → 8）：新增 Shift 衝刺、↓ 蹲下、牆壁+跳蹬牆跳、披風滑翔
+- [x] **道具首次拾取情境提示**：`game.firstTimePickupHint()` API 接入 7 種 power-up（mushroom/star/fire/ice/magnet/mega/cape）
+- [x] **暫停選單「重看教學」按鈕**：點下清 flag + dynamic import + 立即重播
+- [x] **`bump-version.js` 首次正式啟用**：4 檔同步成功
 
 ---
 

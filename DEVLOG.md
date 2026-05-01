@@ -1,5 +1,68 @@
 # 開發日誌 (Development Log)
 
+## 2026-05-01 (v2.28.0)
+
+### 📖 教學引導重做
+
+把舊的「每次開遊戲都被迫看 cutscene」改成「版本綁定 + 道具情境提示」，並補齊 v2.13 ~ v2.17 累積的新技能說明。
+
+**動機：**
+v2.13 加成就、v2.14 加 Sprint、v2.15 加 Wall Jump、v2.17 加 Cape — 但 Tutorial.js 的步驟還停在最早期，新玩家根本不會發現這些技能存在。同時老玩家每次開遊戲都被迫看 cutscene，累積煩躁。
+
+**設計：版本綁定（取捨選 c）**
+- `Tutorial.js` 內 `TUTORIAL_VERSION` 常數，complete 時寫進 `localStorage.marioTutorialSeenVersion`
+- 啟動時若版本不符 → 自動重播一次新內容（補課完就再也不打擾）
+- 老玩家的舊紀錄會被識別為「未看過 v2.28.0 教學」→ 補課新增的步驟
+
+**擴充步驟（6 → 8 步）：**
+1. 歡迎
+2. 移動 + 跳躍（合併）
+3. 踩敵人（強調連踩加分）
+4. **Shift 衝刺** ⭐ 新增
+5. **↓ 蹲下 / 牆壁+跳 蹬牆跳** ⭐ 新增
+6. 金幣 / 問號磚塊
+7. **披風滑翔 / 火冰花射子彈** ⭐ 新增
+8. 準備開始
+
+**情境提示（道具首次拾取）：**
+- 新增 `game.firstTimePickupHint(type, text)` API — 用 `localStorage.marioPowerUpSeen_<type>` 紀錄首次
+- 在 CollisionSystem 各 power-up 拾取點呼叫：
+  - 🍄 Mushroom：「變大！受到傷害會回到小狀態」
+  - ⭐ Star：「無敵！短時間內碰到敵人會直接消滅他們」
+  - 🔥 Fire Flower：「按空白鍵發射火球攻擊敵人」
+  - ❄️ Ice Flower：「冰球能凍住敵人，被凍敵人可當踏腳石」
+  - 🧲 Magnet：「自動吸附附近金幣」
+  - 🍄💥 Mega Mushroom：「巨大化！可破壞敵人、磚塊、水管」
+  - 🦸 Cape：「空中按住空白鍵減緩下降」
+- 沿用 v2.24.0 已存在的 `showPowerUpHint()` UI（3 秒淡出）
+
+**「重看教學」入口：**
+- 暫停選單新增 `📖 重看教學` 按鈕（pauseSecondaryBtn 樣式）
+- 點下去 = 清除 flag + dynamic import Tutorial.js + 立即在當前遊戲中重播
+
+### 📁 修改檔案
+
+| 檔案 | 狀態 |
+|------|------|
+| `js/Tutorial.js` | ✏️ 重寫（版本綁定 + 8 步驟）+ 匯出 resetTutorial() |
+| `js/Game.js` | ✏️ 新增 firstTimePickupHint() helper |
+| `js/CollisionSystem.js` | ✏️ 7 個 power-up 拾取點接入 hint |
+| `index.html` | ✏️ 暫停選單 pauseActions + replayTutorialButton |
+| `style.css` | ✏️ pauseSecondaryBtn 樣式 |
+| `js/main.js` | ✏️ wire up replayTutorialButton |
+| `js/version.js` / `sw.js` / `version.json` | ✏️ 由 `bump-version.js` 自動同步 |
+
+### 🛠️ 首次正式使用 bump-version.js
+
+```bash
+node scripts/bump-version.js 2.28.0 "教學引導重做：版本綁定 + 擴充步驟 + 道具首次提示"
+# → 自動同步 js/version.js / sw.js / version.json / index.html 4 處
+```
+
+驗證腳本工作正常 — 拒絕 same-version bump、明確列出哪些檔案有更新。
+
+---
+
 ## 2026-05-01 (v2.27.1)
 
 ### 🔄 PWA 自動更新偵測機制

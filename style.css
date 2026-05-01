@@ -279,6 +279,29 @@ body {
     box-shadow: 0 15px 25px rgba(0, 0, 0, 0.3);
 }
 
+#pauseActions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+}
+
+.pauseSecondaryBtn {
+    padding: 10px 28px;
+    font-size: 15px;
+    color: #ddd;
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 30px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.pauseSecondaryBtn:hover {
+    border-color: #FFD700;
+    color: #FFD700;
+}
+
 /* ========== GAME OVER OVERLAY ========== */
 #gameOverOverlay {
     display: none;

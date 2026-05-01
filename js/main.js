@@ -2,6 +2,7 @@ import { Game } from './Game.js';
 import { AssetLoader } from './AssetLoader.js';
 import { GAME_VERSION } from './version.js';
 import { LEVELS, getUnlockedLevels, getLevelById } from './Levels.js';
+import { resetTutorial } from './Tutorial.js';
 
 window.onload = async function () {
     console.log('%c Game Version: ' + GAME_VERSION + ' (Level Select + 4 Worlds) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
@@ -354,6 +355,27 @@ window.onload = async function () {
             game.resume();
         }
     });
+
+    // Replay Tutorial button (v2.28.0) — clears the seen-flag and forces tutorial
+    // to play again; if a game is running, replays it inline. Otherwise it'll fire
+    // on the next game start.
+    const replayTutorialBtn = document.getElementById('replayTutorialButton');
+    if (replayTutorialBtn) {
+        replayTutorialBtn.addEventListener('click', () => {
+            resetTutorial();
+            if (game) {
+                // Recreate Tutorial in the running game and resume so player sees it now
+                import('./Tutorial.js').then(({ Tutorial }) => {
+                    game.tutorial = new Tutorial(game);
+                    if (game.isPaused) game.resume();
+                });
+            } else {
+                // Just dismiss the pause overlay; flag is cleared so tutorial will fire
+                // when player next picks a level.
+                uiElements.pauseOverlay.style.display = 'none';
+            }
+        });
+    }
 
     // ESC key for pause
     document.addEventListener('keydown', (e) => {

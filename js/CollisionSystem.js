@@ -324,6 +324,7 @@ export class CollisionSystem {
                 if (this.game.player.powerUp()) {
                     this.game.playSound('powerup_mushroom');
                     this.game.triggerFreeze(20);
+                    this.game.firstTimePickupHint('mushroom', '🍄 變大！受到傷害會回到小狀態');
                 } else {
                     this.game.playSound('coin');
                 }
@@ -347,6 +348,7 @@ export class CollisionSystem {
                 this.game.triggerFreeze(20);
                 this.game.achievementSystem.trackStarCollect();
                 if (this.game.player.getStarPower) this.game.player.getStarPower();
+                this.game.firstTimePickupHint('star', '⭐ 無敵！短時間內碰到敵人會直接消滅他們');
                 this.game.stars.splice(i, 1);
             }
         }
@@ -366,6 +368,7 @@ export class CollisionSystem {
                     if (changed) {
                         this.game.playSound('powerup_fire');
                         this.game.triggerFreeze(20);
+                        this.game.firstTimePickupHint('fire', '🔥 火焰花！按空白鍵發射火球攻擊敵人');
                     } else {
                         this.game.playSound('coin');
                     }
@@ -390,6 +393,7 @@ export class CollisionSystem {
                         this.game.playSound('powerup_fire'); // Reuse sound
                         this.game.triggerFreeze(20);
                         this.game.addParticles(flower.x + 14, flower.y + 16, 15, '#00BFFF');
+                        this.game.firstTimePickupHint('ice', '❄️ 冰花！冰球能凍住敵人，被凍敵人可當踏腳石');
                     } else {
                         this.game.playSound('coin');
                     }
@@ -408,6 +412,7 @@ export class CollisionSystem {
                 this.game.updateScore();
                 this.game.playSound('powerup_mushroom');
                 if (this.game.player.getMagnetPower) this.game.player.getMagnetPower();
+                this.game.firstTimePickupHint('magnet', '🧲 磁鐵！自動吸附附近金幣');
                 this.game.magnets.splice(i, 1);
             }
         }
@@ -422,6 +427,7 @@ export class CollisionSystem {
                 this.game.updateScore();
                 this.game.playSound('powerup_mushroom');
                 if (this.game.player.getMegaMushroom) this.game.player.getMegaMushroom();
+                this.game.firstTimePickupHint('mega', '🍄💥 巨大化！可破壞敵人、磚塊、水管！');
                 this.game.megaMushrooms.splice(i, 1);
             }
         }
@@ -449,6 +455,7 @@ export class CollisionSystem {
                 this.game.addParticles(cape.x + cape.width / 2, cape.y + cape.height / 2, 15, '#FFD700');
                 this.game.addParticles(cape.x + cape.width / 2, cape.y + cape.height / 2, 10, '#FFA500');
                 if (this.game.player.getCape) this.game.player.getCape();
+                this.game.firstTimePickupHint('cape', '🦸 披風滑翔！空中按住空白鍵減緩下降');
                 this.game.capes.splice(i, 1);
             }
         }

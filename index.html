@@ -15,7 +15,7 @@
   <link rel="icon" type="image/png" href="assets/icon-192.png">
   <link rel="shortcut icon" type="image/png" href="assets/icon-192.png">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="style.css?v=2.27.1">
+  <link rel="stylesheet" href="style.css?v=2.28.0">
 </head>
 
 <body>
@@ -83,7 +83,10 @@
         <div class="guide-row"><span>牆壁+跳</span><span>蹬牆跳</span></div>
       </div>
     </div>
-    <button id="resumeButton">繼續遊戲</button>
+    <div id="pauseActions">
+      <button id="resumeButton">繼續遊戲</button>
+      <button id="replayTutorialButton" class="pauseSecondaryBtn">📖 重看教學</button>
+    </div>
   </div>
 
   <!-- Game Over Overlay -->
@@ -126,7 +129,7 @@
     <button id="updateBannerDismiss" aria-label="關閉">✕</button>
   </div>
 
-  <script type="module" src="js/main.js?v=2.27.1"></script>
+  <script type="module" src="js/main.js?v=2.28.0"></script>
   <script>
     // Register Service Worker + listen for new-version events.
     // Pairs with version.json polling (in main.js) for redundancy.

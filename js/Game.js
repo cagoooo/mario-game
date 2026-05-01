@@ -201,6 +201,21 @@ export class Game {
     }
 
     /**
+     * Show a hint only the first time a player picks up a given power-up type.
+     * Persisted in localStorage so it never repeats — call freely from CollisionSystem.
+     * @param {string} type - power-up identifier (e.g. 'cape', 'fire', 'ice', 'star', 'mega')
+     * @param {string} text - hint message to display
+     */
+    firstTimePickupHint(type, text) {
+        const key = `marioPowerUpSeen_${type}`;
+        try {
+            if (localStorage.getItem(key)) return;
+            localStorage.setItem(key, '1');
+        } catch (e) { /* storage blocked → just show the hint anyway */ }
+        this.showPowerUpHint(text);
+    }
+
+    /**
      * Show a power-up hint message on screen
      * @param {string} text - Hint message to display
      */

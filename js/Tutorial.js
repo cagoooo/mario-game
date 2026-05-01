@@ -1,50 +1,80 @@
 /**
- * Tutorial System - 新手教學系統
- * 在遊戲開始時顯示操作提示
+ * Tutorial.js - 新手教學系統
+ *
+ * Version-bound first-play detection (v2.28.0+):
+ * - localStorage stores `marioTutorialSeenVersion` after the player completes
+ *   the tutorial. If TUTORIAL_VERSION (below) is bumped (e.g. new moves added),
+ *   players see the updated tutorial once.
+ * - Pause menu's「重看教學」button clears the flag → next game restart shows it.
  */
+
+// Bump this whenever tutorial content changes substantively (new steps,
+// rewordings that matter). Players who've seen an older version will be
+// shown the new one once.
+const TUTORIAL_VERSION = '2.28.0';
+const STORAGE_KEY = 'marioTutorialSeenVersion';
+
 export class Tutorial {
     constructor(game) {
         this.game = game;
-        this.isActive = true;
         this.currentStep = 0;
         this.stepTimer = 0;
         this.fadeAlpha = 1.0;
 
-        // Tutorial steps configuration
+        // Skip if this player already saw the current tutorial version
+        let alreadySeen = false;
+        try {
+            alreadySeen = localStorage.getItem(STORAGE_KEY) === TUTORIAL_VERSION;
+        } catch (e) { /* localStorage may be blocked */ }
+
+        this.isActive = !alreadySeen;
+
         this.steps = [
             {
                 text: '歡迎來到超級瑪利歐！',
                 subtext: '',
-                duration: 120, // 2 seconds at 60fps
+                duration: 90,
                 icon: '🎮'
             },
             {
-                text: '← → 移動',
-                subtext: '使用方向鍵或點擊螢幕左右側',
+                text: '← → 移動 ｜ 空白鍵 跳躍',
+                subtext: '方向鍵或點擊螢幕左右側',
                 duration: 180,
                 icon: '🏃'
             },
             {
-                text: '空白鍵 跳躍',
-                subtext: '點擊畫面或按空白鍵可跳躍',
-                duration: 180,
-                icon: '⬆️'
-            },
-            {
-                text: '踩踏敵人消滅！',
-                subtext: '從上方跳到敵人頭上',
-                duration: 180,
+                text: '從上方踩敵人消滅',
+                subtext: '連續踩多個有額外加分！',
+                duration: 150,
                 icon: '👟'
             },
             {
-                text: '收集金幣獲得分數',
-                subtext: '問號磚塊內有驚喜！',
+                text: 'Shift 衝刺',
+                subtext: '按住 Shift 跑得更快',
+                duration: 150,
+                icon: '⚡'
+            },
+            {
+                text: '↓ 蹲下 ｜ 牆壁＋跳 = 蹬牆跳',
+                subtext: '蹲下可閃過敵人；蹬牆跳爬上高處',
+                duration: 180,
+                icon: '🧗'
+            },
+            {
+                text: '收集金幣 ｜ 撞問號磚塊',
+                subtext: '裡頭有蘑菇、火焰花、披風⋯⋯各種驚喜',
                 duration: 180,
                 icon: '🪙'
             },
             {
+                text: '披風 = 滑翔 ｜ 火/冰花 = 射子彈',
+                subtext: '空中按住空白鍵滑翔；發射鍵也是空白',
+                duration: 180,
+                icon: '🦸'
+            },
+            {
                 text: '準備開始！',
-                subtext: '',
+                subtext: '隨時點擊螢幕可跳過教學',
                 duration: 90,
                 icon: '🚀'
             }
@@ -64,22 +94,19 @@ export class Tutorial {
             return;
         }
 
-        // Check if current step is complete
         if (this.stepTimer >= currentStepData.duration) {
             this.stepTimer = 0;
             this.currentStep++;
-
             if (this.currentStep >= this.steps.length) {
                 this.complete();
             }
         }
 
-        // Calculate fade effect for step transitions
         const stepProgress = this.stepTimer / currentStepData.duration;
         if (stepProgress < 0.1) {
-            this.fadeAlpha = stepProgress / 0.1; // Fade in
+            this.fadeAlpha = stepProgress / 0.1;
         } else if (stepProgress > 0.85) {
-            this.fadeAlpha = (1 - stepProgress) / 0.15; // Fade out
+            this.fadeAlpha = (1 - stepProgress) / 0.15;
         } else {
             this.fadeAlpha = 1.0;
         }
@@ -93,52 +120,43 @@ export class Tutorial {
 
         ctx.save();
 
-        // Semi-transparent overlay (less opaque to see game behind)
         ctx.fillStyle = `rgba(0, 0, 0, ${0.4 * this.fadeAlpha})`;
         ctx.fillRect(0, 0, width, height);
 
-        // Center content
         const centerX = width / 2;
         const centerY = height / 2 - 30;
 
         ctx.globalAlpha = this.fadeAlpha;
 
-        // Icon
         ctx.font = 'bold 48px Arial';
         ctx.textAlign = 'center';
         ctx.fillStyle = '#FFF';
         ctx.fillText(currentStepData.icon, centerX, centerY - 40);
 
-        // Main text with shadow
-        ctx.font = 'bold 28px Arial';
+        ctx.font = 'bold 24px Arial';
         ctx.fillStyle = '#000';
         ctx.fillText(currentStepData.text, centerX + 2, centerY + 12);
         ctx.fillStyle = '#FFF';
         ctx.fillText(currentStepData.text, centerX, centerY + 10);
 
-        // Subtext
         if (currentStepData.subtext) {
-            ctx.font = '18px Arial';
+            ctx.font = '16px Arial';
             ctx.fillStyle = '#CCC';
-            ctx.fillText(currentStepData.subtext, centerX, centerY + 45);
+            ctx.fillText(currentStepData.subtext, centerX, centerY + 42);
         }
 
-        // Skip hint at bottom
         ctx.font = '14px Arial';
         ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
         ctx.fillText('點擊螢幕跳過教學', centerX, height - 30);
 
-        // Progress indicator
         const progressWidth = 200;
         const progressHeight = 4;
         const progressX = centerX - progressWidth / 2;
         const progressY = height - 60;
 
-        // Background bar
         ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
         ctx.fillRect(progressX, progressY, progressWidth, progressHeight);
 
-        // Progress bar
         const overallProgress = (this.currentStep + this.stepTimer / currentStepData.duration) / this.steps.length;
         ctx.fillStyle = '#4CAF50';
         ctx.fillRect(progressX, progressY, progressWidth * overallProgress, progressHeight);
@@ -152,7 +170,9 @@ export class Tutorial {
 
     complete() {
         this.isActive = false;
-        // Play a sound when tutorial ends
+        try {
+            localStorage.setItem(STORAGE_KEY, TUTORIAL_VERSION);
+        } catch (e) { /* storage blocked */ }
         if (this.game && this.game.playSound) {
             this.game.playSound('menuSelect');
         }
@@ -161,4 +181,14 @@ export class Tutorial {
     isCompleted() {
         return !this.isActive;
     }
+}
+
+/**
+ * Reset the seen-flag so the tutorial plays again on next game start.
+ * Called from Pause menu「重看教學」button.
+ */
+export function resetTutorial() {
+    try {
+        localStorage.removeItem(STORAGE_KEY);
+    } catch (e) { /* storage blocked */ }
 }
