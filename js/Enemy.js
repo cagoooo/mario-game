@@ -29,6 +29,9 @@ export class Enemy {
         this.x = x;
         this.y = y;
         this.speed = speed;
+        this.frozen = false;
+        this.frozenTimer = 0;
+        this.originalSpeed = speed;
         this.direction = direction;
         this.alive = true;
         this.animationFrame = 0;

@@ -109,6 +109,15 @@ function main() {
     let html = fs.readFileSync(INDEX_HTML, 'utf8');
     const before = html;
     html = html.replace(/\?v=[\d.]+/g, `?v=${next}`);
+    // Version every transitive ES module, so an older active worker cannot mix
+    // fresh HTML/main.js with old unversioned dependencies during an update.
+    const imports = Object.fromEntries(fs.readdirSync(path.join(ROOT, 'js'))
+        .filter(name => name.endsWith('.js')).sort()
+        .map(name => [`./js/${name}`, `./js/${name}?v=${next}`]));
+    const importMap = `<script type="importmap" id="game-imports">${JSON.stringify({ imports })}</script>`;
+    html = html.includes('id="game-imports"')
+        ? html.replace(/<script type="importmap" id="game-imports">[\s\S]*?<\/script>/, importMap)
+        : html.replace('</head>', `  ${importMap}\n</head>`);
     if (html !== before) {
         fs.writeFileSync(INDEX_HTML, html);
         results.push(['index.html', true]);

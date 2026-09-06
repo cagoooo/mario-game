@@ -1,4 +1,4 @@
 {
-    "version": "2.33.0",
-    "notes": "敵人 AI 抽象化：抽出共用 frozen overlay + chase helpers，去除 ~50 行重複"
+    "version": "2.34.0",
+    "notes": "探索關卡、寶石收集、個人紀錄與遊戲穩定性修復"
 }

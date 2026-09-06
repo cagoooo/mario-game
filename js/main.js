@@ -1,3 +1,4 @@
+import { COURSES, getCourseRecord } from './AdventureCourse.js';
 import { Game } from './Game.js';
 import { AssetLoader } from './AssetLoader.js';
 import { GAME_VERSION } from './version.js';
@@ -7,7 +8,7 @@ import { ACHIEVEMENT_REWARDS } from './Rewards.js';
 import { flushSaves } from './saveHelper.js';
 
 window.onload = async function () {
-    console.log('%c Game Version: ' + GAME_VERSION + ' (Level Select + 4 Worlds) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
+    console.log('%c Game Version: ' + GAME_VERSION + ' (Adventure Trails + Classic Worlds) ', 'background: #222; color: #00ff00; font-size: 20px; padding: 10px;');
     const canvas = document.getElementById('gameArea');
 
     // UI Elements
@@ -121,6 +122,7 @@ window.onload = async function () {
             unlocked: unlocked.includes(lvl.id)
         }));
         items.push({ type: 'endless' });
+        items.unshift(...COURSES.map(level => ({ type: 'course', level, unlocked: true })));
         return items;
     }
 
@@ -128,17 +130,14 @@ window.onload = async function () {
         menuItems = buildMenuItems();
         levelSelectList.innerHTML = '';
         if (selectedIndex >= menuItems.length) selectedIndex = 0;
-        // Default selection: highest unlocked level (or Endless if all cleared)
-        if (selectedIndex === 0) {
-            for (let i = 0; i < menuItems.length; i++) {
-                if (menuItems[i].type === 'level' && menuItems[i].unlocked) {
-                    selectedIndex = i;
-                }
-            }
-        }
+        // Keep keyboard selection stable, including the first item.
         menuItems.forEach((item, i) => {
             const li = document.createElement('li');
-            if (item.type === 'level') {
+            li.tabIndex = item.unlocked || item.type === 'endless' ? 0 : -1;
+            li.setAttribute('role', 'button');
+            li.setAttribute('aria-disabled', String(item.type === 'level' && !item.unlocked));
+            li.addEventListener('focus', () => { selectedIndex = i; });
+            if (item.type === 'level' || item.type === 'course') {
                 li.className = item.unlocked ? 'unlocked' : 'locked';
                 li.innerHTML = `
                     <span class="lsEmoji">${item.level.emoji}</span>
@@ -146,6 +145,15 @@ window.onload = async function () {
                     <span class="lsSub">${item.level.subtitle}</span>
                     ${item.unlocked ? '' : '<span class="lsLock">🔒</span>'}
                 `;
+                if (item.type === 'course') {
+                    li.classList.add('course');
+                    li.style.setProperty('--course-color', item.level.color);
+                    const record = getCourseRecord(item.level.id);
+                    const badge = document.createElement('span');
+                    badge.className = 'lsRecord';
+                    badge.textContent = record ? `${'★'.repeat(record.stars)}${'☆'.repeat(3 - record.stars)} · ${record.bestTime.toFixed(1)} 秒` : '新冒險 · 收集 3 顆寶石';
+                    li.appendChild(badge);
+                }
                 if (item.unlocked) {
                     li.addEventListener('click', () => startGame(i));
                 }
@@ -153,7 +161,7 @@ window.onload = async function () {
                 li.className = 'endless unlocked';
                 li.innerHTML = `
                     <span class="lsEmoji">∞</span>
-                    <span class="lsName">Endless Mode</span>
+                    <span class="lsName">無盡冒險</span>
                     <span class="lsSub">無限挑戰</span>
                 `;
                 li.addEventListener('click', () => startGame(i));
@@ -185,7 +193,10 @@ window.onload = async function () {
         uiElements.gameOverOverlay.style.display = 'none';
         uiElements.pauseOverlay.style.display = 'none';
 
-        const levelConfig = (item.type === 'level') ? item.level : null;
+        const levelConfig = item.level || null;
+        document.activeElement?.blur();
+        document.body.classList.add('playing');
+        document.getElementById('courseResult').hidden = true;
 
         if (game) {
             // Reuse existing instance to avoid listener accumulation on canvas
@@ -199,11 +210,15 @@ window.onload = async function () {
             window.game = game;
         }
 
+        canvas.removeEventListener('marioLevelCleared', onLevelCleared);
         canvas.addEventListener('marioLevelCleared', onLevelCleared, { once: true });
     }
 
     function onLevelCleared(e) {
         const { current, next, score } = e.detail;
+        menuItems = buildMenuItems();
+        lcNextLevelBtn.textContent = '下一關 ▶';
+        document.getElementById('courseResult').hidden = true;
         const cleared = getLevelById(current);
         lcLevelName.textContent = cleared ? `${cleared.name} ${cleared.emoji}` : current;
         lcScore.textContent = `SCORE: ${score}`;
@@ -222,13 +237,13 @@ window.onload = async function () {
 
     function showLevelSelect() {
         if (game) {
-            game.gameRunning = false;
-            game = null;
+            game.stop();
         }
         uiElements.startScreen.style.display = 'none';
         uiElements.gameOverOverlay.style.display = 'none';
         uiElements.pauseOverlay.style.display = 'none';
         levelClearedOverlay.classList.remove('active');
+        document.body.classList.remove('playing');
         selectedIndex = 0;
         renderLevelSelect();
         levelSelectScreen.classList.add('active');
@@ -238,6 +253,7 @@ window.onload = async function () {
         // Keyboard navigation
         document.addEventListener('keydown', (e) => {
             if (!levelSelectScreen.classList.contains('active')) return;
+            if (e.repeat) return;
             if (e.key === 'ArrowDown') { e.preventDefault(); moveSelection(1); }
             else if (e.key === 'ArrowUp') { e.preventDefault(); moveSelection(-1); }
             else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startGame(selectedIndex); }
@@ -252,7 +268,8 @@ window.onload = async function () {
         lcNextLevelBtn.addEventListener('click', () => {
             const nextId = lcNextLevelBtn.dataset.nextId;
             if (!nextId) return;
-            const idx = menuItems.findIndex(it => it.type === 'level' && it.level.id === nextId);
+            menuItems = buildMenuItems();
+            const idx = menuItems.findIndex(it => it.level?.id === nextId);
             if (idx >= 0) {
                 selectedIndex = idx;
                 startGame(idx);
@@ -264,12 +281,33 @@ window.onload = async function () {
         });
     }
 
+    document.getElementById('pauseMenuBtn').addEventListener('click', showLevelSelect);
+    document.getElementById('gameOverMenuBtn').addEventListener('click', showLevelSelect);
+    document.getElementById('lcReplayBtn').addEventListener('click', () => {
+        const index = menuItems.findIndex(item => item.level?.id === game?.levelConfig?.id);
+        if (index >= 0) startGame(index);
+    });
+    canvas.addEventListener('marioCourseCleared', e => {
+        const { config, stars, seconds, gems, record, noDeath } = e.detail;
+        lcLevelName.textContent = `${config.emoji} ${config.name}`;
+        lcScore.textContent = `${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}　${seconds.toFixed(1)} 秒`;
+        const result = document.getElementById('courseResult');
+        result.hidden = false;
+        result.textContent = `抵達終點 ✓ ｜ 寶石 ${gems}/3 ｜ 不失誤 ${noDeath ? '✓' : '—'}\n個人最快 ${record.bestTime.toFixed(1)} 秒 · 累計通關 ${record.clears} 次`;
+        lcUnlockMessage.textContent = seconds <= config.par ? '⚡ 達成速度挑戰！再試試收齊寶石。' : `再挑戰：${config.par} 秒內抵達終點！`;
+        const next = COURSES[(COURSES.findIndex(c => c.id === config.id) + 1) % COURSES.length];
+        lcNextLevelBtn.dataset.nextId = next.id;
+        lcNextLevelBtn.disabled = false;
+        lcNextLevelBtn.textContent = `下一站：${next.name} ▶`;
+        levelClearedOverlay.classList.add('active');
+    });
+
     // ========== Persist on tab hide / unload (v2.32.0) ==========
     // Belt-and-braces save: idleSave coalesces writes; this flushes them
     // synchronously before the tab is hidden/unloaded so nothing is lost.
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'hidden') {
-            if (game && game.achievementSystem) game.achievementSystem.save();
+            if (game && game.achievementSystem) { game.achievementSystem.save(); game.pause(); }
             flushSaves();
         }
     });
@@ -316,6 +354,7 @@ window.onload = async function () {
                 try {
                     const reg = await navigator.serviceWorker.getRegistration();
                     if (reg && reg.waiting) {
+                        navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload(), { once: true });
                         reg.waiting.postMessage({ type: 'SKIP_WAITING' });
                         return; // controllerchange listener will trigger reload
                     }
@@ -349,10 +388,18 @@ window.onload = async function () {
         setInterval(checkVersion, 5 * 60 * 1000);
     }
 
+    window.addEventListener('blur', () => game?.pause());
+
+    document.getElementById('gameUI').addEventListener('click', e => e.target.closest('button')?.blur());
+
     // Pause button
     uiElements.pauseBtn.addEventListener('click', () => {
         if (game && game.gameRunning) {
-            game.pause();
+            if (game.isPaused) game.resume(); else game.pause();
+        }
+    });
+    canvas.addEventListener('marioPaused', () => {
+        if (game) {
             // Update pause stats + achievements badge
             if (game.achievementSystem) {
                 const stats = game.achievementSystem.stats;
@@ -371,6 +418,7 @@ window.onload = async function () {
     // Resume button
     uiElements.resumeBtn.addEventListener('click', () => {
         if (game) {
+            document.activeElement?.blur();
             game.resume();
         }
     });
@@ -451,13 +499,12 @@ window.onload = async function () {
 
     // ESC key for pause
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && game) {
-            if (game.gameRunning) {
-                game.pause();
-            } else if (game.isPaused) {
-                game.resume();
-            }
-        }
+        if (e.key !== 'Escape' || e.repeat) return;
+        if (achievementsModal?.classList.contains('active')) { achievementsModal.classList.remove('active'); return; }
+        if (uiElements.audioModal.classList.contains('active')) { uiElements.closeSettingsBtn.click(); return; }
+        if (!game || levelSelectScreen.classList.contains('active') || levelClearedOverlay.classList.contains('active')) return;
+        if (game.isPaused) game.resume();
+        else if (game.gameRunning) game.pause();
     });
 
     // Mute button
@@ -535,9 +582,12 @@ window.onload = async function () {
     checkOrientation();
 
     // ========== Audio Settings Modal ==========
+    let resumeAfterSettings = false;
     if (uiElements.settingsBtn && uiElements.audioModal) {
         // Open settings modal
         uiElements.settingsBtn.addEventListener('click', () => {
+            resumeAfterSettings = !!(game?.gameRunning && !game.isPaused);
+            game?.pause();
             uiElements.audioModal.classList.add('active');
             // Load current values from game audio system
             if (game && game.audioSystem && typeof game.audioSystem.getMusicVolume === 'function') {
@@ -573,12 +623,15 @@ window.onload = async function () {
         // Close modal
         uiElements.closeSettingsBtn.addEventListener('click', () => {
             uiElements.audioModal.classList.remove('active');
+            document.activeElement?.blur();
+            if (resumeAfterSettings) game?.resume();
+            resumeAfterSettings = false;
         });
 
         // Close modal on background click
         uiElements.audioModal.addEventListener('click', (e) => {
             if (e.target === uiElements.audioModal) {
-                uiElements.audioModal.classList.remove('active');
+                uiElements.closeSettingsBtn.click();
             }
         });
     }

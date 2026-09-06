@@ -11,7 +11,7 @@
 // Bump this whenever tutorial content changes substantively (new steps,
 // rewordings that matter). Players who've seen an older version will be
 // shown the new one once.
-const TUTORIAL_VERSION = '2.28.0';
+const TUTORIAL_VERSION = '2.34.0';
 const STORAGE_KEY = 'marioTutorialSeenVersion';
 
 export class Tutorial {
@@ -38,7 +38,7 @@ export class Tutorial {
             },
             {
                 text: '← → 移動 ｜ 空白鍵 跳躍',
-                subtext: '方向鍵或點擊螢幕左右側',
+                subtext: '也可用 A / D 移動、W 跳；再按一次可二段跳',
                 duration: 180,
                 icon: '🏃'
             },
@@ -56,7 +56,7 @@ export class Tutorial {
             },
             {
                 text: '↓ 蹲下 ｜ 牆壁＋跳 = 蹬牆跳',
-                subtext: '蹲下可閃過敵人；蹬牆跳爬上高處',
+                subtext: '站上水管按 ↓ 進入；手機用下方按鈕',
                 duration: 180,
                 icon: '🧗'
             },
@@ -68,13 +68,13 @@ export class Tutorial {
             },
             {
                 text: '披風 = 滑翔 ｜ 火/冰花 = 射子彈',
-                subtext: '空中按住空白鍵滑翔；發射鍵也是空白',
+                subtext: '空中按住跳躍滑翔；取得火／冰花後自動發射',
                 duration: 180,
                 icon: '🦸'
             },
             {
-                text: '準備開始！',
-                subtext: '隨時點擊螢幕可跳過教學',
+                text: '收集寶石，抵達終點旗！',
+                subtext: '探索關卡可拚三星與最快紀錄；點畫面跳過教學',
                 duration: 90,
                 icon: '🚀'
             }

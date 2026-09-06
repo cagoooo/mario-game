@@ -1,0 +1,64 @@
+/* Adventure update: compact, scrollable menus and complete touch controls. */
+#gameArea { width: min(100vw, 200svh); height: auto; max-width: 100%; touch-action: none; }
+#gameUI, #controlButtons { visibility: hidden; }
+body.playing #gameUI, body.playing #controlButtons { visibility: visible; }
+.newFeatures { color: #234b43; text-align: center; padding: 0 20px; margin: 0 0 18px; font-weight: 600; }
+#gameTitle { font-size: clamp(28px, 5vw, 48px); }
+#gameSubtitle { text-align: center; padding: 0 16px; margin-bottom: 16px; }
+#levelSelectScreen { overflow-y: auto; justify-content: flex-start; padding: max(24px, env(safe-area-inset-top)) 16px 24px; background: #122c2c; }
+#levelSelectScreen .lsTitle { color: #fff3bb; text-shadow: 2px 3px #13211e; font-family: inherit; font-size: clamp(24px, 4vw, 34px); margin: 0 0 10px; }
+#levelSelectScreen .lsSubtitle { font-family: inherit; color: #ccded6; line-height: 1.8; margin-bottom: 16px; text-align: center; }
+#levelSelectList { width: min(760px, 100%); max-width: none; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0; }
+#levelSelectList li { margin: 0; min-height: 67px; padding: 14px 12px; font-family: inherit; flex-wrap: wrap; border: 2px solid #58746a; background: #213e36; color: #fff; gap: 8px; cursor: pointer; }
+#levelSelectList li .lsName { font-family: inherit; font-size: 17px; flex: 1; }
+#levelSelectList li .lsSub { font-size: 12px; color: #d0e4db; margin: 0; }
+#levelSelectList li .lsEmoji { width: 26px; margin: 0; font-size: 22px; }
+#levelSelectList li.course { border-left: 6px solid var(--course-color); }
+#levelSelectList li .lsRecord { flex-basis: 100%; font-size: 12px; color: #ffe396; padding-left: 34px; }
+#levelSelectList li.locked { opacity: 0.68; cursor: default; }
+#levelSelectList li.unlocked.selected, #levelSelectList li.unlocked:hover, #levelSelectList li:focus-visible { background: #fff0bc; color: #20372c; border-color: #f4c862; outline: none; transform: none; }
+#levelSelectList li.selected .lsRecord, #levelSelectList li:hover .lsRecord { color: #674516; }
+#levelSelectList li.unlocked.selected::before { display: none; }
+#levelSelectList li.endless { grid-column: 1 / -1; }
+#levelSelectList li.endless .lsName { color: inherit; }
+#levelSelectScreen .lsBack { margin-top: 16px; flex-shrink: 0; color: #eee; }
+.lcButtons { flex-wrap: wrap; justify-content: center; }
+#levelClearedOverlay { overflow-y: auto; padding: 24px 16px; }
+#courseResult { white-space: pre-line; color: #e7f1e4; line-height: 1.9; text-align: center; }
+#pauseOverlay { overflow-y: auto; padding: 16px; }
+#pauseActions { flex-wrap: wrap; justify-content: center; }
+#gameOverMenuBtn { margin-top: 15px; }
+#controlButtons { width: 100%; padding: 0 max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left)); justify-content: space-between; gap: 10px; bottom: max(14px, env(safe-area-inset-bottom)); pointer-events: none; }
+.directionControls, .actionControls { display: flex; gap: 10px; align-items: center; }
+.controlButton { pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; font-family: inherit; color: white; padding: 0; white-space: nowrap; }
+#downButton, #sprintButton { width: 55px; height: 55px; font-size: 16px; background: #395f80; }
+button:focus-visible { outline: 3px solid #f7c841; outline-offset: 3px; }
+@media (max-width: 600px) {
+    #levelSelectList { grid-template-columns: 1fr; gap: 8px; }
+    #levelSelectScreen .lsTitle { font-size: 25px; }
+    #levelSelectList li { min-height: 62px; padding: 10px; }
+    #levelSelectList li .lsSub { font-size: 11px; }
+    #gameSubtitle { font-size: 16px; }
+    .newFeatures { font-size: 13px; }
+    #startInstructions { padding: 14px; margin-bottom: 20px; }
+    #startInstructions p { font-size: 13px; }
+    .directionControls, .actionControls { gap: 6px; }
+    .controlButton, #jumpButton { width: 52px; height: 52px; font-size: 23px; }
+    #downButton, #sprintButton { width: 44px; height: 44px; font-size: 14px; }
+    #pauseContent { max-width: 100%; }
+    .lcTitle { font-size: 25px; }
+    .lcLevelName { font-size: 24px; }
+    #courseResult { font-size: 13px; }
+}
+@media (orientation: landscape) and (max-height: 550px) {
+    #pauseOverlay { justify-content: flex-start; }
+    #pauseText { font-size: 25px; margin: 0 0 8px; }
+    #pauseContent { margin-bottom: 8px; }
+    #pauseActions { flex-direction: row; gap: 8px; }
+    #pauseActions button { padding: 10px 18px; font-size: 14px; }
+    .controlButton, #jumpButton { width: 52px; height: 52px; font-size: 23px; }
+    #controlButtons { bottom: 8px; opacity: .75; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+}

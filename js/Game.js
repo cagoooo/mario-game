@@ -1,3 +1,6 @@
+import { Cape } from './Cape.js';
+import { FixedStepLoop } from './FixedStepLoop.js';
+import { AdventureCourse } from './AdventureCourse.js';
 import { Player } from './Player.js';
 import { Background, Biomes } from './Background.js';
 import { InputHandler } from './InputHandler.js';
@@ -56,7 +59,7 @@ export class Game {
         this.canvas.width = this.width;
         this.canvas.height = this.height;
 
-        this.dpr = window.devicePixelRatio || 1;
+        this.dpr = Math.min(2, window.devicePixelRatio || 1);
         canvas.width = this.width * this.dpr;
         canvas.height = this.height * this.dpr;
         this.ctx.scale(this.dpr, this.dpr);
@@ -83,7 +86,9 @@ export class Game {
         this.isNewHighScore = false;
         this.isGameOverSequence = false;
         this.isPaused = false;
-        this.isMuted = localStorage.getItem('marioMuted') === 'true';
+        this.isMuted = false;
+        this.timers = [];
+        this.loop = new FixedStepLoop(() => this.update(), () => this.draw(), () => this.gameRunning && !this.isPaused);
 
         this.scorePopups = [];
         this.scorePopupPool = new ObjectPool(
@@ -133,11 +138,12 @@ export class Game {
         this.showFps = false; // Hidden by default (set to true for debugging)
 
         this.audioSystem = new EnhancedAudioSystem();
+        this.isMuted = this.audioSystem.isMuted;
         this.currentBGMMode = null;
 
-        this.input = new InputHandler(() => this.onJump());
-        this.input.attachCanvas(canvas);
-        this.input.attachControls(uiElements.leftBtn, uiElements.rightBtn, uiElements.jumpBtn);
+        this.input = new InputHandler(() => this.onJump(), () => this.gameRunning && !this.isPaused && !this.levelCleared);
+        this.input.attachCanvas(canvas, this.width);
+        this.input.attachControls(uiElements.leftBtn, uiElements.rightBtn, uiElements.jumpBtn, document.getElementById('downButton'), document.getElementById('sprintButton'));
 
         this.background = new Background(this.width, this.GROUND_Y);
         this.levelGenerator = new LevelGenerator();
@@ -207,8 +213,7 @@ export class Game {
         this.isProcessingDeath = false; // Reset death flag for new game
         this.isNewHighScore = false;
         this.isPaused = false;
-        this.score = 0;
-        this.ui.score.textContent = `⭐ 0`;
+        this.ui.score.textContent = `⭐ ${this.score}`;
         this.ui.gameOverOverlay.style.display = 'none';
         this.ui.pauseOverlay.style.display = 'none';
         this.gameLoop();
@@ -319,6 +324,25 @@ export class Game {
     }
 
     initGame() {
+        this.loop.stop();
+        this.timers = [];
+        this.input.reset();
+        if (this.savedState) this.unloadBonusLevel();
+        this.gameState = 'OVERWORLD';
+        this.savedState = null;
+        this.sessionCoins = 0;
+        this.ui.highScore.textContent = `🏆 ${this.highScore}`;
+        this.simulationTicks = 0;
+        this.achievementSystem._coinTimestamps = [];
+        this.achievementSystem.trackLanding();
+        this.lastCleanedX = 0;
+        this.isProcessingDeath = false;
+        this.isGameOverSequence = false;
+        this.freezeFrames = 0;
+        this.deathFlashTimer = 0;
+        this.powerUpHint = null;
+        this.transitionManager.cancel();
+        this.course = this.levelConfig?.mode === 'trail' ? new AdventureCourse(this, this.levelConfig) : null;
         this.player = new Player(this, 50, this.GROUND_Y, this.images.player);
         this.player.setGroundY(this.GROUND_Y);
 
@@ -373,7 +397,8 @@ export class Game {
         this.bossBattleActive = false;
         this.biomeDistance = 0;
         this.lastGeneratedX = 0;
-        this.generateChunk(0, this.CHUNK_SIZE * 2);
+        if (this.course) this.course.build();
+        else this.generateChunk(0, this.CHUNK_SIZE * 2);
         this.fps = 60;
         this.fpsInterval = 1000 / this.fps;
         this.lastTime = 0;
@@ -499,8 +524,9 @@ export class Game {
 
     onJump() {
         this.initAudio();
-        if (!this.gameRunning) return;
-        if (this.player && this.player.jump()) {
+        if (!this.gameRunning || this.isPaused) return;
+        if (this.player && !this.player.isDead && !this.player.isEnteringPipe && !this.player.isExitingPipe && this.player.jump()) {
+            this.player.setState(2);
             this.playSound('jump');
         }
     }
@@ -524,7 +550,15 @@ export class Game {
     }
 
     update() {
-        if (!this.gameRunning || !this.player) return;
+        if (!this.gameRunning || this.isPaused || !this.player) return;
+        this.simulationTicks++;
+        if (this.course && !this.course.finished) this.course.ticks++;
+        this.advanceTimers();
+        if (!this.gameRunning || this.isPaused) return;
+        this.lightingSystem.update();
+        this.weatherSystem.update();
+        this.achievementSystem.update();
+        if (this.powerUpHint?.timer > 0) this.powerUpHint.timer--;
 
         // Update Tutorial System
         if (this.tutorial && !this.tutorial.isCompleted()) {
@@ -554,6 +588,7 @@ export class Game {
 
         if (this.bossBattleActive && this.boss) {
             this.updateBossBattle();
+            if (this.isPaused) return;
         }
 
         if (this.gameState === 'BONUS' && !this.player.isEnteringPipe && !this.player.isExitingPipe) {
@@ -607,6 +642,7 @@ export class Game {
             }
         }
 
+        this.course?.beforePlayerUpdate();
         this.player.update(this.input, this.platforms, this.levelWidth, this.camera);
 
         if (this.player.grounded && Math.abs(this.player.velX) > 0.5) {
@@ -617,7 +653,7 @@ export class Game {
         if (targetCamX < 0) targetCamX = 0;
         this.camera.x = targetCamX;
 
-        this.enemyManager.update(this.camera.x + this.width + 1000);
+        this.enemyManager.update(this.levelWidth, this.player);
         this.questionBlocks.forEach(block => block.update());
 
         for (let i = this.scorePopups.length - 1; i >= 0; i--) {
@@ -761,6 +797,9 @@ export class Game {
         this.checkProjectileCollisions();
 
         this.collisionSystem.update();
+        if (this.player.grounded) this.achievementSystem.trackLanding();
+        this.course?.update();
+        if (this.isPaused) return;
 
         // === BOUNDARY CHECKS (Bonus Level) ===
         if (this.gameState === 'BONUS') {
@@ -783,7 +822,7 @@ export class Game {
 
         // === AUTO-ENTER PIPE CHECK (After Collision) ===
         // We check here because collisionSystem updates 'grounded' and 'playerOnTop'
-        if (!this.player.isEnteringPipe && !this.player.isExitingPipe && this.player.grounded) {
+        if (!this.player.isEnteringPipe && !this.player.isExitingPipe && this.player.grounded && (this.input.keys['ArrowDown'] || this.input.keys['KeyS'])) {
             const standingPipe = this.pipes.find(p => {
                 // Use the flag set by CollisionSystem
                 if (p.playerOnTop) return true;
@@ -816,12 +855,12 @@ export class Game {
             }
         }
 
-        if (this.camera.x + this.width + this.renderDistance > this.lastGeneratedX) {
+        if (!this.course && this.gameState === 'OVERWORLD' && this.camera.x + this.width + this.renderDistance > this.lastGeneratedX) {
             const nextChunkEnd = this.lastGeneratedX + this.CHUNK_SIZE;
             this.generateChunk(this.lastGeneratedX, nextChunkEnd);
         }
 
-        if (this.camera.x - this.cleanupMargin > this.lastCleanedX) {
+        if (!this.course && this.gameState === 'OVERWORLD' && this.camera.x - this.cleanupMargin > this.lastCleanedX) {
             this.cleanupObjects(this.camera.x - this.cleanupMargin);
             this.lastCleanedX = this.camera.x - this.cleanupMargin;
         }
@@ -848,6 +887,7 @@ export class Game {
         this.bossArenaStartX = arenaStart;
         const arena = this.levelGenerator.generateBossArena(arenaStart, this.GROUND_Y);
         this.platforms.push(...arena.platforms);
+        this.levelWidth = Math.max(this.levelWidth, arena.endX);
         this.boss = createBoss(this.currentBiome, arenaStart + 800, this.GROUND_Y - 100, this.getDifficultyMultiplier());
         this.renderDistance = 0;
     }
@@ -878,6 +918,7 @@ export class Game {
                     }
                 }));
                 this.pause();
+                this.ui.pauseOverlay.style.display = 'none';
             }
             return;
         }
@@ -1064,7 +1105,7 @@ export class Game {
             this.onLevelCleared = { current: this.levelConfig.id, next: nextId };
             // Track for achievements (worldsCleared / noDeathRuns)
             const noDeath = !this._diedThisRun;
-            if (this.achievementSystem) this.achievementSystem.trackWorldClear(noDeath);
+            if (this.achievementSystem) this.achievementSystem.trackWorldClear(noDeath, this.levelConfig.id);
         } else {
             // Endless Mode: queue another boss further ahead
             this.bossTriggerDistance = this.player.x + 5000;
@@ -1087,6 +1128,7 @@ export class Game {
             this.background.draw(this.ctx, this.height, this.camera);
         }
 
+        this.course?.draw(this.ctx, this.camera);
         this.questionBlocks.forEach(block => {
             if (isEntityVisible(block, this.camera, this.width, this.height)) {
                 block.draw(this.ctx, this.camera);
@@ -1281,17 +1323,14 @@ export class Game {
         });
 
         // Lighting effects (draw before particles for proper layering)
-        this.lightingSystem.update();
         this.lightingSystem.draw(this.ctx, this.camera);
 
         this.particleSystem.draw(this.ctx, this.camera);
 
         // Draw achievement notifications (always on top)
-        this.achievementSystem.update();
         this.achievementSystem.draw(this.ctx, this.width);
 
         // Weather effects (draw on top of everything except UI)
-        this.weatherSystem.update();
         this.weatherSystem.draw(this.ctx, this.camera);
 
         // Draw UI elements via UIManager (Phase 3)
@@ -1299,7 +1338,6 @@ export class Game {
 
         // Draw Power-Up Hint (e.g., Cape glide instructions)
         if (this.powerUpHint && this.powerUpHint.timer > 0) {
-            this.powerUpHint.timer--;
             this.powerUpHint.alpha = Math.min(1, this.powerUpHint.timer / 30); // Fade out
 
             this.ctx.save();
@@ -1321,6 +1359,8 @@ export class Game {
 
         // Draw scene transition overlay (topmost layer)
         this.transitionManager.draw();
+
+        this.course?.drawHUD(this.ctx);
 
         // FPS Counter and Performance Monitor
         if (this.showFps) {
@@ -1509,7 +1549,8 @@ export class Game {
                 coins: [...this.coins],
                 enemies: [...this.enemies],
                 pipes: [...this.pipes],
-                blocks: [...this.questionBlocks]
+                blocks: [...this.questionBlocks],
+                ...Object.fromEntries(['mushrooms', 'stars', 'fireflowers', 'iceflowers', 'fireballs', 'iceballs', 'magnets', 'megaMushrooms', 'oneUpMushrooms', 'capes', 'cannons', 'lava', 'checkpoints'].map(key => [key, this[key]]))
             }
         };
     }
@@ -1517,9 +1558,10 @@ export class Game {
     loadBonusLevel() {
         this.gameState = 'BONUS';
 
+        for (const key of ['mushrooms', 'stars', 'fireflowers', 'iceflowers', 'fireballs', 'iceballs', 'magnets', 'megaMushrooms', 'oneUpMushrooms', 'capes', 'cannons', 'lava', 'checkpoints']) this[key] = [];
         this.platforms = [];
         this.coins = [];
-        this.enemyManager.reset();
+        this.enemyManager.enemies = []; // Detach saved overworld enemies without returning them to pools.
         this.pipes = [];
         this.questionBlocks = [];
         this.mushrooms = [];
@@ -1558,9 +1600,17 @@ export class Game {
     }
 
     unloadBonusLevel() {
+        const leavingBonus = this.gameState === 'BONUS';
         this.gameState = 'OVERWORLD';
 
         if (this.savedState) {
+            const pools = { coins: 'coinPool', mushrooms: 'mushroomPool', stars: 'starPool', fireflowers: 'fireFlowerPool', iceflowers: 'iceFlowerPool', fireballs: 'fireballPool', iceballs: 'iceballPool', magnets: 'magnetPool', megaMushrooms: 'megaMushroomPool', oneUpMushrooms: 'oneUpMushroomPool', capes: 'capePool' };
+            for (const [key, pool] of Object.entries(pools)) {
+                if (leavingBonus) this[key].forEach(item => this[pool].release(item));
+            }
+            this.enemyManager.reset();
+            this.enemyManager.enemies = this.savedState.entities.enemies;
+            for (const key of ['mushrooms', 'stars', 'fireflowers', 'iceflowers', 'fireballs', 'iceballs', 'magnets', 'megaMushrooms', 'oneUpMushrooms', 'capes', 'cannons', 'lava', 'checkpoints']) this[key] = this.savedState.entities[key];
             this.camera.x = this.savedState.cameraX;
             this.player.x = this.savedState.playerX + 100;
             this.player.y = this.savedState.playerY - 50;
@@ -1576,25 +1626,41 @@ export class Game {
         }
 
         this.savedState = null;
+        this.collisionSystem.rebuildSpatialGrid();
     }
 
-    gameLoop() {
-        if (!this.gameRunning || this.isPaused) return;
+    gameLoop() { this.loop.start(); }
 
-        try {
-            this.update();
-            this.draw();
-        } catch (e) {
-            console.error('Error in game loop:', e);
-            this.gameRunning = false;
-        }
+    schedule(callback, milliseconds) {
+        this.timers.push({ callback, ticks: Math.ceil(milliseconds * 60 / 1000) });
+    }
 
-        requestAnimationFrame(() => this.gameLoop());
+    advanceTimers() {
+        const due = [];
+        this.timers = this.timers.filter(timer => {
+            if (--timer.ticks <= 0) { due.push(timer.callback); return false; }
+            return true;
+        });
+        due.forEach(callback => callback());
+    }
+
+    stop() {
+        this.gameRunning = false;
+        this.isPaused = false;
+        this.loop.stop();
+        this.timers = [];
+        this.input.reset();
+        this.stopBGM();
+        this.achievementSystem.save();
+        flushSaves();
     }
 
     pause() {
-        if (!this.gameRunning) return;
+        if (!this.gameRunning || this.isPaused) return;
         this.isPaused = true;
+        this.loop.stop();
+        this.input.reset();
+        this.canvas.dispatchEvent(new CustomEvent('marioPaused'));
         this.ui.pauseOverlay.style.display = 'flex';
         this.stopBGM();
         // v2.32.0: persist achievement stats on pause (was only saved on unlock)
@@ -1603,8 +1669,9 @@ export class Game {
     }
 
     resume() {
-        if (!this.isPaused) return;
+        if (!this.isPaused || this.levelCleared) return;
         this.isPaused = false;
+        document.activeElement?.blur();
         this.ui.pauseOverlay.style.display = 'none';
         this.startBGM();
         this.gameLoop();
@@ -1629,7 +1696,7 @@ export class Game {
         this.isGameOverSequence = true;
 
         // Wait for death animation, then process life loss
-        setTimeout(() => {
+        this.schedule(() => {
             this.loseLife();
         }, 2000);
     }
@@ -1642,12 +1709,12 @@ export class Game {
             // Show lives remaining briefly then respawn or game over
             if (this.lives > 0) {
                 this.showLivesScreen();
-                setTimeout(() => {
+                this.schedule(() => {
                     this.respawn();
                 }, 1500);
             } else {
                 // No lives left - real game over
-                setTimeout(() => {
+                this.schedule(() => {
                     this.showGameOverScreen();
                 }, 500);
             }
@@ -1658,6 +1725,7 @@ export class Game {
     }
 
     respawn() {
+        if (this.gameState === 'BONUS') this.unloadBonusLevel();
         // Reset player at checkpoint or nearby death location
         // If we have a checkpoint, use it. Otherwise respawn near where they were.
         let respawnX;
@@ -1688,6 +1756,9 @@ export class Game {
             respawnX = Math.max(50, this.camera.x + 100);
         }
 
+        this.player = new Player(this, respawnX, this.GROUND_Y - 50, this.images.player);
+        this.player.setGroundY(this.GROUND_Y);
+        this.player.glideFallSpeed = 1.5 * (this.rewards?.glideFallSpeedMultiplier || 1);
         this.player.x = respawnX;
         this.player.y = this.GROUND_Y - this.player.height;
         this.player.velX = 0;
@@ -1779,7 +1850,7 @@ export class Game {
         this.ui.gameOverOverlay.style.display = 'flex';
         this.ui.finalScore.textContent = `最終分數: ${this.score}`;
 
-        if (this.score > this.highScore) {
+        if (this.isNewHighScore || this.score > this.highScore) {
             this.highScore = this.score;
             this.ui.highScore.innerHTML = `🏆 <span style="color: #FFD700;">新紀錄!</span> ${this.highScore}`;
             this.ui.finalHighScore.innerHTML = `🏆 <span style="color: #FFD700; text-shadow: 0 0 10px #FFD700;">新最高分!</span> ${this.highScore}`;
@@ -1794,16 +1865,14 @@ export class Game {
 
         this.playSound('gameOver');
 
-        const addRestartListeners = () => {
-            document.addEventListener('keydown', this.handleAnyKeyRestart);
-            document.addEventListener('click', this.handleAnyKeyRestart);
-            document.addEventListener('touchstart', this.handleAnyKeyRestart);
-        };
-
-        setTimeout(addRestartListeners, 500);
+        this.loop.stop();
+        this.input.reset();
+        this.achievementSystem.save();
+        flushSaves();
     }
 
     restart() {
+        document.activeElement?.blur();
         document.removeEventListener('keydown', this.handleAnyKeyRestart);
         document.removeEventListener('click', this.handleAnyKeyRestart);
         document.removeEventListener('touchstart', this.handleAnyKeyRestart);
@@ -1841,8 +1910,8 @@ export class Game {
             clientY = e.clientY;
         }
 
-        const scaleX = this.canvas.width / rect.width;
-        const scaleY = this.canvas.height / rect.height;
+        const scaleX = this.width / rect.width;
+        const scaleY = this.height / rect.height;
 
         const canvasX = (clientX - rect.left) * scaleX;
         const canvasY = (clientY - rect.top) * scaleY;
@@ -1899,6 +1968,13 @@ export class Game {
     }
 
     updateScore() {
+        this.achievementSystem?.trackHighScore(this.score);
+        this.collisionSystem.checkNewHighScore();
+        if (this.score > this.highScore) {
+            this.highScore = this.score;
+            this.saveHighScore();
+            this.ui.highScore.textContent = `🏆 ${this.highScore}`;
+        }
         this.ui.score.textContent = `⭐ ${this.score}`;
         this.ui.score.style.transform = 'scale(1.2)';
         setTimeout(() => {

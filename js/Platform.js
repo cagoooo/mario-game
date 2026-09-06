@@ -20,7 +20,7 @@ export class Platform {
             const tx = drawX + i * tileSize;
 
             // Brick base
-            ctx.fillStyle = '#CD853F';
+            ctx.fillStyle = this.tint || '#CD853F';
             ctx.fillRect(tx, this.y, tileSize, this.height);
 
             // Brick lines

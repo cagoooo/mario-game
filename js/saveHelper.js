@@ -55,7 +55,7 @@ export function flushSaves() {
 
 export function loadValue(key) {
     try {
-        return localStorage.getItem(key);
+        return pending.has(key) ? pending.get(key) : localStorage.getItem(key);
     } catch (e) {
         return null;
     }

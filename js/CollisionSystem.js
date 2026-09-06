@@ -21,11 +21,8 @@ export class CollisionSystem {
 
     update() {
         // Periodically rebuild spatial grid with all collidable entities
-        this.lastGridRebuild++;
-        if (this.lastGridRebuild >= this.GRID_REBUILD_INTERVAL) {
-            this.rebuildSpatialGrid();
-            this.lastGridRebuild = 0;
-        }
+        // Moving enemies/platforms must be indexed at their current positions.
+        this.rebuildSpatialGrid();
 
         this.handleEnemyCollisions();
         this.handleBlockCollisions();
@@ -112,7 +109,7 @@ export class CollisionSystem {
                     this.game.score += 100;
                     this.game.updateScore();
                     this.game.playSound('stomp');
-                    this.game.achievementSystem.trackEnemyKill();
+                    this.game.achievementSystem.trackEnemyKill(true);
                     this.checkNewHighScore();
                 } else {
                     const result = this.game.player.hit();
@@ -370,7 +367,7 @@ export class CollisionSystem {
                     if (changed) {
                         this.game.playSound('powerup_fire');
                         this.game.triggerFreeze(20);
-                        this.game.firstTimePickupHint('fire', '🔥 火焰花！按空白鍵發射火球攻擊敵人');
+                        this.game.firstTimePickupHint('fire', '🔥 火焰花！自動發射火球，面向敵人即可攻擊');
                     } else {
                         this.game.playSound('coin');
                     }
@@ -487,6 +484,7 @@ export class CollisionSystem {
                     this.game.addScorePopup(enemy.x, enemy.y, 100);
                     this.game.addParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 8, '#FFD700');
                     this.game.enemies.splice(j, 1);
+                    this.game.achievementSystem.trackEnemyKill();
                     this.game.score += 100;
                     this.game.updateScore();
                     this.game.playSound('stomp');

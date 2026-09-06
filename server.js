@@ -1,39 +1,20 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-
-const server = http.createServer((req, res) => {
-    // Handle query strings by removing them for file lookup
-    const urlPath = req.url.split('?')[0];
-    let filePath = '.' + urlPath;
-    if (filePath === './') filePath = './index.html';
-
-    const extname = path.extname(filePath);
-    let contentType = 'text/html';
-    switch (extname) {
-        case '.js': contentType = 'text/javascript'; break;
-        case '.css': contentType = 'text/css'; break;
-        case '.json': contentType = 'application/json'; break;
-        case '.png': contentType = 'image/png'; break;
-        case '.jpg': contentType = 'image/jpg'; break;
-        case '.ico': contentType = 'image/x-icon'; break;
+const root = __dirname;
+const types = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.ico': 'image/x-icon', '.html': 'text/html' };
+http.createServer((req, res) => {
+    let pathname;
+    try { pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname); }
+    catch { res.writeHead(400); res.end('Bad request'); return; }
+    const target = path.resolve(root, '.' + (pathname === '/' ? '/index.html' : pathname));
+    const relative = path.relative(root, target);
+    if (relative.startsWith('..') || path.isAbsolute(relative) || relative.split(/[\\/]/).some(part => part.startsWith('.'))) {
+        res.writeHead(403); res.end('Forbidden'); return;
     }
-
-    fs.readFile(filePath, (error, content) => {
-        if (error) {
-            if (error.code == 'ENOENT') {
-                res.writeHead(404);
-                res.end('404 Not Found');
-            } else {
-                res.writeHead(500);
-                res.end('500: ' + error.code);
-            }
-        } else {
-            res.writeHead(200, { 'Content-Type': contentType });
-            res.end(content, 'utf-8');
-        }
+    fs.readFile(target, (error, data) => {
+        if (error) { res.writeHead(error.code === 'ENOENT' ? 404 : 500); res.end('File unavailable'); return; }
+        res.writeHead(200, { 'Content-Type': types[path.extname(target)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
+        res.end(data);
     });
-});
-
-server.listen(8000);
-console.log('Server running at http://127.0.0.1:8000/');
+}).listen(8000, '127.0.0.1', () => console.log('Server running at http://127.0.0.1:8000/'));

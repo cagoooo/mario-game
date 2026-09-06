@@ -36,12 +36,6 @@ export class Idle extends State {
         if (input.keys['ArrowLeft'] || input.keys['ArrowRight'] || input.touchDirection !== 0 || mouseMoving) {
             this.player.setState(states.RUNNING);
         }
-        // Jump
-        else if (input.keys['Space'] || input.isTouching) {
-            if (this.player.jump()) {
-                this.player.setState(states.JUMPING);
-            }
-        }
         // Fall (if platform disappears or walked off edge)
         else if (!this.player.grounded) {
             this.player.setState(states.FALLING);
@@ -81,12 +75,6 @@ export class Running extends State {
         if (!isMoving && Math.abs(this.player.velX) < 0.1) {
             this.player.setState(states.IDLE);
         }
-        // Jump
-        else if (input.keys['Space'] || input.isTouching) {
-            if (this.player.jump()) {
-                this.player.setState(states.JUMPING);
-            }
-        }
         // Fall
         else if (!this.player.grounded) {
             this.player.setState(states.FALLING);
@@ -120,15 +108,6 @@ export class Jumping extends State {
     }
 
     handleInput(input) {
-        // Double jump logic is handled inside player.jump(), but we need to trigger it
-        if ((input.keys['Space'] || input.isTouching) && !this.player.jumpHeld) {
-            // Attempt double jump
-            if (this.player.jump()) {
-                // Remain in jumping state, but re-enter to reset animation/particles if needed
-                this.enter();
-            }
-        }
-
         if (this.player.velY > 0) {
             this.player.setState(states.FALLING);
         }
@@ -149,13 +128,6 @@ export class Falling extends State {
     }
 
     handleInput(input) {
-        // Double jump allowed while falling? Usually yes in this game
-        if ((input.keys['Space'] || input.isTouching) && !this.player.jumpHeld) {
-            if (this.player.jump()) {
-                this.player.setState(states.JUMPING);
-            }
-        }
-
         if (this.player.grounded) {
             this.player.setState(states.IDLE); // Or Running if keys held, but Idle is safe default, it will switch next frame
         }
