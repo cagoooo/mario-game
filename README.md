@@ -2,6 +2,8 @@
 
 🌐 **線上使用：[超級瑪莉歐冒險](https://cagoooo.github.io/mario-game/)**
 
+> 📌 **目前版本：v2.34.1**（依據 `version.json`）
+
 瑪莉歐遊戲加強版
 
 <!-- BEGIN:PROJECT_GUIDE -->
