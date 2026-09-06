@@ -1,4 +1,4 @@
 {
-    "version": "2.33.0",
-    "notes": "敵人 AI 抽象化：抽出共用 frozen overlay + chase helpers，去除 ~50 行重複"
+    "version": "2.34.1",
+    "notes": "恢復滑鼠跟隨，鍵盤操作自動鎖定滑鼠，放開後明顯移動才切回"
 }

@@ -206,9 +206,9 @@ export class AchievementSystem {
     }
 
     // ─── Track methods (called by Game / CollisionSystem) ───────────
-    trackEnemyKill() {
+    trackEnemyKill(stomp = false) {
         this.stats.enemiesKilled++;
-        this.stats.currentEnemyStreak++;
+        if (stomp) this.stats.currentEnemyStreak++;
         if (this.stats.currentEnemyStreak > this.stats.maxEnemyStreak) {
             this.stats.maxEnemyStreak = this.stats.currentEnemyStreak;
         }
@@ -228,7 +228,7 @@ export class AchievementSystem {
     trackCoinCollect() {
         this.stats.totalCoins++;
         // Coin rush: count coins in last 60 frames
-        const now = (this.game && this.game.frameCount) || performance.now();
+        const now = this.game?.simulationTicks ?? performance.now() * 60 / 1000;
         this._coinTimestamps.push(now);
         // Trim to last 60 frames worth
         const cutoff = now - COIN_RUSH_WINDOW_FRAMES;
@@ -254,8 +254,11 @@ export class AchievementSystem {
         }
     }
 
-    trackWorldClear(noDeath = false) {
-        this.stats.worldsCleared++;
+    trackWorldClear(noDeath = false, levelId = null) {
+        const ids = new Set(Array.isArray(this.stats.clearedWorldIds) ? this.stats.clearedWorldIds : []);
+        if (levelId) ids.add(levelId);
+        this.stats.clearedWorldIds = [...ids];
+        this.stats.worldsCleared = ids.size;
         if (noDeath) this.stats.noDeathRuns++;
         this.checkAchievements();
     }

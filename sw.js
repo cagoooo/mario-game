@@ -6,7 +6,7 @@
 // ─────────────────────────────────────────────────────────────
 // Bumping rules (enforced by scripts/bump-version.js):
 //   js/version.js GAME_VERSION  ←→  sw.js CACHE_VERSION  ←→  version.json
-const CACHE_VERSION = '2.33.0';
+const CACHE_VERSION = '2.34.1';
 const STATIC_CACHE = `mario-static-v${CACHE_VERSION}`;
 const HTML_CACHE = `mario-html-v${CACHE_VERSION}`;
 
@@ -14,6 +14,12 @@ const PRECACHE = [
     './',
     './index.html',
     './style.css',
+    './adventure.css',
+    './js/FixedStepLoop.js',
+    './js/AdventureCourse.js',
+    `./style.css?v=${CACHE_VERSION}`,
+    `./adventure.css?v=${CACHE_VERSION}`,
+    `./js/main.js?v=${CACHE_VERSION}`,
     './manifest.json',
     './assets/icon-192.png',
     './assets/player.png',
@@ -73,15 +79,11 @@ const PRECACHE = [
 ];
 
 self.addEventListener('install', event => {
-    self.skipWaiting();
     event.waitUntil(
         caches.open(STATIC_CACHE).then(cache => {
             console.log('[SW] Precaching for', CACHE_VERSION);
-            return Promise.allSettled(
-                PRECACHE.map(url => cache.add(url).catch(err => {
-                    console.warn('[SW] Skip precache fail:', url, err.message);
-                }))
-            );
+            const modules = PRECACHE.filter(url => url.startsWith('./js/') && !url.includes('?'));
+            return cache.addAll([...new Set([...PRECACHE, ...modules.map(url => `${url}?v=${CACHE_VERSION}`)])]);
         })
     );
 });
@@ -90,7 +92,7 @@ self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys()
             .then(keys => Promise.all(
-                keys.filter(k => !k.endsWith(`v${CACHE_VERSION}`))
+                keys.filter(k => /^mario-(static|html)-v/.test(k) && !k.endsWith(`v${CACHE_VERSION}`))
                     .map(k => {
                         console.log('[SW] Deleting old cache:', k);
                         return caches.delete(k);
@@ -118,20 +120,28 @@ function isVersionJson(url) {
 async function networkFirst(req, cacheName) {
     try {
         const fresh = await fetch(req);
-        if (fresh && fresh.ok) {
+        if (fresh && fresh.ok && !new URL(req.url).pathname.endsWith('/version.json')) {
             const cache = await caches.open(cacheName);
             cache.put(req, fresh.clone()).catch(() => {});
         }
         return fresh;
     } catch (err) {
-        const cached = await caches.match(req);
+        const cache = await caches.open(cacheName);
+        const cached = await cache.match(req);
         if (cached) return cached;
+        // First offline navigation can happen before HTML_CACHE has been filled.
+        if (req.mode === 'navigate') {
+            const precache = await caches.open(STATIC_CACHE);
+            const entry = await precache.match(new URL('./index.html', self.registration.scope).href);
+            if (entry) return entry;
+        }
         throw err;
     }
 }
 
 async function cacheFirst(req, cacheName) {
-    const cached = await caches.match(req);
+    const cache = await caches.open(cacheName);
+    const cached = await cache.match(req);
     if (cached) return cached;
     const fresh = await fetch(req);
     if (fresh && fresh.ok && fresh.type !== 'opaque') {
@@ -146,7 +156,7 @@ self.addEventListener('fetch', event => {
     if (req.method !== 'GET') return;
 
     const url = new URL(req.url);
-    if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+    if (url.origin !== self.location.origin || !url.href.startsWith(self.registration.scope)) return;
 
     // version.json: always network-first, never serve stale
     if (isVersionJson(url)) {

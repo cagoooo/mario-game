@@ -16,6 +16,7 @@ export class EnhancedAudioSystem {
         this.soundPresets = this.initSoundPresets();
 
         this.initAudio();
+        this.loadVolumeSettings();
     }
 
     initAudio() {
@@ -489,7 +490,7 @@ export class EnhancedAudioSystem {
 
     // 8-bit背景音樂模式
     startBGM(mode = 'normal') {
-        if (this.isMuted) return;
+        if (this.isMuted || !this.audioCtx) return;
 
         // Resume context if suspended (Chrome policy)
         if (this.audioCtx.state === 'suspended') {

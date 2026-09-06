@@ -15,38 +15,43 @@
   <link rel="icon" type="image/png" href="assets/icon-192.png">
   <link rel="shortcut icon" type="image/png" href="assets/icon-192.png">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="style.css?v=2.33.0">
+  <link rel="stylesheet" href="style.css?v=2.34.1">
+  <link rel="stylesheet" href="adventure.css?v=2.34.1">
+  <script type="importmap" id="game-imports">{"imports":{"./js/AchievementSystem.js":"./js/AchievementSystem.js?v=2.34.1","./js/AdventureCourse.js":"./js/AdventureCourse.js?v=2.34.1","./js/AssetLoader.js":"./js/AssetLoader.js?v=2.34.1","./js/AudioSystem.js":"./js/AudioSystem.js?v=2.34.1","./js/Background.js":"./js/Background.js?v=2.34.1","./js/BonusLevelGenerator.js":"./js/BonusLevelGenerator.js?v=2.34.1","./js/Boss.js":"./js/Boss.js?v=2.34.1","./js/Camera.js":"./js/Camera.js?v=2.34.1","./js/Cannon.js":"./js/Cannon.js?v=2.34.1","./js/Cape.js":"./js/Cape.js?v=2.34.1","./js/Checkpoint.js":"./js/Checkpoint.js?v=2.34.1","./js/Coin.js":"./js/Coin.js?v=2.34.1","./js/CollisionSystem.js":"./js/CollisionSystem.js?v=2.34.1","./js/Config.js":"./js/Config.js?v=2.34.1","./js/Enemy.js":"./js/Enemy.js?v=2.34.1","./js/EnemyBehaviors.js":"./js/EnemyBehaviors.js?v=2.34.1","./js/EnemyManager.js":"./js/EnemyManager.js?v=2.34.1","./js/FireFlower.js":"./js/FireFlower.js?v=2.34.1","./js/Fireball.js":"./js/Fireball.js?v=2.34.1","./js/FixedStepLoop.js":"./js/FixedStepLoop.js?v=2.34.1","./js/Game.js":"./js/Game.js?v=2.34.1","./js/IceFlower.js":"./js/IceFlower.js?v=2.34.1","./js/Iceball.js":"./js/Iceball.js?v=2.34.1","./js/InputHandler.js":"./js/InputHandler.js?v=2.34.1","./js/Lava.js":"./js/Lava.js?v=2.34.1","./js/LevelGenerator.js":"./js/LevelGenerator.js?v=2.34.1","./js/LevelLoader.js":"./js/LevelLoader.js?v=2.34.1","./js/Levels.js":"./js/Levels.js?v=2.34.1","./js/LightingSystem.js":"./js/LightingSystem.js?v=2.34.1","./js/Magnet.js":"./js/Magnet.js?v=2.34.1","./js/MegaMushroom.js":"./js/MegaMushroom.js?v=2.34.1","./js/Mushroom.js":"./js/Mushroom.js?v=2.34.1","./js/ObjectPool.js":"./js/ObjectPool.js?v=2.34.1","./js/OneUpMushroom.js":"./js/OneUpMushroom.js?v=2.34.1","./js/ParticleSystem.js":"./js/ParticleSystem.js?v=2.34.1","./js/Pipe.js":"./js/Pipe.js?v=2.34.1","./js/Platform.js":"./js/Platform.js?v=2.34.1","./js/Player.js":"./js/Player.js?v=2.34.1","./js/PlayerStates.js":"./js/PlayerStates.js?v=2.34.1","./js/QuestionBlock.js":"./js/QuestionBlock.js?v=2.34.1","./js/Rewards.js":"./js/Rewards.js?v=2.34.1","./js/SpatialGrid.js":"./js/SpatialGrid.js?v=2.34.1","./js/SpriteAnimator.js":"./js/SpriteAnimator.js?v=2.34.1","./js/Star.js":"./js/Star.js?v=2.34.1","./js/TransitionManager.js":"./js/TransitionManager.js?v=2.34.1","./js/Tutorial.js":"./js/Tutorial.js?v=2.34.1","./js/UIManager.js":"./js/UIManager.js?v=2.34.1","./js/WeatherSystem.js":"./js/WeatherSystem.js?v=2.34.1","./js/main.js":"./js/main.js?v=2.34.1","./js/saveHelper.js":"./js/saveHelper.js?v=2.34.1","./js/utils.js":"./js/utils.js?v=2.34.1","./js/version.js":"./js/version.js?v=2.34.1"}}</script>
 </head>
 
 <body>
   <!-- Start Screen -->
   <div id="startScreen">
     <div id="gameTitle">🍄 超級冒險 🍄</div>
-    <div id="gameSubtitle">Mario Style Platformer</div>
+    <div id="gameSubtitle">探索新路線，挑戰你的最佳紀錄</div>
+    <p class="newFeatures">全新 4 個探索關卡 · 彈簧與移動浮台 · 寶石收集</p>
     <div id="startInstructions">
       <p>🎮 <strong>操作方式</strong></p>
-      <p>⬅️ ➡️ 方向鍵移動 | 空白鍵跳躍</p>
-      <p>📱 觸控螢幕：點擊移動 | 點擊跳躍</p>
+      <p>← → / A D 移動 · 空白 / W 跳躍 · Shift 衝刺</p>
+      <p>📱 使用下方方向／跳躍按鈕，可同時按住</p>
     </div>
     <button id="startButton">開始遊戲</button>
   </div>
 
   <!-- Level Select Screen (NES retro style text menu) -->
   <div id="levelSelectScreen">
-    <div class="lsTitle">SELECT WORLD</div>
-    <div class="lsSubtitle">↑↓ 選擇 ｜ Enter / 點擊 進入</div>
+    <div class="lsTitle">選擇你的冒險</div>
+    <div class="lsSubtitle">↑↓ 選擇 · Enter 進入 · 探索關卡全部開放<br>★ 通關　★ 收齊寶石　★ 不失去生命</div>
     <ul id="levelSelectList"></ul>
     <button id="levelSelectBack" class="lsBack">← 返回</button>
   </div>
 
   <!-- Level Cleared Overlay -->
   <div id="levelClearedOverlay">
-    <div class="lcTitle">★ STAGE CLEAR ★</div>
+    <div class="lcTitle">★ 冒險完成 ★</div>
     <div id="lcLevelName" class="lcLevelName">World 1-1</div>
     <div id="lcScore" class="lcScore">SCORE: 0</div>
+    <p id="courseResult" hidden></p>
     <div id="lcUnlockMessage" class="lcUnlock"></div>
     <div class="lcButtons">
       <button id="lcNextLevelBtn">下一關 ▶</button>
+      <button id="lcReplayBtn">再挑戰一次 ↻</button>
       <button id="lcMenuBtn">回選單</button>
     </div>
   </div>
@@ -58,10 +63,10 @@
   <div id="gameUI">
     <div id="score">⭐ 0</div>
     <div id="highScore">🏆 0</div>
-    <button id="muteButton">🔊</button>
+    <button id="muteButton" aria-label="切換靜音">🔊</button>
     <button id="settingsButton" title="音效設定">⚙️</button>
-    <button id="fullscreenButton">⛶</button>
-    <button id="pauseButton">⏸️</button>
+    <button id="fullscreenButton" aria-label="切換全螢幕">⛶</button>
+    <button id="pauseButton" aria-label="暫停遊戲">⏸️</button>
   </div>
 
   <!-- Pause Overlay -->
@@ -86,6 +91,7 @@
     <div id="pauseActions">
       <button id="resumeButton">繼續遊戲</button>
       <button id="achievementsButton" class="pauseSecondaryBtn">🏅 成就 (<span id="achievementCount">0/0</span>)</button>
+      <button id="pauseMenuBtn" class="pauseSecondaryBtn">回冒險選單</button>
       <button id="replayTutorialButton" class="pauseSecondaryBtn">📖 重看教學</button>
     </div>
   </div>
@@ -105,6 +111,7 @@
     <div id="finalScore"></div>
     <div id="finalHighScore"></div>
     <button id="restartButton">重新開始</button>
+    <button id="gameOverMenuBtn" class="pauseSecondaryBtn">回冒險選單</button>
   </div>
 
   <!-- Audio Settings Modal -->
@@ -112,12 +119,12 @@
     <div class="modal-content">
       <h3>🔊 音效設定</h3>
       <div class="volume-control">
-        <label>🎵 音樂 (BGM)</label>
+        <label for="musicVolumeSlider">🎵 音樂 (BGM)</label>
         <input type="range" id="musicVolumeSlider" min="0" max="100" value="40">
         <span id="musicVolumeValue">40%</span>
       </div>
       <div class="volume-control">
-        <label>🔔 音效 (SFX)</label>
+        <label for="sfxVolumeSlider">🔔 音效 (SFX)</label>
         <input type="range" id="sfxVolumeSlider" min="0" max="100" value="70">
         <span id="sfxVolumeValue">70%</span>
       </div>
@@ -127,9 +134,15 @@
 
   <!-- Touch Controls -->
   <div id="controlButtons">
-    <div id="leftButton" class="controlButton">◀</div>
-    <div id="jumpButton" class="controlButton">↑</div>
-    <div id="rightButton" class="controlButton">▶</div>
+    <div class="directionControls">
+      <button id="leftButton" class="controlButton" aria-label="向左移動">◀</button>
+      <button id="rightButton" class="controlButton" aria-label="向右移動">▶</button>
+      <button id="downButton" class="controlButton" aria-label="蹲下或進入水管">↓</button>
+    </div>
+    <div class="actionControls">
+      <button id="sprintButton" class="controlButton" aria-label="衝刺">衝刺</button>
+      <button id="jumpButton" class="controlButton" aria-label="跳躍">跳</button>
+    </div>
   </div>
 
   <!-- Update Banner (PWA new-version detection) -->
@@ -139,11 +152,11 @@
     <button id="updateBannerDismiss" aria-label="關閉">✕</button>
   </div>
 
-  <script type="module" src="js/main.js?v=2.33.0"></script>
+  <script type="module" src="js/main.js?v=2.34.1"></script>
   <script>
     // Register Service Worker + listen for new-version events.
     // Pairs with version.json polling (in main.js) for redundancy.
-    if ('serviceWorker' in navigator) {
+    if ('serviceWorker' in navigator && (!['localhost', '127.0.0.1'].includes(location.hostname) || new URLSearchParams(location.search).has('pwa'))) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').then(reg => {
           console.log('[SW] registered, scope:', reg.scope);
@@ -170,8 +183,7 @@
         let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
           if (refreshing) return;
-          refreshing = true;
-          window.location.reload();
+          window.dispatchEvent(new CustomEvent('marioNewVersionReady', { detail: { source: 'controllerchange' } }));
         });
       });
     }

@@ -42,7 +42,7 @@ export const LEVELS = [
     }
 ];
 
-import { idleSave } from './saveHelper.js';
+import { idleSave, loadValue } from './saveHelper.js';
 
 export const LEVELS_VERSION = 1;
 const STORAGE_KEY = 'marioUnlockedLevels';
@@ -50,14 +50,14 @@ const STORAGE_VERSION_KEY = 'marioUnlockedLevelsVersion';
 
 export function getUnlockedLevels() {
     try {
-        const storedVersion = parseInt(localStorage.getItem(STORAGE_VERSION_KEY) || '0', 10);
+        const storedVersion = parseInt(loadValue(STORAGE_VERSION_KEY) || '0', 10);
         if (storedVersion !== LEVELS_VERSION) {
             // Schema bump — reset to defaults
             idleSave(STORAGE_VERSION_KEY, String(LEVELS_VERSION));
             idleSave(STORAGE_KEY, ['1-1']);
             return ['1-1'];
         }
-        const raw = localStorage.getItem(STORAGE_KEY);
+        const raw = loadValue(STORAGE_KEY);
         if (!raw) return ['1-1'];
         const parsed = JSON.parse(raw);
         return Array.isArray(parsed) && parsed.length > 0 ? parsed : ['1-1'];

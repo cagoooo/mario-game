@@ -66,7 +66,9 @@ export class Player {
         this.starTimer = 0;
         this.starDuration = 600; // 10 seconds
 
-        // Fire Power\n        this.firePower = false;\n\n        // Ice Power\n        this.icePower = false;
+        // Projectile power-ups
+        this.firePower = false;
+        this.icePower = false;
 
         // Invincibility frames (when hit)
         this.invincible = false;
