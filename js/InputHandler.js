@@ -20,6 +20,8 @@ export class InputHandler {
         this.keys = {};
         this.sources.clear();
         this.mouseX = null;
+        this.lastMouseClientX = null;
+        this.mouseSwitchOrigin = null;
         this.touchDirection = 0;
         this.isTouching = false;
         this.inputMode = 'KEYBOARD';
@@ -38,10 +40,15 @@ export class InputHandler {
         if (e.repeat) return;
         this.inputMode = 'KEYBOARD';
         this.mouseX = null;
+        this.mouseSwitchOrigin = this.lastMouseClientX;
         this.setSource(`key:${e.code}`, code, true);
     }
     handleKeyUp(e) {
         this.setSource(`key:${e.code}`, ALIASES[e.code] || e.code, false);
+        this.mouseSwitchOrigin = this.lastMouseClientX;
+    }
+    get keyboardActive() {
+        return [...this.sources.keys()].some(source => source.startsWith('key:'));
     }
     attachCanvas(canvas, logicalWidth = 800) {
         this.canvasWidth = logicalWidth;
@@ -50,16 +57,27 @@ export class InputHandler {
             if (!this.isActive() || e.button !== 0) return;
             e.preventDefault();
             canvas.setPointerCapture(e.pointerId);
-            this.inputMode = 'MOUSE';
-            this.mouseX = position(e);
+            if (!this.keyboardActive) {
+                this.inputMode = 'MOUSE';
+                this.mouseX = position(e);
+            }
             this.setSource(`canvas:${e.pointerId}`, 'Space', true);
         });
-        this.listen(canvas, 'pointermove', e => {
-            if (canvas.hasPointerCapture(e.pointerId)) this.mouseX = position(e);
+        this.listen(window, 'pointermove', e => {
+            if (e.pointerType === 'mouse') this.lastMouseClientX = e.clientX;
+            if (!this.isActive() || this.keyboardActive) return;
+            if (e.pointerType === 'mouse' && this.inputMode !== 'MOUSE') {
+                this.mouseSwitchOrigin ??= e.clientX;
+                if (Math.abs(e.clientX - this.mouseSwitchOrigin) <= 10) return;
+            }
+            if (e.pointerType === 'mouse' || canvas.hasPointerCapture(e.pointerId)) {
+                this.inputMode = 'MOUSE';
+                this.mouseX = position(e);
+            }
         });
         const release = e => {
             this.setSource(`canvas:${e.pointerId}`, 'Space', false);
-            this.mouseX = null;
+            if (e.pointerType !== 'mouse' || e.type === 'pointercancel' || !this.isActive()) this.mouseX = null;
         };
         for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) this.listen(canvas, event, release);
     }

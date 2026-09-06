@@ -59,3 +59,31 @@ test('multi-touch releases only its own source', () => {
     assert.equal(input.keys.ArrowRight, false); assert.equal(input.keys.Space, true);
     input.destroy();
 });
+
+test('mouse follows without clicking; keyboard locks it until deliberate movement after release', () => {
+    let active = true, jumps = 0;
+    const input = new InputHandler(() => jumps++, () => active);
+    const canvas = new EventTarget();
+    canvas.getBoundingClientRect = () => ({ left: 100, width: 400 });
+    canvas.hasPointerCapture = () => false;
+    canvas.setPointerCapture = () => {};
+    input.attachCanvas(canvas, 800);
+    const pointer = (target, type, clientX) => target.dispatchEvent(Object.assign(new Event(type), { pointerType: 'mouse', pointerId: 1, clientX, button: 0 }));
+    pointer(window, 'pointermove', 150); pointer(window, 'pointermove', 300);
+    assert.equal(input.inputMode, 'MOUSE'); assert.equal(input.mouseX, 400); assert.equal(jumps, 0);
+    input.handleKeyDown({ code: 'KeyD', preventDefault() {} });
+    pointer(window, 'pointermove', 450);
+    assert.equal(input.inputMode, 'KEYBOARD'); assert.equal(input.mouseX, null);
+    pointer(canvas, 'pointerdown', 450); pointer(canvas, 'pointerup', 450);
+    assert.equal(input.inputMode, 'KEYBOARD'); assert.equal(jumps, 1);
+    input.handleKeyUp({ code: 'KeyD' });
+    pointer(window, 'pointermove', 455);
+    assert.equal(input.inputMode, 'KEYBOARD');
+    pointer(window, 'pointermove', 420);
+    assert.equal(input.inputMode, 'MOUSE'); assert.equal(input.mouseX, 640);
+    pointer(canvas, 'pointerdown', 420); pointer(canvas, 'pointerup', 420);
+    assert.equal(input.mouseX, 640); assert.equal(jumps, 2);
+    active = false; input.reset(); pointer(window, 'pointermove', 200); pointer(window, 'pointermove', 350);
+    assert.equal(input.mouseX, null);
+    input.destroy();
+});

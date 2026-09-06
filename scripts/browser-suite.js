@@ -47,6 +47,25 @@ export async function runSuite(g) {
             g.onJump(); check(g.player.jumpCount === 2, 'double jump failed');
             check(!g.player.jump(), 'third jump allowed');
         });
+        run('mouse follow and keyboard handoff do not fight', () => {
+            reset();
+            const rect = g.canvas.getBoundingClientRect();
+            const move = x => window.dispatchEvent(new PointerEvent('pointermove', { pointerType:'mouse', pointerId:1, clientX:rect.left + x * rect.width / g.width }));
+            const step = () => { for (let i = 0; i < 20; i++) g.update(); };
+            const start = g.player.x;
+            move(100); move(700); step();
+            check(g.player.x > start + 20 && g.player.jumpCount === 0, 'hover did not move player without jumping');
+            window.dispatchEvent(new KeyboardEvent('keydown', { code:'KeyA' }));
+            move(600); step();
+            check(g.input.inputMode === 'KEYBOARD' && g.input.mouseX === null && g.player.velX < 0, 'mouse stole held keyboard control');
+            window.dispatchEvent(new KeyboardEvent('keyup', { code:'KeyA' }));
+            move(600 + 5 * g.width / rect.width);
+            check(g.input.inputMode === 'KEYBOARD', 'small mouse jitter stole control');
+            move(700); step(); check(g.input.inputMode === 'MOUSE' && g.player.velX > 0, 'deliberate mouse movement did not switch back');
+            move(0); step(); check(g.player.velX < 0, 'mouse left follow failed');
+            g.pause(); const x = g.player.x; move(700); step();
+            check(g.player.x === x && g.input.mouseX === null, 'paused hover moved player');
+        });
         run('sprint exceeds walking speed and crouch keeps feet planted', () => {
             reset(); g.input.keys.ArrowRight = true; g.input.keys.ShiftLeft = true;
             for (let i = 0; i < 25; i++) g.update(); check(g.player.velX > 3.5, 'sprint failed');
